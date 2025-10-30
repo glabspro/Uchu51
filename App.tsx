@@ -176,7 +176,8 @@ const App: React.FC = () => {
             setOrders(currentOrders => currentOrders.map(o => o.id === orderData.id ? orderData : o));
             showToast(`Pedido ${orderData.id} actualizado y enviado a cocina.`, 'success');
         } else {
-            const newOrder = {
+            // FIX: Explicitly type `newOrder` as `Pedido` to prevent type inference issues with `historial.usuario`.
+            const newOrder: Pedido = {
                 ...orderData,
                 id: `PED-${String(Date.now()).slice(-4)}`,
                 fecha: new Date().toISOString(),

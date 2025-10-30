@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { LockClosedIcon } from './icons';
+import { LockClosedIcon, FireIcon } from './icons';
 
 interface LoginProps {
     onLogin: (password: string) => void;
@@ -21,7 +20,10 @@ const Login: React.FC<LoginProps> = ({ onLogin, error, onNavigateToCustomerView 
             <div className="w-full max-w-md">
                  <div className="bg-white shadow-2xl rounded-xl overflow-hidden">
                     <div className="bg-slate-800 p-8 text-center">
-                        <h1 className="text-3xl font-extrabold text-white">GRAB<span className="text-primary">IT</span> <span className="font-normal text-white/80">Admin</span></h1>
+                        <div className="flex items-center justify-center space-x-2">
+                           <FireIcon className="h-8 w-8 text-primary" />
+                           <h1 className="text-3xl font-extrabold text-white">UCHU51 <span className="font-normal text-white/80">Admin</span></h1>
+                        </div>
                         <p className="text-slate-300 mt-2">Acceso al panel de administración</p>
                     </div>
                     <form onSubmit={handleSubmit} className="px-8 pt-6 pb-8">

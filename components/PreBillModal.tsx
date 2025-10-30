@@ -36,7 +36,7 @@ const PreBillModal: React.FC<PreBillModalProps> = ({ order, onClose }) => {
             <div className="bg-white rounded-lg shadow-xl w-full max-w-sm" onClick={e => e.stopPropagation()}>
                 <div id="prebill-printable-area" className="p-6 text-sm text-slate-800">
                     <div className="text-center mb-6">
-                        <h1 className="text-2xl font-black text-slate-900">GRAB IT</h1>
+                        <h1 className="text-2xl font-black text-slate-900">UCHU51</h1>
                         <p className="text-xs text-slate-500">Av. Ejemplo 123, Lima, Perú</p>
                         <p className="text-lg font-bold mt-2">PRE-CUENTA</p>
                     </div>

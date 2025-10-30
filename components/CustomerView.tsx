@@ -194,7 +194,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
 
     const renderSelectionScreen = () => (
         <div className="text-center max-w-4xl mx-auto">
-            <h1 className="text-5xl font-extrabold text-slate-800 mb-4">GRAB <span className="text-primary">IT</span></h1>
+            <h1 className="text-5xl font-extrabold text-slate-800 mb-4">UCHU<span className="text-primary">51</span></h1>
             <p className="text-lg text-slate-600 mb-12">Pide tu comida favorita, rápido y a buen precio.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <button onClick={() => handleSelectOrderType('retiro')} className="group bg-white p-8 rounded-2xl border border-slate-200 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300">
@@ -486,7 +486,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
                 <header className={`flex justify-between items-center ${isCatalogStage ? 'mb-6' : ''}`}>
                      { isCatalogStage ? (
                         <div>
-                            <h1 className="text-2xl font-bold text-slate-900" onClick={() => setStage('selection')}>GRAB<span className="text-primary">IT</span></h1>
+                            <h1 className="text-2xl font-bold text-slate-900" onClick={() => setStage('selection')}>UCHU<span className="text-primary">51</span></h1>
                         </div>
                      ) : (
                         <div/>

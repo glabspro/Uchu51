@@ -1,7 +1,6 @@
-
 import React from 'react';
 import type { View, Turno } from '../types';
-import { ChartBarIcon, ClockIcon, DocumentTextIcon, HomeIcon, TruckIcon, LogoutIcon, ShoppingBagIcon, CreditCardIcon } from './icons';
+import { ChartBarIcon, ClockIcon, DocumentTextIcon, HomeIcon, TruckIcon, LogoutIcon, ShoppingBagIcon, CreditCardIcon, FireIcon } from './icons';
 
 interface HeaderProps {
     currentView: View;
@@ -53,7 +52,10 @@ const Header: React.FC<HeaderProps> = ({
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16">
                     <div className="flex items-center space-x-6">
-                        <h1 className="text-xl font-extrabold text-white">GRAB <span className="font-bold text-primary">IT</span> <span className="font-normal text-white/80">Admin</span></h1>
+                        <h1 className="text-xl font-extrabold text-white flex items-center space-x-2">
+                            <FireIcon className="h-6 w-6 text-primary" />
+                            <span>UCHU51 <span className="font-normal text-white/80">Admin</span></span>
+                        </h1>
                         <nav className="hidden md:flex items-center space-x-1 bg-slate-900/50 p-1 rounded-xl">
                            {navItems.map(item => (
                                 <NavButton 
