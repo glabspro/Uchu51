@@ -192,13 +192,12 @@ const App: React.FC = () => {
         showToast(isRiskyRetiro ? `Pedido ${newOrder.id} pendiente de confirmación.` : `Nuevo pedido ${newOrder.id} recibido.`, 'success');
     };
     
-    const handleSavePOSOrder = (orderData: Pedido) => {
+    const handleSavePOSOrder = (orderData: Pedido, mesaNumero: number) => {
         const existingOrderIndex = orders.findIndex(o => o.id === orderData.id);
         if (existingOrderIndex > -1) {
             setOrders(currentOrders => currentOrders.map(o => o.id === orderData.id ? orderData : o));
             showToast(`Pedido ${orderData.id} actualizado y enviado a cocina.`, 'success');
         } else {
-            // FIX: Explicitly type `newOrder` as `Pedido` to prevent type inference issues with `historial.usuario`.
             const newOrder: Pedido = {
                 ...orderData,
                 id: `PED-${String(Date.now()).slice(-4)}`,
@@ -208,6 +207,15 @@ const App: React.FC = () => {
                 tiempoTranscurrido: 0,
             };
             setOrders(currentOrders => [newOrder, ...currentOrders]);
+            
+            // FIX: Update the active table with the new order ID to keep POS view in sync
+            setPosMesaActiva(prevMesa => {
+                if (prevMesa && prevMesa.numero === mesaNumero) {
+                    return { ...prevMesa, ocupada: true, pedidoId: newOrder.id };
+                }
+                return prevMesa;
+            });
+    
             showToast(`Nuevo pedido ${newOrder.id} creado y enviado a cocina.`, 'success');
         }
     };

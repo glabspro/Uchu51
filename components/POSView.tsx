@@ -9,7 +9,7 @@ interface POSViewProps {
     order: Pedido | null;
     products: Producto[];
     onExit: () => void;
-    onSaveOrder: (order: Pedido) => void;
+    onSaveOrder: (order: Pedido, mesaNumero: number) => void;
     onGeneratePreBill: (order: Pedido) => void;
 }
 
@@ -17,6 +17,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
     const [activeCategory, setActiveCategory] = useState('Hamburguesas');
     const [selectedItem, setSelectedItem] = useState<ProductoPedido | null>(null);
     const [currentOrder, setCurrentOrder] = useState<Pedido | null>(order);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const [isSauceModalOpen, setIsSauceModalOpen] = useState(false);
     const [productForSauces, setProductForSauces] = useState<Producto | null>(null);
@@ -24,6 +25,14 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
     useEffect(() => {
         setCurrentOrder(order);
     }, [order]);
+
+    useEffect(() => {
+        // When the parent's state has been updated and passed down via the `order` prop,
+        // we can re-enable the submission buttons.
+        if (isSubmitting) {
+            setIsSubmitting(false);
+        }
+    }, [order, isSubmitting]);
     
     const groupedProducts = useMemo(() => {
         return products.reduce((acc, product) => {
@@ -132,15 +141,22 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
     };
     
     const handleSendToKitchen = () => {
-        if(currentOrder && currentOrder.productos.length > 0) {
-            const productosEnviados = currentOrder.productos.map(p => ({...p, sentToKitchen: true}));
-            const orderToSend = { 
-                ...currentOrder, 
-                productos: productosEnviados,
-                estado: 'en preparación' as const 
-            };
-            onSaveOrder(orderToSend);
+        if(isSubmitting || !currentOrder || currentOrder.productos.length === 0) {
+            return;
         }
+
+        // Prevent multiple clicks
+        setIsSubmitting(true);
+
+        const productosEnviados = currentOrder.productos.map(p => ({...p, sentToKitchen: true}));
+        const orderToSend: Pedido = { 
+            ...currentOrder, 
+            productos: productosEnviados,
+            estado: 'en preparación' 
+        };
+        
+        // Pass mesa number to parent to sync state if it's a new order
+        onSaveOrder(orderToSend, mesa.numero);
     };
 
     const isSentToKitchen = currentOrder?.estado && !['nuevo', 'confirmado'].includes(currentOrder.estado);
@@ -223,18 +239,18 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
                                     <button
                                         onClick={handleSendToKitchen}
                                         className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl text-base transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:scale-95 disabled:bg-gray-400 dark:disabled:bg-slate-700 disabled:shadow-none disabled:translate-y-0 disabled:cursor-not-allowed"
-                                        disabled={!currentOrder || currentOrder.productos.every(p => p.sentToKitchen)}
+                                        disabled={isSubmitting || !currentOrder || currentOrder.productos.every(p => p.sentToKitchen)}
                                     >
-                                        Adicionar y Enviar
+                                        {isSubmitting ? 'Enviando...' : 'Adicionar y Enviar'}
                                     </button>
                                 </div>
                              ) : (
                                 <button
                                     onClick={handleSendToKitchen}
                                     className="w-full bg-success text-white font-bold py-4 rounded-xl text-xl transition-all duration-300 shadow-lg shadow-success/30 hover:shadow-success/40 hover:-translate-y-0.5 active:scale-95 disabled:bg-gray-400 dark:disabled:bg-slate-700 disabled:shadow-none disabled:translate-y-0 disabled:cursor-not-allowed"
-                                    disabled={!currentOrder || currentOrder.productos.length === 0}
+                                    disabled={isSubmitting || !currentOrder || currentOrder.productos.length === 0}
                                 >
-                                    Enviar a Cocina
+                                    {isSubmitting ? 'Enviando...' : 'Enviar a Cocina'}
                                 </button>
                              )}
                         </div>
