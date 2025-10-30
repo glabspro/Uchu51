@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import type { Pedido, Producto, ProductoPedido, Cliente, Salsa, TipoPedido, MetodoPago, Theme } from '../types';
-import { ShoppingBagIcon, TrashIcon, CheckCircleIcon, TruckIcon, UserIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon, MapPinIcon, SearchIcon, AdjustmentsHorizontalIcon, MinusIcon, PlusIcon, StarIcon, SunIcon, MoonIcon } from './icons';
+import { ShoppingBagIcon, TrashIcon, CheckCircleIcon, TruckIcon, UserIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon, MapPinIcon, SearchIcon, AdjustmentsHorizontalIcon, MinusIcon, PlusIcon, StarIcon, SunIcon, MoonIcon, ChevronLeftIcon } from './icons';
 import SauceModal from './SauceModal';
 import { yapePlinInfo } from '../constants';
 import { Logo } from './Logo';
@@ -41,6 +41,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
 
     const [isLocating, setIsLocating] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [showGoBackConfirm, setShowGoBackConfirm] = useState(false);
 
     // FIX: `groupedProducts` must be declared before `filteredProducts` because `filteredProducts` depends on it.
     const groupedProducts = useMemo(() => {
@@ -226,6 +227,23 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
             { timeout: 10000 }
         );
     };
+
+     const handleGoBack = () => {
+        if (cart.length > 0 && stage !== 'selection') {
+            setShowGoBackConfirm(true);
+        } else {
+            setOrderType(null);
+            setStage('selection');
+        }
+    };
+
+    const confirmGoBack = () => {
+        setCart([]);
+        setOrderType(null);
+        setStage('selection');
+        setShowGoBackConfirm(false);
+    };
+
 
     const renderSelectionScreen = () => (
         <div className="text-center w-full max-w-md mx-auto animate-fade-in-up flex flex-col justify-between h-full p-4">
@@ -424,7 +442,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
                                         aria-label="Usar ubicación actual"
                                     >
                                         {isLocating ? (
-                                            <svg className="animate-spin h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <svg className="animate-spin h-5 w-5 text-primary" xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                             </svg>
@@ -534,13 +552,32 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
     return (
         <div className="min-h-screen flex flex-col font-sans bg-background dark:bg-slate-900 text-text-primary dark:text-slate-200">
             {isSauceModalOpen && <SauceModal product={currentProduct} onClose={handleCloseSauceModal} onConfirm={handleConfirmSauces} />}
+            {showGoBackConfirm && (
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[101] p-4">
+                    <div className="bg-surface dark:bg-slate-800 rounded-2xl shadow-xl p-6 max-w-sm w-full text-center animate-fade-in-scale">
+                        <h3 className="text-xl font-heading font-bold text-text-primary dark:text-white">¿Volver al inicio?</h3>
+                        <p className="text-text-secondary dark:text-slate-400 my-3">Tu pedido actual se perderá. ¿Estás seguro que quieres continuar?</p>
+                        <div className="grid grid-cols-2 gap-3 mt-6">
+                            <button onClick={() => setShowGoBackConfirm(false)} className="bg-text-primary/10 dark:bg-slate-700 hover:bg-text-primary/20 dark:hover:bg-slate-600 text-text-primary dark:text-slate-200 font-bold py-2 px-4 rounded-lg transition-colors">Cancelar</button>
+                            <button onClick={confirmGoBack} className="bg-danger hover:brightness-110 text-white font-bold py-2 px-4 rounded-lg transition-all">Sí, volver</button>
+                        </div>
+                    </div>
+                </div>
+            )}
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-0 flex-grow flex flex-col">
                 {stage !== 'selection' && (
                     <header className="flex justify-between items-center py-4">
-                        <button onClick={() => { setStage('selection'); setCart([]) }} aria-label="Volver a la selección de tipo de pedido">
-                            <Logo className="h-10 w-auto" variant={theme === 'dark' ? 'light' : 'default'} />
-                        </button>
-                        <button onClick={onToggleTheme} className="flex items-center justify-center h-12 w-12 rounded-full text-text-secondary dark:text-slate-400 hover:bg-surface dark:hover:bg-slate-800 hover:text-primary dark:hover:text-amber-400 transition-colors">
+                       <button onClick={handleGoBack} className="flex items-center space-x-2 font-semibold text-text-secondary dark:text-slate-300 hover:text-primary dark:hover:text-orange-400 transition-colors">
+                           <ChevronLeftIcon className="h-5 w-5" />
+                           <span>Inicio</span>
+                       </button>
+                        {stage === 'catalog' && orderType && (
+                            <div className="flex items-center p-1 bg-surface dark:bg-slate-800 rounded-full border border-text-primary/10 dark:border-slate-700">
+                                <button onClick={() => setOrderType('retiro')} className={`px-4 py-1.5 text-sm font-semibold rounded-full transition-colors ${orderType === 'retiro' ? 'bg-primary text-white' : 'text-text-secondary dark:text-slate-300 hover:bg-background dark:hover:bg-slate-700'}`}>Para Llevar</button>
+                                <button onClick={() => setOrderType('delivery')} className={`px-4 py-1.5 text-sm font-semibold rounded-full transition-colors ${orderType === 'delivery' ? 'bg-primary text-white' : 'text-text-secondary dark:text-slate-300 hover:bg-background dark:hover:bg-slate-700'}`}>Delivery</button>
+                            </div>
+                        )}
+                        <button onClick={onToggleTheme} className="flex items-center justify-center h-10 w-10 rounded-full text-text-secondary dark:text-slate-400 hover:bg-surface dark:hover:bg-slate-800 hover:text-primary dark:hover:text-amber-400 transition-colors">
                             {theme === 'light' ? <MoonIcon className="h-6 w-6" /> : <SunIcon className="h-6 w-6" />}
                         </button>
                     </header>
