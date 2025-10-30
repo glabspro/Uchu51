@@ -184,24 +184,33 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
                             <span className="text-text-primary dark:text-slate-100">Total</span>
                             <span className="text-text-primary dark:text-slate-100 font-mono">S/.{currentOrder?.total.toFixed(2) || '0.00'}</span>
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-3">
                              {isSentToKitchen ? (
+                                <>
+                                 <button
+                                    onClick={handleSendToKitchen}
+                                    className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl text-lg transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:-translate-y-0.5 disabled:bg-gray-400 dark:disabled:bg-slate-700 disabled:shadow-none disabled:translate-y-0 disabled:cursor-not-allowed"
+                                    disabled={!currentOrder || currentOrder.productos.length === 0}
+                                >
+                                    Adicionar y Enviar
+                                </button>
                                 <div className="grid grid-cols-2 gap-3">
                                     <button
                                         onClick={() => onGeneratePreBill(currentOrder!)}
-                                        className="w-full bg-text-primary dark:bg-slate-600 text-white font-bold py-4 rounded-xl text-lg hover:bg-text-primary/90 dark:hover:bg-slate-500 transition-all duration-300 shadow-lg hover:shadow-text-primary/20 hover:-translate-y-0.5"
+                                        className="w-full bg-text-primary dark:bg-slate-600 text-white font-bold py-3 rounded-xl text-base hover:bg-text-primary/90 dark:hover:bg-slate-500 transition-all duration-300 shadow-lg hover:shadow-text-primary/20 hover:-translate-y-0.5"
                                         aria-label="Ver o imprimir la pre-cuenta del pedido"
                                     >
                                         Ver Cuenta
                                     </button>
                                     <button
                                         onClick={() => onInitiatePayment(currentOrder!)}
-                                        className="w-full bg-primary text-white font-bold py-4 rounded-xl text-lg transition-all duration-300 shadow-lg shadow-primary/30 hover:shadow-primary/40 hover:-translate-y-0.5"
+                                        className="w-full bg-primary text-white font-bold py-3 rounded-xl text-base transition-all duration-300 shadow-lg shadow-primary/30 hover:shadow-primary/40 hover:-translate-y-0.5"
                                         aria-label="Iniciar el proceso de pago para este pedido"
                                     >
                                         Pagar
                                     </button>
                                 </div>
+                                </>
                              ) : (
                                 <button
                                     onClick={handleSendToKitchen}
