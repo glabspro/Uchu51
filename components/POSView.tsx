@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Pedido, Producto, ProductoPedido, Mesa, Salsa } from '../types';
 import { ChevronLeftIcon, TrashIcon, MinusIcon, PlusIcon, CheckCircleIcon } from './icons';
@@ -27,12 +26,16 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
     }, [order]);
 
     useEffect(() => {
-        // When the parent's state has been updated and passed down via the `order` prop,
-        // we can re-enable the submission buttons.
-        if (isSubmitting) {
+        if (isSubmitting && order && currentOrder && order.id === currentOrder.id) {
             setIsSubmitting(false);
         }
-    }, [order, isSubmitting]);
+    }, [order, isSubmitting, currentOrder]);
+
+    const hasUnsavedChanges = useMemo(() => {
+        if (!currentOrder) return false;
+        // An item is considered an "unsaved change" if it hasn't been sent to the kitchen yet.
+        return currentOrder.productos.some(p => !p.sentToKitchen);
+    }, [currentOrder]);
     
     const groupedProducts = useMemo(() => {
         return products.reduce((acc, product) => {
@@ -144,22 +147,20 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
         if(isSubmitting || !currentOrder || currentOrder.productos.length === 0) {
             return;
         }
-
-        // Prevent multiple clicks
         setIsSubmitting(true);
 
         const productosEnviados = currentOrder.productos.map(p => ({...p, sentToKitchen: true}));
         const orderToSend: Pedido = { 
             ...currentOrder, 
             productos: productosEnviados,
-            estado: 'en preparación' 
+            estado: currentOrder.id ? 'en preparación' : 'nuevo', // Keep status if updating, set to new if creating
+            historial: currentOrder.id ? currentOrder.historial : [{ estado: 'nuevo', fecha: new Date().toISOString(), usuario: 'admin' }],
         };
         
-        // Pass mesa number to parent to sync state if it's a new order
         onSaveOrder(orderToSend, mesa.numero);
     };
 
-    const isSentToKitchen = currentOrder?.estado && !['nuevo', 'confirmado'].includes(currentOrder.estado);
+    const isSentToKitchen = currentOrder?.id && currentOrder?.estado !== 'nuevo';
 
     return (
         <div className="fixed inset-0 bg-background dark:bg-slate-900 flex flex-col font-sans">
@@ -231,7 +232,8 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
                                 <div className="grid grid-cols-2 gap-3">
                                     <button
                                         onClick={() => onGeneratePreBill(currentOrder!)}
-                                        className="w-full bg-text-primary/80 dark:bg-slate-600 text-white font-bold py-3 rounded-xl text-base hover:bg-text-primary/90 dark:hover:bg-slate-500 transition-all duration-300 shadow-lg hover:shadow-text-primary/20 hover:-translate-y-0.5 active:scale-95"
+                                        disabled={hasUnsavedChanges}
+                                        className="w-full bg-text-primary/80 dark:bg-slate-600 text-white font-bold py-3 rounded-xl text-base hover:bg-text-primary/90 dark:hover:bg-slate-500 transition-all duration-300 shadow-lg hover:shadow-text-primary/20 hover:-translate-y-0.5 active:scale-95 disabled:bg-gray-400/50 dark:disabled:bg-slate-700 disabled:text-text-secondary dark:disabled:text-slate-400 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0"
                                         aria-label="Ver o imprimir la pre-cuenta del pedido"
                                     >
                                         Ver Cuenta
@@ -239,7 +241,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
                                     <button
                                         onClick={handleSendToKitchen}
                                         className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl text-base transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:scale-95 disabled:bg-gray-400 dark:disabled:bg-slate-700 disabled:shadow-none disabled:translate-y-0 disabled:cursor-not-allowed"
-                                        disabled={isSubmitting || !currentOrder || currentOrder.productos.every(p => p.sentToKitchen)}
+                                        disabled={isSubmitting || !hasUnsavedChanges}
                                     >
                                         {isSubmitting ? 'Enviando...' : 'Adicionar y Enviar'}
                                     </button>
@@ -253,6 +255,11 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
                                     {isSubmitting ? 'Enviando...' : 'Enviar a Cocina'}
                                 </button>
                              )}
+                              {hasUnsavedChanges && isSentToKitchen && (
+                                <p className="text-xs text-center text-warning dark:text-yellow-400 mt-2 animate-fade-in-up">
+                                    Tienes cambios sin enviar. Haz clic en "Adicionar y Enviar".
+                                </p>
+                            )}
                         </div>
                     </div>
                 </div>
