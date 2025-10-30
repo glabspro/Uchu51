@@ -10,11 +10,10 @@ interface POSViewProps {
     products: Producto[];
     onExit: () => void;
     onSaveOrder: (order: Pedido) => void;
-    onInitiatePayment: (order: Pedido) => void;
     onGeneratePreBill: (order: Pedido) => void;
 }
 
-const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSaveOrder, onInitiatePayment, onGeneratePreBill }) => {
+const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSaveOrder, onGeneratePreBill }) => {
     const [activeCategory, setActiveCategory] = useState('Hamburguesas');
     const [selectedItem, setSelectedItem] = useState<ProductoPedido | null>(null);
     const [currentOrder, setCurrentOrder] = useState<Pedido | null>(order);
@@ -194,20 +193,13 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
                                 >
                                     Adicionar y Enviar
                                 </button>
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 gap-3">
                                     <button
                                         onClick={() => onGeneratePreBill(currentOrder!)}
                                         className="w-full bg-text-primary dark:bg-slate-600 text-white font-bold py-3 rounded-xl text-base hover:bg-text-primary/90 dark:hover:bg-slate-500 transition-all duration-300 shadow-lg hover:shadow-text-primary/20 hover:-translate-y-0.5"
                                         aria-label="Ver o imprimir la pre-cuenta del pedido"
                                     >
                                         Ver Cuenta
-                                    </button>
-                                    <button
-                                        onClick={() => onInitiatePayment(currentOrder!)}
-                                        className="w-full bg-primary text-white font-bold py-3 rounded-xl text-base transition-all duration-300 shadow-lg shadow-primary/30 hover:shadow-primary/40 hover:-translate-y-0.5"
-                                        aria-label="Iniciar el proceso de pago para este pedido"
-                                    >
-                                        Pagar
                                     </button>
                                 </div>
                                 </>

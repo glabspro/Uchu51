@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Pedido, TipoPedido } from '../types';
-import { CheckCircleIcon, HomeIcon, TruckIcon, ShoppingBagIcon } from './icons';
+import { CheckCircleIcon, HomeIcon, TruckIcon, ShoppingBagIcon, CashIcon } from './icons';
 
 interface CajaViewProps {
     orders: Pedido[];
@@ -9,25 +9,28 @@ interface CajaViewProps {
     onGeneratePreBill: (order: Pedido) => void;
 }
 
+type CajaTab = 'porCobrar' | 'local' | 'delivery' | 'retiro';
+
 const TabButton: React.FC<{
     isActive: boolean;
     onClick: () => void;
     icon: React.ReactNode;
     label: string;
     count: number;
-}> = ({ isActive, onClick, icon, label, count }) => (
+    isPrimary?: boolean;
+}> = ({ isActive, onClick, icon, label, count, isPrimary = false }) => (
     <button
         onClick={onClick}
         className={`flex-1 flex items-center justify-center space-x-2 py-3 px-2 font-semibold transition-colors border-b-4 ${
             isActive
-                ? 'border-primary text-primary'
+                ? (isPrimary ? 'border-success text-success' : 'border-primary text-primary')
                 : 'border-transparent text-text-secondary dark:text-slate-400 hover:text-primary dark:hover:text-orange-400 hover:bg-background dark:hover:bg-slate-700/50'
         }`}
     >
         {icon}
         <span>{label}</span>
         <span className={`text-xs font-bold rounded-full px-2 py-0.5 transition-colors ${
-            isActive ? 'bg-primary text-white' : 'bg-text-primary/10 dark:bg-slate-700 text-text-primary dark:text-slate-200'
+            isActive ? (isPrimary ? 'bg-success text-white' : 'bg-primary text-white') : 'bg-text-primary/10 dark:bg-slate-700 text-text-primary dark:text-slate-200'
         }`}>{count}</span>
     </button>
 );
@@ -35,20 +38,22 @@ const TabButton: React.FC<{
 
 const CajaView: React.FC<CajaViewProps> = ({ orders, onInitiatePayment, onGeneratePreBill }) => {
     const [selectedOrder, setSelectedOrder] = useState<Pedido | null>(null);
-    const [activeTab, setActiveTab] = useState<TipoPedido | 'local'>('local');
+    const [activeTab, setActiveTab] = useState<CajaTab>('porCobrar');
 
-    const salonOrders = useMemo(() => orders.filter(o => o.tipo === 'local'), [orders]);
-    const deliveryOrders = useMemo(() => orders.filter(o => o.tipo === 'delivery'), [orders]);
-    const retiroOrders = useMemo(() => orders.filter(o => o.tipo === 'retiro'), [orders]);
+    const cuentasPorCobrar = useMemo(() => orders.filter(o => o.estado === 'cuenta solicitada'), [orders]);
+    const salonOrders = useMemo(() => orders.filter(o => o.tipo === 'local' && o.estado !== 'cuenta solicitada'), [orders]);
+    const deliveryOrders = useMemo(() => orders.filter(o => o.tipo === 'delivery' && o.estado !== 'cuenta solicitada'), [orders]);
+    const retiroOrders = useMemo(() => orders.filter(o => o.tipo === 'retiro' && o.estado !== 'cuenta solicitada'), [orders]);
 
     const filteredOrders = useMemo(() => {
         switch (activeTab) {
+            case 'porCobrar': return cuentasPorCobrar;
             case 'local': return salonOrders;
             case 'delivery': return deliveryOrders;
             case 'retiro': return retiroOrders;
             default: return [];
         }
-    }, [activeTab, salonOrders, deliveryOrders, retiroOrders]);
+    }, [activeTab, cuentasPorCobrar, salonOrders, deliveryOrders, retiroOrders]);
     
     useEffect(() => {
         setSelectedOrder(filteredOrders[0] || null);
@@ -60,6 +65,14 @@ const CajaView: React.FC<CajaViewProps> = ({ orders, onInitiatePayment, onGenera
             <div className="w-full lg:w-1/3 bg-surface dark:bg-slate-800 rounded-2xl shadow-lg p-0 flex flex-col border border-text-primary/5 dark:border-slate-700">
                  <div className="flex-shrink-0 border-b border-text-primary/5 dark:border-slate-700">
                     <div className="flex">
+                        <TabButton
+                            isActive={activeTab === 'porCobrar'}
+                            onClick={() => setActiveTab('porCobrar')}
+                            icon={<CashIcon className="h-5 w-5" />}
+                            label="Por Cobrar"
+                            count={cuentasPorCobrar.length}
+                            isPrimary
+                        />
                         <TabButton
                             isActive={activeTab === 'local'}
                             onClick={() => setActiveTab('local')}
@@ -103,7 +116,9 @@ const CajaView: React.FC<CajaViewProps> = ({ orders, onInitiatePayment, onGenera
                             </div>
                         </button>
                     )) : (
-                        <p className="text-center text-text-secondary dark:text-slate-500 mt-8">No hay cuentas abiertas en esta sección.</p>
+                        <p className="text-center text-text-secondary dark:text-slate-500 mt-8">
+                            {activeTab === 'porCobrar' ? 'No hay cuentas pendientes de cobro.' : 'No hay cuentas abiertas en esta sección.'}
+                        </p>
                     )}
                 </div>
             </div>

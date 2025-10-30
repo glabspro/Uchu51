@@ -114,6 +114,7 @@ const App: React.FC = () => {
             'en camino': `Notificación enviada a ${cliente.nombre}: "¡Tu pedido ${id} va en camino!"`,
             'entregado': `Notificación enviada a ${cliente.nombre}: "¡Tu pedido ${id} ha sido entregado! ¡Buen provecho!"`,
             'recogido': `Notificación enviada a ${cliente.nombre}: "¡Tu pedido ${id} ha sido recogido! Gracias."`,
+            'cuenta solicitada': tipo === 'local' ? `La Mesa ${cliente.mesa} solicita la cuenta. Pedido ${id} listo para cobro en Caja.` : `Pedido ${id} listo para cobro.`,
             'pagado': tipo === 'local' ? `Mesa ${cliente.mesa} pagada y liberada.` : `Pedido ${id} pagado.`,
         };
         
@@ -212,7 +213,10 @@ const App: React.FC = () => {
     };
 
     // --- Payment Flow Handlers ---
-    const handleGeneratePreBill = (order: Pedido) => setOrderForPreBill(order);
+    const handleGeneratePreBill = (order: Pedido) => {
+        updateOrderStatus(order.id, 'cuenta solicitada', 'admin');
+        setOrderForPreBill(order);
+    };
     const handleInitiatePayment = (order: Pedido) => setOrderToPay(order);
 
     const handleConfirmPayment = (orderId: string, details: { metodo: MetodoPago; montoPagado?: number }) => {
@@ -303,7 +307,6 @@ const App: React.FC = () => {
             order={activeOrder}
             products={initialProducts}
             onSaveOrder={handleSavePOSOrder}
-            onInitiatePayment={handleInitiatePayment}
             onGeneratePreBill={handleGeneratePreBill}
          />;
     }
