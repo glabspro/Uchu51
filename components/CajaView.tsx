@@ -160,14 +160,14 @@ const CajaView: React.FC<CajaViewProps> = ({ orders, onInitiatePayment, onGenera
                             <div className="grid grid-cols-2 gap-4">
                                 <button
                                     onClick={() => onGeneratePreBill(selectedOrder)}
-                                    className="w-full bg-text-primary dark:bg-slate-600 text-white font-bold py-4 rounded-xl text-lg hover:bg-text-primary/90 dark:hover:bg-slate-500 transition-all duration-300 shadow-lg hover:shadow-text-primary/20 hover:-translate-y-0.5"
+                                    className="w-full bg-text-primary dark:bg-slate-600 text-white font-bold py-4 rounded-xl text-lg hover:bg-text-primary/90 dark:hover:bg-slate-500 transition-all duration-300 shadow-lg hover:shadow-text-primary/20 hover:-translate-y-0.5 active:scale-95"
                                     aria-label={`Generar pre-cuenta para el pedido ${selectedOrder.id}`}
                                 >
                                     Generar Cuenta
                                 </button>
                                 <button
                                     onClick={() => onInitiatePayment(selectedOrder)}
-                                    className="w-full bg-primary text-white font-bold py-4 rounded-xl text-lg transition-all duration-300 shadow-lg shadow-primary/30 hover:shadow-primary/40 hover:-translate-y-0.5"
+                                    className="w-full bg-primary text-white font-bold py-4 rounded-xl text-lg transition-all duration-300 shadow-lg shadow-primary/30 hover:shadow-primary/40 hover:-translate-y-0.5 active:scale-95"
                                     aria-label={`Registrar pago para el pedido ${selectedOrder.id}`}
                                 >
                                     Registrar Pago

@@ -17,7 +17,7 @@ const LocalBoard: React.FC<LocalBoardProps> = ({ mesas, onSelectMesa }) => {
                         key={mesa.numero} 
                         onClick={() => onSelectMesa(mesa)}
                         style={{ '--delay': `${i * 30}ms` } as React.CSSProperties}
-                        className={`group animate-fade-in-up bg-surface dark:bg-slate-800 rounded-2xl shadow-lg flex flex-col items-center justify-center p-6 text-center transition-all duration-300 hover:shadow-xl hover:-translate-y-1.5 border-2 ${
+                        className={`group animate-fade-in-up bg-surface dark:bg-slate-800 rounded-2xl shadow-lg flex flex-col items-center justify-center p-6 text-center transition-all duration-300 hover:shadow-xl hover:-translate-y-1.5 hover:scale-102 active:scale-95 border-2 ${
                             mesa.ocupada ? 'border-primary/50 dark:border-primary/70' : 'border-transparent dark:border-slate-700'
                         }`}
                     >

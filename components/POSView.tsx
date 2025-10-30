@@ -191,11 +191,11 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
                                         <p className="font-bold text-text-primary dark:text-slate-100 text-lg">S/.{((item.precio + (item.salsas || []).reduce((sum,s) => sum + s.precio, 0)) * item.cantidad).toFixed(2)}</p>
                                     </div>
                                     <div className="absolute right-3 bottom-3 flex items-center gap-2 mt-1">
-                                        <button onClick={(e) => { e.stopPropagation(); handleQuantityChange(item, -1); }} className="bg-text-primary/10 dark:bg-slate-700 rounded-full h-8 w-8 flex items-center justify-center font-bold text-text-primary dark:text-slate-200 hover:bg-text-primary/20 dark:hover:bg-slate-600">
+                                        <button onClick={(e) => { e.stopPropagation(); handleQuantityChange(item, -1); }} className="bg-text-primary/10 dark:bg-slate-700 rounded-full h-8 w-8 flex items-center justify-center font-bold text-text-primary dark:text-slate-200 hover:bg-text-primary/20 dark:hover:bg-slate-600 transition-transform active:scale-90">
                                             {item.cantidad > 1 ? <MinusIcon className="h-5 w-5"/> : <TrashIcon className="h-4 w-4 text-danger" />}
                                         </button>
                                         <span className="font-bold w-6 text-center text-lg dark:text-slate-200">{item.cantidad}</span>
-                                        <button onClick={(e) => { e.stopPropagation(); handleQuantityChange(item, 1); }} className="bg-text-primary/10 dark:bg-slate-700 rounded-full h-8 w-8 flex items-center justify-center font-bold text-text-primary dark:text-slate-200 hover:bg-text-primary/20 dark:hover:bg-slate-600"><PlusIcon className="h-5 w-5" /></button>
+                                        <button onClick={(e) => { e.stopPropagation(); handleQuantityChange(item, 1); }} className="bg-text-primary/10 dark:bg-slate-700 rounded-full h-8 w-8 flex items-center justify-center font-bold text-text-primary dark:text-slate-200 hover:bg-text-primary/20 dark:hover:bg-slate-600 transition-transform active:scale-90"><PlusIcon className="h-5 w-5" /></button>
                                     </div>
                                 </div>
                             ))
@@ -215,14 +215,14 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
                                 <div className="grid grid-cols-2 gap-3">
                                     <button
                                         onClick={() => onGeneratePreBill(currentOrder!)}
-                                        className="w-full bg-text-primary/80 dark:bg-slate-600 text-white font-bold py-3 rounded-xl text-base hover:bg-text-primary/90 dark:hover:bg-slate-500 transition-all duration-300 shadow-lg hover:shadow-text-primary/20 hover:-translate-y-0.5"
+                                        className="w-full bg-text-primary/80 dark:bg-slate-600 text-white font-bold py-3 rounded-xl text-base hover:bg-text-primary/90 dark:hover:bg-slate-500 transition-all duration-300 shadow-lg hover:shadow-text-primary/20 hover:-translate-y-0.5 active:scale-95"
                                         aria-label="Ver o imprimir la pre-cuenta del pedido"
                                     >
                                         Ver Cuenta
                                     </button>
                                     <button
                                         onClick={handleSendToKitchen}
-                                        className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl text-base transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:-translate-y-0.5 disabled:bg-gray-400 dark:disabled:bg-slate-700 disabled:shadow-none disabled:translate-y-0 disabled:cursor-not-allowed"
+                                        className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl text-base transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:scale-95 disabled:bg-gray-400 dark:disabled:bg-slate-700 disabled:shadow-none disabled:translate-y-0 disabled:cursor-not-allowed"
                                         disabled={!currentOrder || currentOrder.productos.every(p => p.sentToKitchen)}
                                     >
                                         Adicionar y Enviar
@@ -231,7 +231,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
                              ) : (
                                 <button
                                     onClick={handleSendToKitchen}
-                                    className="w-full bg-[#44281D] text-white font-bold py-4 rounded-xl text-xl transition-all duration-300 shadow-lg hover:shadow-text-primary/30 hover:-translate-y-0.5 disabled:bg-gray-400 dark:disabled:bg-slate-700 disabled:shadow-none disabled:translate-y-0 disabled:cursor-not-allowed border-2 border-blue-500"
+                                    className="w-full bg-[#44281D] text-white font-bold py-4 rounded-xl text-xl transition-all duration-300 shadow-lg hover:shadow-text-primary/30 hover:-translate-y-0.5 active:scale-95 disabled:bg-gray-400 dark:disabled:bg-slate-700 disabled:shadow-none disabled:translate-y-0 disabled:cursor-not-allowed border-2 border-blue-500"
                                     disabled={!currentOrder || currentOrder.productos.length === 0}
                                 >
                                     Enviar a Cocina

@@ -326,7 +326,9 @@ const App: React.FC = () => {
                 onToggleTheme={toggleTheme}
             />
             <main className="flex-grow p-4 md:p-6 lg:p-8">
-                {renderView()}
+                <div key={view} className="animate-fade-in-scale">
+                    {renderView()}
+                </div>
             </main>
              <div className="fixed top-20 right-4 z-[100] space-y-2 w-full max-w-sm">
                 {toasts.map(toast => (

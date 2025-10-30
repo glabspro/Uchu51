@@ -155,8 +155,8 @@ const KitchenBoard: React.FC<KitchenBoardProps> = ({ orders, updateOrderStatus, 
             </div>
             <div className="flex flex-col md:flex-row gap-6 pt-4 flex-grow bg-background dark:bg-slate-900 p-4 rounded-b-lg">
                 <KitchenColumn title="En Preparación" count={preparingOrders.length} onDrop={handleDrop('en preparación')} onDragOver={handleDragOver}>
-                    {preparingOrders.map(order => (
-                        <div key={order.id} draggable onDragStart={(e) => handleDragStart(e, order.id)}>
+                    {preparingOrders.map((order, i) => (
+                        <div key={order.id} draggable onDragStart={(e) => handleDragStart(e, order.id)} className="animate-fade-in-up" style={{ '--delay': `${i * 50}ms` } as React.CSSProperties}>
                             <OrderCard order={order}>
                                 <div className="flex items-center space-x-2 relative">
                                     <UserIcon className="h-5 w-5 text-text-primary/40 dark:text-slate-500 absolute left-3"/>
@@ -174,8 +174,8 @@ const KitchenBoard: React.FC<KitchenBoardProps> = ({ orders, updateOrderStatus, 
                     ))}
                 </KitchenColumn>
                 <KitchenColumn title="En Armado" count={assemblingOrders.length} onDrop={handleDrop('en armado')} onDragOver={handleDragOver}>
-                    {assemblingOrders.map(order => (
-                        <div key={order.id} draggable onDragStart={(e) => handleDragStart(e, order.id)}>
+                    {assemblingOrders.map((order, i) => (
+                        <div key={order.id} draggable onDragStart={(e) => handleDragStart(e, order.id)} className="animate-fade-in-up" style={{ '--delay': `${i * 50}ms` } as React.CSSProperties}>
                             <OrderCard order={order}>
                                 <div className="text-center font-semibold text-text-secondary dark:text-slate-400">
                                     {order.cocineroAsignado ? `Asignado a: ${order.cocineroAsignado}` : 'Sin cocinero asignado'}

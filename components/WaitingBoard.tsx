@@ -33,7 +33,7 @@ const WaitingBoard: React.FC<WaitingBoardProps> = ({ orders, updateOrderStatus }
                     <OrderCard key={order.id} order={order} style={{ '--delay': `${i * 50}ms` } as React.CSSProperties}>
                         <button 
                             onClick={() => updateOrderStatus(order.id, 'nuevo', 'recepcionista')}
-                            className="w-full bg-text-primary dark:bg-slate-700 hover:bg-text-primary/90 dark:hover:bg-slate-600 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-text-primary/20 hover:-translate-y-0.5"
+                            className="w-full bg-text-primary dark:bg-slate-700 hover:bg-text-primary/90 dark:hover:bg-slate-600 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-text-primary/20 hover:-translate-y-0.5 active:scale-95"
                         >
                             <CheckCircleIcon className="h-5 w-5 mr-2" /> Validar Pedido
                         </button>
@@ -45,7 +45,7 @@ const WaitingBoard: React.FC<WaitingBoardProps> = ({ orders, updateOrderStatus }
                     <OrderCard key={order.id} order={order} style={{ '--delay': `${i * 50}ms` } as React.CSSProperties}>
                         <button 
                             onClick={() => updateOrderStatus(order.id, 'confirmado', 'recepcionista')}
-                            className="w-full bg-text-primary dark:bg-slate-700 hover:bg-text-primary/90 dark:hover:bg-slate-600 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-text-primary/20 hover:-translate-y-0.5"
+                            className="w-full bg-text-primary dark:bg-slate-700 hover:bg-text-primary/90 dark:hover:bg-slate-600 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-text-primary/20 hover:-translate-y-0.5 active:scale-95"
                         >
                             <CheckCircleIcon className="h-5 w-5 mr-2" /> Confirmar
                         </button>
@@ -57,7 +57,7 @@ const WaitingBoard: React.FC<WaitingBoardProps> = ({ orders, updateOrderStatus }
                     <OrderCard key={order.id} order={order} style={{ '--delay': `${i * 50}ms` } as React.CSSProperties}>
                        <button
                          onClick={() => updateOrderStatus(order.id, 'en preparación', 'recepcionista')}
-                         className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5"
+                         className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5 active:scale-95"
                        >
                          Enviar a Cocina
                        </button>

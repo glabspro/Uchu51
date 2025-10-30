@@ -73,7 +73,7 @@ const DeliveryBoard: React.FC<DeliveryBoardProps> = ({ orders, updateOrderStatus
                         <button
                             onClick={() => updateOrderStatus(order.id, 'en camino', 'repartidor')}
                             disabled={!order.repartidorAsignado}
-                            className="w-full mt-2 bg-primary hover:bg-primary-dark text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center transition-all duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5"
+                            className="w-full mt-2 bg-primary hover:bg-primary-dark text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center transition-all duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5 active:scale-95"
                         >
                             <TruckIcon className="h-5 w-5 mr-2" /> Enviar
                         </button>
@@ -88,7 +88,7 @@ const DeliveryBoard: React.FC<DeliveryBoardProps> = ({ orders, updateOrderStatus
                         </div>
                         <button
                             onClick={() => updateOrderStatus(order.id, 'entregado', 'repartidor')}
-                            className="w-full bg-success hover:brightness-105 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-success/30 hover:-translate-y-0.5"
+                            className="w-full bg-success hover:brightness-105 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-success/30 hover:-translate-y-0.5 active:scale-95"
                         >
                             <CheckCircleIcon className="h-5 w-5 mr-2" /> Marcar como Entregado
                         </button>

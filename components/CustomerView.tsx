@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import type { Pedido, Producto, ProductoPedido, Cliente, Salsa, TipoPedido, MetodoPago, Theme } from '../types';
 import { ShoppingBagIcon, TrashIcon, CheckCircleIcon, TruckIcon, UserIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon, MapPinIcon, SearchIcon, AdjustmentsHorizontalIcon, MinusIcon, PlusIcon, StarIcon, SunIcon, MoonIcon, ChevronLeftIcon } from './icons';
@@ -258,14 +259,14 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
                 <h1 className="font-heading text-4xl font-extrabold text-text-primary dark:text-white mb-3">El sabor que te mueve</h1>
                 <p className="text-base text-text-secondary dark:text-slate-400 mb-8 max-w-sm">Pide tu comida favorita, preparada al momento con los mejores ingredientes. Rápido, fresco y delicioso.</p>
                 <div className="space-y-4 w-full">
-                    <button onClick={() => handleSelectOrderType('retiro')} className="group bg-surface dark:bg-slate-800 p-6 rounded-xl border border-text-primary/10 dark:border-slate-700 hover:shadow-xl hover:border-primary/50 dark:hover:border-primary hover:-translate-y-1 transition-all duration-300 w-full text-left flex items-center space-x-4">
+                    <button onClick={() => handleSelectOrderType('retiro')} className="group bg-surface dark:bg-slate-800 p-6 rounded-xl border border-text-primary/10 dark:border-slate-700 hover:shadow-xl hover:border-primary/50 dark:hover:border-primary hover:-translate-y-1 transition-all duration-300 w-full text-left flex items-center space-x-4 active:scale-95">
                         <div className="bg-primary/10 p-3 rounded-lg"><ShoppingBagIcon className="h-8 w-8 text-primary"/></div>
                         <div>
                             <h3 className="text-lg font-heading font-bold text-text-primary dark:text-white">Para Llevar</h3>
                             <p className="text-sm text-text-secondary dark:text-slate-400">Pide y recoge en tienda sin esperas.</p>
                         </div>
                     </button>
-                    <button onClick={() => handleSelectOrderType('delivery')} className="group bg-surface dark:bg-slate-800 p-6 rounded-xl border border-text-primary/10 dark:border-slate-700 hover:shadow-xl hover:border-primary/50 dark:hover:border-primary hover:-translate-y-1 transition-all duration-300 w-full text-left flex items-center space-x-4">
+                    <button onClick={() => handleSelectOrderType('delivery')} className="group bg-surface dark:bg-slate-800 p-6 rounded-xl border border-text-primary/10 dark:border-slate-700 hover:shadow-xl hover:border-primary/50 dark:hover:border-primary hover:-translate-y-1 transition-all duration-300 w-full text-left flex items-center space-x-4 active:scale-95">
                         <div className="bg-primary/10 p-3 rounded-lg"><TruckIcon className="h-8 w-8 text-primary"/></div>
                         <div>
                             <h3 className="text-lg font-heading font-bold text-text-primary dark:text-white">Delivery</h3>
@@ -291,7 +292,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
                             else setActiveCategory('Hamburguesas');
                         }} className="w-full bg-surface dark:bg-slate-800 border border-text-primary/10 dark:border-slate-700 rounded-xl py-3 pl-12 pr-4 focus:ring-2 focus:ring-primary focus:border-primary transition dark:text-white dark:placeholder-slate-400" />
                     </div>
-                     <button className="md:flex-shrink-0 bg-surface dark:bg-slate-800 border border-text-primary/10 dark:border-slate-700 rounded-xl p-3 flex items-center justify-center">
+                     <button className="md:flex-shrink-0 bg-surface dark:bg-slate-800 border border-text-primary/10 dark:border-slate-700 rounded-xl p-3 flex items-center justify-center transition-transform active:scale-95">
                         <AdjustmentsHorizontalIcon className="h-6 w-6 text-text-primary dark:text-slate-200" />
                     </button>
                 </div>
@@ -304,7 +305,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
                                     setActiveCategory(category)
                                     setSearchTerm('');
                                 }}
-                                className={`whitespace-nowrap py-2 px-5 rounded-full font-semibold text-sm transition-colors focus:outline-none border-2 ${
+                                className={`whitespace-nowrap py-2 px-5 rounded-full font-semibold text-sm transition-all duration-200 focus:outline-none border-2 active:scale-95 ${
                                     activeCategory === category 
                                         ? 'bg-primary text-white border-primary' 
                                         : 'bg-surface dark:bg-slate-800 text-text-primary dark:text-slate-200 border-text-primary/10 dark:border-slate-700 hover:bg-background dark:hover:bg-slate-700 hover:border-text-primary/20'
@@ -330,7 +331,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
                             <p className="text-sm text-text-secondary dark:text-slate-400 mt-1 line-clamp-2 mb-2">{product.descripcion}</p>
                             <div className="flex justify-between items-center mt-2">
                                 <p className="text-xl font-heading font-extrabold text-text-primary dark:text-white">S/.{product.precio.toFixed(2)}</p>
-                                <button onClick={() => handleProductClick(product)} className="w-9 h-9 flex items-center justify-center bg-primary rounded-full text-white hover:bg-primary-dark transition-all duration-300 shadow-lg hover:shadow-primary/30 transform hover:scale-110">
+                                <button onClick={() => handleProductClick(product)} className="w-9 h-9 flex items-center justify-center bg-primary rounded-full text-white hover:bg-primary-dark transition-all duration-300 shadow-lg hover:shadow-primary/30 transform hover:scale-110 active:scale-95">
                                     <PlusIcon className="h-5 w-5" />
                                 </button>
                             </div>
@@ -358,7 +359,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
     }> = ({ method, label, icon, currentMethod, setMethod }) => (
         <button
             onClick={() => setMethod(method)}
-            className={`flex items-center justify-center space-x-2 w-full p-3 rounded-xl border-2 transition-all duration-200 ${
+            className={`flex items-center justify-center space-x-2 w-full p-3 rounded-xl border-2 transition-all duration-200 active:scale-95 ${
                 currentMethod === method
                     ? 'bg-primary/10 border-primary text-primary font-bold shadow-inner'
                     : 'bg-surface dark:bg-slate-700 border-text-primary/10 dark:border-slate-600 text-text-primary dark:text-slate-200 hover:border-primary/50 dark:hover:border-primary/80'
@@ -392,11 +393,11 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
                                         )}
                                         <p className="text-sm text-text-secondary dark:text-slate-400">S/.{unitPriceWithSauces.toFixed(2)} c/u</p>
                                         <div className="flex items-center gap-2 mt-1">
-                                            <button onClick={() => updateQuantity(item.cartItemId, item.cantidad - 1)} className="bg-text-primary/10 dark:bg-slate-700 rounded-full h-7 w-7 flex items-center justify-center font-bold text-text-primary dark:text-slate-200 hover:bg-text-primary/20 dark:hover:bg-slate-600">
+                                            <button onClick={() => updateQuantity(item.cartItemId, item.cantidad - 1)} className="bg-text-primary/10 dark:bg-slate-700 rounded-full h-7 w-7 flex items-center justify-center font-bold text-text-primary dark:text-slate-200 hover:bg-text-primary/20 dark:hover:bg-slate-600 transition-transform active:scale-90">
                                                 {item.cantidad > 1 ? <MinusIcon className="h-4 w-4"/> : <TrashIcon className="h-4 w-4 text-danger" />}
                                             </button>
                                             <span className="font-bold w-6 text-center dark:text-slate-200">{item.cantidad}</span>
-                                            <button onClick={() => updateQuantity(item.cartItemId, item.cantidad + 1)} className="bg-text-primary/10 dark:bg-slate-700 rounded-full h-7 w-7 flex items-center justify-center font-bold text-text-primary dark:text-slate-200 hover:bg-text-primary/20 dark:hover:bg-slate-600"><PlusIcon className="h-4 w-4"/></button>
+                                            <button onClick={() => updateQuantity(item.cartItemId, item.cantidad + 1)} className="bg-text-primary/10 dark:bg-slate-700 rounded-full h-7 w-7 flex items-center justify-center font-bold text-text-primary dark:text-slate-200 hover:bg-text-primary/20 dark:hover:bg-slate-600 transition-transform active:scale-90"><PlusIcon className="h-4 w-4"/></button>
                                         </div>
                                     </div>
                                     <p className="font-bold w-24 text-right text-text-primary dark:text-slate-100 text-lg">S/.{itemTotal.toFixed(2)}</p>
@@ -442,7 +443,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
                                         aria-label="Usar ubicación actual"
                                     >
                                         {isLocating ? (
-                                            <svg className="animate-spin h-5 w-5 text-primary" xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <svg className="animate-spin h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                             </svg>
@@ -508,8 +509,8 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
                         </div>
                     </div>
                     <div className="mt-auto pt-6 grid grid-cols-2 gap-4">
-                        <button onClick={() => setStage('catalog')} className="w-full bg-text-primary/10 dark:bg-slate-700 hover:bg-text-primary/20 dark:hover:bg-slate-600 text-text-primary dark:text-slate-200 font-bold py-3 px-6 rounded-xl transition-colors">Volver</button>
-                        <button onClick={handlePlaceOrder} disabled={cart.length === 0} className="w-full bg-primary text-white font-bold py-3 px-6 rounded-xl disabled:bg-gray-400 dark:disabled:bg-slate-600 disabled:cursor-not-allowed transition-all duration-300 shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-0.5">Confirmar Pedido</button>
+                        <button onClick={() => setStage('catalog')} className="w-full bg-text-primary/10 dark:bg-slate-700 hover:bg-text-primary/20 dark:hover:bg-slate-600 text-text-primary dark:text-slate-200 font-bold py-3 px-6 rounded-xl transition-all active:scale-95">Volver</button>
+                        <button onClick={handlePlaceOrder} disabled={cart.length === 0} className="w-full bg-primary text-white font-bold py-3 px-6 rounded-xl disabled:bg-gray-400 dark:disabled:bg-slate-600 disabled:cursor-not-allowed transition-all duration-300 shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-0.5 active:scale-95">Confirmar Pedido</button>
                     </div>
                 </div>
              </div>
@@ -542,7 +543,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
                 <h2 className="text-4xl font-heading font-bold text-text-primary dark:text-white mb-3">{titleMessage}</h2>
                 <p className="text-text-secondary dark:text-slate-300 text-lg mb-6">Gracias por tu compra. Tu número de referencia es <span className="font-bold text-primary">{newOrderId}</span>.</p>
                 <p className="text-text-secondary dark:text-slate-400">{confirmationMessage}</p>
-                <button onClick={() => setStage('selection')} className="mt-8 bg-primary hover:bg-primary-dark text-white font-bold py-3 px-8 rounded-xl transition-colors shadow-lg shadow-primary/20 hover:shadow-primary/40">Hacer otro Pedido</button>
+                <button onClick={() => setStage('selection')} className="mt-8 bg-primary hover:bg-primary-dark text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg shadow-primary/20 hover:shadow-primary/40 active:scale-95">Hacer otro Pedido</button>
             </div>
         );
     };
@@ -558,8 +559,8 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
                         <h3 className="text-xl font-heading font-bold text-text-primary dark:text-white">¿Volver al inicio?</h3>
                         <p className="text-text-secondary dark:text-slate-400 my-3">Tu pedido actual se perderá. ¿Estás seguro que quieres continuar?</p>
                         <div className="grid grid-cols-2 gap-3 mt-6">
-                            <button onClick={() => setShowGoBackConfirm(false)} className="bg-text-primary/10 dark:bg-slate-700 hover:bg-text-primary/20 dark:hover:bg-slate-600 text-text-primary dark:text-slate-200 font-bold py-2 px-4 rounded-lg transition-colors">Cancelar</button>
-                            <button onClick={confirmGoBack} className="bg-danger hover:brightness-110 text-white font-bold py-2 px-4 rounded-lg transition-all">Sí, volver</button>
+                            <button onClick={() => setShowGoBackConfirm(false)} className="bg-text-primary/10 dark:bg-slate-700 hover:bg-text-primary/20 dark:hover:bg-slate-600 text-text-primary dark:text-slate-200 font-bold py-2 px-4 rounded-lg transition-colors active:scale-95">Cancelar</button>
+                            <button onClick={confirmGoBack} className="bg-danger hover:brightness-110 text-white font-bold py-2 px-4 rounded-lg transition-all active:scale-95">Sí, volver</button>
                         </div>
                     </div>
                 </div>
@@ -597,7 +598,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
 
             {isCatalogStage && (
                  <div className={`fixed bottom-0 left-0 right-0 z-50 p-4 bg-transparent transition-transform ${cart.length === 0 && 'translate-y-full'}`}>
-                    <button onClick={() => cart.length > 0 ? setStage('checkout') : null} className="w-full max-w-md mx-auto bg-text-primary dark:bg-slate-700 text-white rounded-xl px-6 py-4 shadow-2xl transition-transform transform md:hover:scale-105 flex items-center justify-between animate-fade-in-up">
+                    <button onClick={() => cart.length > 0 ? setStage('checkout') : null} className="w-full max-w-md mx-auto bg-text-primary dark:bg-slate-700 text-white rounded-xl px-6 py-4 shadow-2xl transition-transform transform md:hover:scale-105 active:scale-95 flex items-center justify-between animate-fade-in-up">
                         <div className="flex items-center space-x-3">
                             <div className="relative">
                                 <ShoppingBagIcon className="h-6 w-6" />

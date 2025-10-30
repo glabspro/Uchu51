@@ -32,7 +32,7 @@ const RetiroBoard: React.FC<RetiroBoardProps> = ({ orders, updateOrderStatus }) 
                     <OrderCard key={order.id} order={order} style={{ '--delay': `${i * 50}ms` } as React.CSSProperties}>
                         <button
                             onClick={() => updateOrderStatus(order.id, 'recogido', 'recepcionista')}
-                            className="w-full mt-2 bg-success hover:brightness-105 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-success/30 hover:-translate-y-0.5"
+                            className="w-full mt-2 bg-success hover:brightness-105 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-success/30 hover:-translate-y-0.5 active:scale-95"
                         >
                             <CheckCircleIcon className="h-5 w-5 mr-2" /> Marcar como Recogido
                         </button>
