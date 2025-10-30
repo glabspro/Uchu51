@@ -54,7 +54,7 @@ const App: React.FC = () => {
     }, [orders]);
     
     useEffect(() => {
-        document.body.className = appView === 'admin' ? 'bg-stone-100 text-stone-600 antialiased' : 'bg-stone-50 text-stone-600 antialiased';
+        document.body.className = appView === 'admin' ? 'bg-background text-text-primary antialiased' : 'bg-surface text-text-primary antialiased';
     }, [appView]);
 
     useEffect(() => {

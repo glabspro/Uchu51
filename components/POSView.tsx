@@ -123,22 +123,22 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
     const isSentToKitchen = currentOrder?.estado && !['nuevo', 'confirmado'].includes(currentOrder.estado);
 
     return (
-        <div className="fixed inset-0 bg-stone-100 flex flex-col font-sans">
+        <div className="fixed inset-0 bg-background flex flex-col font-sans">
             {isSauceModalOpen && (
                 <SauceModal product={productForSauces} onClose={() => setIsSauceModalOpen(false)} onConfirm={handleAddToCartWithSauces} />
             )}
-            <header className="flex-shrink-0 bg-white shadow-md z-10">
-                <div className="flex items-center justify-between p-3 border-b border-stone-200">
-                    <button onClick={onExit} className="flex items-center font-semibold text-stone-600 hover:text-primary transition-colors">
+            <header className="flex-shrink-0 bg-surface shadow-md z-10">
+                <div className="flex items-center justify-between p-3 border-b border-text-primary/5">
+                    <button onClick={onExit} className="flex items-center font-semibold text-text-secondary hover:text-primary transition-colors">
                         <ChevronLeftIcon className="h-6 w-6 mr-1" />
                         VOLVER AL SALÓN
                     </button>
                     <div className="text-center">
-                        <h1 className="text-xl font-bold text-stone-800">Mesa {mesa.numero}</h1>
-                        {currentOrder?.id && <p className="text-sm font-mono text-stone-500">{currentOrder.id}</p>}
+                        <h1 className="text-2xl font-heading font-bold text-text-primary">Mesa {mesa.numero}</h1>
+                        {currentOrder?.id && <p className="text-sm font-mono text-text-secondary">{currentOrder.id}</p>}
                     </div>
                     <div className="w-48 text-right">
-                        {currentOrder && <span className={`text-sm font-bold uppercase px-3 py-1 rounded-full ${isSentToKitchen ? 'bg-success/20 text-success' : 'bg-warning/20 text-warning'}`}>
+                        {currentOrder && <span className={`text-sm font-bold uppercase tracking-wider px-3 py-1.5 rounded-full ${isSentToKitchen ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
                            {isSentToKitchen ? `Enviado (${currentOrder.estado})` : 'Tomando Pedido'}
                         </span>}
                     </div>
@@ -147,56 +147,56 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
 
             <main className="flex-grow flex overflow-hidden">
                 {/* Left Panel - Order */}
-                <div className="w-5/12 bg-white flex flex-col p-4 border-r border-stone-200">
+                <div className="w-5/12 bg-surface flex flex-col p-4 border-r border-text-primary/5">
                     <div className="flex-grow overflow-y-auto pr-2">
                         {currentOrder && currentOrder.productos.length > 0 ? (
                             currentOrder.productos.map((item, index) => (
-                                <div key={index} onClick={() => setSelectedItem(item)} className={`p-3 rounded-lg cursor-pointer mb-2 relative ${selectedItem === item ? 'bg-primary/20' : 'hover:bg-stone-100'}`}>
+                                <div key={index} onClick={() => setSelectedItem(item)} className={`p-3 rounded-lg cursor-pointer mb-2 relative ${selectedItem === item ? 'bg-primary/10' : 'hover:bg-background'}`}>
                                     <div className="flex justify-between items-start">
                                         <div className="flex-grow">
-                                            <p className="font-semibold text-stone-800 pr-20">{item.nombre}</p>
+                                            <p className="font-semibold text-text-primary pr-20">{item.nombre}</p>
                                              {item.salsas && item.salsas.length > 0 && (
                                                 <p className="text-xs text-sky-600 italic mt-1">
                                                     + {item.salsas.map(s => s.nombre).join(', ')}
                                                 </p>
                                             )}
-                                            <p className="text-sm text-stone-500">{item.cantidad} x S/.{(item.precio + (item.salsas || []).reduce((sum,s) => sum + s.precio, 0)).toFixed(2)}</p>
+                                            <p className="text-sm text-text-secondary">{item.cantidad} x S/.{(item.precio + (item.salsas || []).reduce((sum,s) => sum + s.precio, 0)).toFixed(2)}</p>
                                         </div>
-                                        <p className="font-bold text-stone-700 text-lg">S/.{((item.precio + (item.salsas || []).reduce((sum,s) => sum + s.precio, 0)) * item.cantidad).toFixed(2)}</p>
+                                        <p className="font-bold text-text-primary text-lg">S/.{((item.precio + (item.salsas || []).reduce((sum,s) => sum + s.precio, 0)) * item.cantidad).toFixed(2)}</p>
                                     </div>
                                     <div className="absolute right-3 bottom-3 flex items-center gap-2 mt-1">
-                                        <button onClick={(e) => { e.stopPropagation(); handleQuantityChange(item, -1); }} className="bg-stone-200 rounded-full h-7 w-7 flex items-center justify-center font-bold text-stone-600 hover:bg-stone-300">
+                                        <button onClick={(e) => { e.stopPropagation(); handleQuantityChange(item, -1); }} className="bg-text-primary/10 rounded-full h-8 w-8 flex items-center justify-center font-bold text-text-primary hover:bg-text-primary/20">
                                             {item.cantidad > 1 ? '−' : <TrashIcon className="h-4 w-4 text-danger" />}
                                         </button>
-                                        <span className="font-bold w-6 text-center">{item.cantidad}</span>
-                                        <button onClick={(e) => { e.stopPropagation(); handleQuantityChange(item, 1); }} className="bg-stone-200 rounded-full h-7 w-7 flex items-center justify-center font-bold text-stone-600 hover:bg-stone-300">+</button>
+                                        <span className="font-bold w-6 text-center text-lg">{item.cantidad}</span>
+                                        <button onClick={(e) => { e.stopPropagation(); handleQuantityChange(item, 1); }} className="bg-text-primary/10 rounded-full h-8 w-8 flex items-center justify-center font-bold text-text-primary hover:bg-text-primary/20">+</button>
                                     </div>
                                 </div>
                             ))
                         ) : (
-                            <div className="h-full flex items-center justify-center text-center text-stone-400">
+                            <div className="h-full flex items-center justify-center text-center text-text-secondary/60">
                                 <p>Selecciona productos del menú para comenzar.</p>
                             </div>
                         )}
                     </div>
-                    <div className="flex-shrink-0 pt-4 border-t border-stone-200">
-                        <div className="flex justify-between items-center text-2xl font-bold mb-4">
-                            <span className="text-stone-800">Total</span>
-                            <span className="text-stone-800 font-mono">S/.{currentOrder?.total.toFixed(2) || '0.00'}</span>
+                    <div className="flex-shrink-0 pt-4 border-t border-text-primary/10">
+                        <div className="flex justify-between items-center text-3xl font-heading font-extrabold mb-4">
+                            <span className="text-text-primary">Total</span>
+                            <span className="text-text-primary font-mono">S/.{currentOrder?.total.toFixed(2) || '0.00'}</span>
                         </div>
                         <div className="space-y-2">
                              {isSentToKitchen ? (
-                                <div className="grid grid-cols-2 gap-2">
+                                <div className="grid grid-cols-2 gap-3">
                                     <button
                                         onClick={() => onGeneratePreBill(currentOrder!)}
-                                        className="w-full bg-stone-800 text-white font-bold py-4 rounded-lg text-lg hover:bg-stone-700 transition-shadow shadow-lg"
+                                        className="w-full bg-text-primary text-white font-bold py-4 rounded-xl text-lg hover:bg-text-primary/90 transition-all duration-300 shadow-lg hover:shadow-text-primary/20 hover:-translate-y-0.5"
                                         aria-label="Ver o imprimir la pre-cuenta del pedido"
                                     >
                                         Ver Cuenta
                                     </button>
                                     <button
                                         onClick={() => onInitiatePayment(currentOrder!)}
-                                        className="w-full bg-gradient-to-r from-orange-400 to-primary text-white font-bold py-4 rounded-lg text-lg transition-all duration-300 shadow-lg hover:shadow-primary/40 hover:-translate-y-0.5"
+                                        className="w-full bg-primary text-white font-bold py-4 rounded-xl text-lg transition-all duration-300 shadow-lg shadow-primary/30 hover:shadow-primary/40 hover:-translate-y-0.5"
                                         aria-label="Iniciar el proceso de pago para este pedido"
                                     >
                                         Pagar
@@ -205,7 +205,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
                              ) : (
                                 <button
                                     onClick={handleSendToKitchen}
-                                    className="w-full bg-gradient-to-r from-stone-700 to-stone-800 text-white font-bold py-4 rounded-lg text-xl transition-all duration-300 shadow-lg hover:shadow-stone-800/40 hover:-translate-y-0.5 disabled:from-stone-300 disabled:to-stone-400 disabled:shadow-none disabled:translate-y-0 disabled:cursor-not-allowed"
+                                    className="w-full bg-text-primary text-white font-bold py-4 rounded-xl text-xl transition-all duration-300 shadow-lg hover:shadow-text-primary/30 hover:-translate-y-0.5 disabled:bg-gray-400 disabled:shadow-none disabled:translate-y-0 disabled:cursor-not-allowed"
                                     disabled={!currentOrder || currentOrder.productos.length === 0}
                                 >
                                     Enviar a Cocina
@@ -218,12 +218,12 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
                 {/* Right Panel - Products */}
                 <div className="w-7/12 flex flex-col p-4">
                      <div className="flex-shrink-0 mb-4">
-                        <input type="search" placeholder="Buscar producto..." className="w-full p-3 rounded-lg border border-stone-300 focus:ring-2 focus:ring-primary focus:border-primary" />
+                        <input type="search" placeholder="Buscar producto..." className="w-full p-3 rounded-lg border border-text-primary/10 bg-surface focus:ring-2 focus:ring-primary focus:border-primary" />
                     </div>
-                    <div className="flex-shrink-0 border-b border-stone-200">
-                         <div className="flex space-x-4 overflow-x-auto pb-2">
+                    <div className="flex-shrink-0 border-b border-text-primary/10">
+                         <div className="flex space-x-2 overflow-x-auto pb-2">
                              {categories.map(cat => (
-                                 <button key={cat} onClick={() => setActiveCategory(cat)} className={`py-2 px-4 rounded-lg font-semibold whitespace-nowrap ${activeCategory === cat ? 'bg-primary text-white shadow' : 'bg-white text-stone-600 hover:bg-stone-200'}`}>
+                                 <button key={cat} onClick={() => setActiveCategory(cat)} className={`py-2 px-4 rounded-lg font-semibold whitespace-nowrap text-sm ${activeCategory === cat ? 'bg-primary text-white shadow-sm' : 'bg-surface text-text-primary hover:bg-text-primary/5'}`}>
                                      {cat}
                                  </button>
                              ))}
@@ -232,12 +232,12 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
                     <div className="flex-grow overflow-y-auto pt-4 pr-2">
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                             {(groupedProducts[activeCategory] || []).map(product => (
-                                <button key={product.id} onClick={() => handleProductClick(product)} className="bg-white rounded-lg shadow-md p-2 text-center transition-transform hover:-translate-y-1 hover:shadow-lg flex flex-col">
-                                    <div className="h-24 w-full bg-stone-200 rounded-md overflow-hidden">
+                                <button key={product.id} onClick={() => handleProductClick(product)} className="bg-surface rounded-lg shadow-md p-2 text-center transition-transform hover:-translate-y-1 hover:shadow-lg flex flex-col border border-text-primary/5">
+                                    <div className="h-24 w-full bg-background rounded-md overflow-hidden">
                                         <img src={product.imagenUrl} alt={product.nombre} className="w-full h-full object-cover" />
                                     </div>
-                                    <p className="font-semibold text-sm mt-2 flex-grow text-stone-700 leading-tight">{product.nombre}</p>
-                                    <p className="font-bold text-stone-600 mt-1">S/.{product.precio.toFixed(2)}</p>
+                                    <p className="font-semibold text-sm mt-2 flex-grow text-text-primary leading-tight">{product.nombre}</p>
+                                    <p className="font-bold text-text-secondary mt-1">S/.{product.precio.toFixed(2)}</p>
                                 </button>
                             ))}
                         </div>

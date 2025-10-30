@@ -21,13 +21,13 @@ const TabButton: React.FC<{
         className={`flex-1 flex items-center justify-center space-x-2 py-3 px-2 font-semibold transition-colors border-b-4 ${
             isActive
                 ? 'border-primary text-primary'
-                : 'border-transparent text-stone-500 hover:text-primary hover:bg-stone-100'
+                : 'border-transparent text-text-secondary hover:text-primary hover:bg-background'
         }`}
     >
         {icon}
         <span>{label}</span>
         <span className={`text-xs font-bold rounded-full px-2 py-0.5 transition-colors ${
-            isActive ? 'bg-primary text-white' : 'bg-stone-300 text-stone-600'
+            isActive ? 'bg-primary text-white' : 'bg-text-primary/10 text-text-primary'
         }`}>{count}</span>
     </button>
 );
@@ -51,14 +51,14 @@ const CajaView: React.FC<CajaViewProps> = ({ orders, onInitiatePayment, onGenera
     }, [activeTab, salonOrders, deliveryOrders, retiroOrders]);
     
     useEffect(() => {
-        setSelectedOrder(null);
-    }, [activeTab]);
+        setSelectedOrder(filteredOrders[0] || null);
+    }, [filteredOrders]);
 
 
     return (
         <div className="flex h-[calc(100vh-100px)] gap-6">
-            <div className="w-1/3 bg-white rounded-xl shadow-lg p-0 flex flex-col">
-                 <div className="flex-shrink-0 border-b border-stone-200">
+            <div className="w-1/3 bg-surface rounded-2xl shadow-lg p-0 flex flex-col border border-text-primary/5">
+                 <div className="flex-shrink-0 border-b border-text-primary/5">
                     <div className="flex">
                         <TabButton
                             isActive={activeTab === 'local'}
@@ -88,10 +88,10 @@ const CajaView: React.FC<CajaViewProps> = ({ orders, onInitiatePayment, onGenera
                         <button
                             key={order.id}
                             onClick={() => setSelectedOrder(order)}
-                            className={`w-full text-left p-3 rounded-lg transition-colors ${
+                            className={`w-full text-left p-4 rounded-xl transition-all duration-200 ${
                                 selectedOrder?.id === order.id
-                                    ? 'bg-primary text-white font-bold shadow-lg'
-                                    : 'bg-stone-100 hover:bg-stone-200'
+                                    ? 'bg-primary text-white font-bold shadow-lg -translate-x-1'
+                                    : 'bg-background hover:bg-text-primary/5'
                             }`}
                         >
                             <div className="flex justify-between items-center">
@@ -99,27 +99,27 @@ const CajaView: React.FC<CajaViewProps> = ({ orders, onInitiatePayment, onGenera
                                     <p className="font-semibold">{order.tipo === 'local' ? `Mesa ${order.cliente.mesa}` : `${order.cliente.nombre}`}</p>
                                     <p className="text-xs font-mono">{order.id}</p>
                                 </div>
-                                <p className="font-mono text-lg">S/.{order.total.toFixed(2)}</p>
+                                <p className="font-mono text-lg font-semibold">S/.{order.total.toFixed(2)}</p>
                             </div>
                         </button>
                     )) : (
-                        <p className="text-center text-stone-500 mt-8">No hay cuentas abiertas en esta sección.</p>
+                        <p className="text-center text-text-secondary mt-8">No hay cuentas abiertas en esta sección.</p>
                     )}
                 </div>
             </div>
 
-            <div className="w-2/3 bg-white rounded-xl shadow-lg p-6 flex flex-col">
+            <div className="w-2/3 bg-surface rounded-2xl shadow-lg p-8 flex flex-col border border-text-primary/5">
                 {selectedOrder ? (
                     <>
-                        <h2 className="text-2xl font-bold text-stone-800 mb-1">Pedido {selectedOrder.id}</h2>
-                        <p className="text-stone-600 mb-4">{selectedOrder.tipo === 'local' ? `Mesa ${selectedOrder.cliente.mesa}` : selectedOrder.cliente.nombre}</p>
+                        <h2 className="text-3xl font-heading font-bold text-text-primary mb-1">Pedido {selectedOrder.id}</h2>
+                        <p className="text-text-secondary text-lg mb-4">{selectedOrder.tipo === 'local' ? `Mesa ${selectedOrder.cliente.mesa}` : selectedOrder.cliente.nombre}</p>
                         
-                        <div className="flex-grow border-t border-b border-stone-200 py-4 overflow-y-auto my-4">
+                        <div className="flex-grow border-t border-b border-text-primary/10 py-4 overflow-y-auto my-4">
                             <ul className="space-y-2">
                                 {selectedOrder.productos.map((p, index) => (
-                                    <li key={index} className="flex justify-between items-center text-stone-600">
+                                    <li key={index} className="flex justify-between items-center text-text-primary">
                                         <div>
-                                            <span>{p.cantidad}x {p.nombre}</span>
+                                            <span className="font-semibold">{p.cantidad}x {p.nombre}</span>
                                             {p.salsas && p.salsas.length > 0 && (
                                                 <p className="text-xs text-sky-600 italic">
                                                     + {p.salsas.map(s => s.nombre).join(', ')}
@@ -131,28 +131,28 @@ const CajaView: React.FC<CajaViewProps> = ({ orders, onInitiatePayment, onGenera
                                 ))}
                             </ul>
                              {selectedOrder.notas && (
-                                <div className="mt-4 p-3 bg-amber-100 text-amber-800 rounded-lg text-sm">
+                                <div className="mt-4 p-3 bg-amber-500/10 text-amber-800 rounded-lg text-sm">
                                     <p><span className="font-bold">Nota del Cliente:</span> {selectedOrder.notas}</p>
                                 </div>
                             )}
                         </div>
 
                         <div className="flex-shrink-0">
-                             <div className="flex justify-between items-center text-3xl font-bold mb-6 text-stone-800">
+                             <div className="flex justify-between items-center text-4xl font-heading font-extrabold mb-6 text-text-primary">
                                 <span>TOTAL</span>
                                 <span className="font-mono">S/.{selectedOrder.total.toFixed(2)}</span>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <button
                                     onClick={() => onGeneratePreBill(selectedOrder)}
-                                    className="w-full bg-stone-800 text-white font-bold py-4 rounded-lg text-lg hover:bg-stone-700 transition-shadow shadow-lg"
+                                    className="w-full bg-text-primary text-white font-bold py-4 rounded-xl text-lg hover:bg-text-primary/90 transition-all duration-300 shadow-lg hover:shadow-text-primary/20 hover:-translate-y-0.5"
                                     aria-label={`Generar pre-cuenta para el pedido ${selectedOrder.id}`}
                                 >
                                     Generar Cuenta
                                 </button>
                                 <button
                                     onClick={() => onInitiatePayment(selectedOrder)}
-                                    className="w-full bg-gradient-to-r from-orange-400 to-primary text-white font-bold py-4 rounded-lg text-lg transition-all duration-300 shadow-lg hover:shadow-primary/40 hover:-translate-y-0.5"
+                                    className="w-full bg-primary text-white font-bold py-4 rounded-xl text-lg transition-all duration-300 shadow-lg shadow-primary/30 hover:shadow-primary/40 hover:-translate-y-0.5"
                                     aria-label={`Registrar pago para el pedido ${selectedOrder.id}`}
                                 >
                                     Registrar Pago
@@ -161,10 +161,10 @@ const CajaView: React.FC<CajaViewProps> = ({ orders, onInitiatePayment, onGenera
                         </div>
                     </>
                 ) : (
-                    <div className="h-full flex flex-col items-center justify-center text-center text-stone-400">
-                        <CheckCircleIcon className="h-24 w-24 text-stone-300 mb-4" />
-                        <h2 className="text-xl font-semibold">Seleccione una cuenta para cobrar</h2>
-                        <p>Las detalles del pedido y las opciones de pago aparecerán aquí.</p>
+                    <div className="h-full flex flex-col items-center justify-center text-center text-text-secondary/50">
+                        <CheckCircleIcon className="h-24 w-24 mb-4" />
+                        <h2 className="text-xl font-semibold text-text-primary">Seleccione una cuenta para cobrar</h2>
+                        <p>Los detalles del pedido y las opciones de pago aparecerán aquí.</p>
                     </div>
                 )}
             </div>

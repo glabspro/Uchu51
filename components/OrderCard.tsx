@@ -11,7 +11,7 @@ interface OrderCardProps {
 
 const getStatusAppearance = (status: Pedido['estado']) => {
     switch (status) {
-        case 'nuevo': return { color: 'bg-stone-400', text: 'text-stone-800', label: 'Nuevo' };
+        case 'nuevo': return { color: 'bg-gray-500', text: 'text-gray-800', label: 'Nuevo' };
         case 'pendiente de confirmación': return { color: 'bg-yellow-500', text: 'text-yellow-800', label: 'Pendiente' };
         case 'confirmado': return { color: 'bg-primary', text: 'text-primary-dark', label: 'Confirmado' };
         case 'en preparación': return { color: 'bg-amber-500', text: 'text-amber-800', label: 'En Preparación' };
@@ -56,39 +56,39 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, children, style }) => {
     }
 
     return (
-        <div style={style} className="bg-white rounded-xl shadow-lg flex flex-col justify-between min-h-[250px] transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] group animate-fade-in-up border-2 border-transparent hover:border-primary/40">
-            <div className="p-4 flex-grow flex flex-col">
+        <div style={style} className="bg-surface rounded-2xl shadow-lg flex flex-col justify-between min-h-[250px] transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group animate-fade-in-up border border-text-primary/5">
+            <div className="p-5 flex-grow flex flex-col">
                 <div className="flex justify-between items-start mb-3">
                     <div>
-                        <h3 className="font-extrabold text-lg text-stone-800">{order.id}</h3>
+                        <h3 className="font-heading font-extrabold text-xl text-text-primary">{order.id}</h3>
                         <p className="text-sm font-semibold text-primary">
                             {order.tipo === 'delivery' ? 'Delivery' : (order.cliente.mesa ? `Salón - Mesa ${order.cliente.mesa}` : 'Retiro')}
                         </p>
                     </div>
-                     <div className={`text-xl font-bold ${timerColor} flex items-center bg-stone-100/70 px-2 py-1 rounded-md`}>
-                       <ClockIcon className="h-5 w-5 mr-1"/> {formatTime(order.tiempoTranscurrido)}
+                     <div className={`text-2xl font-bold ${timerColor} flex items-center bg-background px-3 py-1 rounded-lg font-mono`}>
+                       <ClockIcon className="h-5 w-5 mr-2"/> {formatTime(order.tiempoTranscurrido)}
                     </div>
                 </div>
                  <div className="flex items-center space-x-2 mb-4">
-                    <span className={`h-3 w-3 rounded-full ${statusColor}`}></span>
-                    <span className={`text-xs font-bold uppercase ${statusTextColor}`}>{statusLabel}</span>
+                    <span className={`h-2.5 w-2.5 rounded-full ${statusColor}`}></span>
+                    <span className={`text-xs font-bold uppercase tracking-wider ${statusTextColor}`}>{statusLabel}</span>
                 </div>
 
-                <div className="space-y-2 text-sm text-stone-600 mb-4">
+                <div className="space-y-2 text-sm text-text-secondary mb-4">
                     <div className="flex items-center">
-                        <UserIcon className="h-4 w-4 mr-2 text-stone-400" />
-                        <span>{order.cliente.nombre}</span>
+                        <UserIcon className="h-4 w-4 mr-2.5 text-text-primary/40" />
+                        <span className="font-medium text-text-primary">{order.cliente.nombre}</span>
                     </div>
                     <div className="flex items-center">
-                        <PhoneIcon className="h-4 w-4 mr-2 text-stone-400" />
+                        <PhoneIcon className="h-4 w-4 mr-2.5 text-text-primary/40" />
                         <span>{order.cliente.telefono}</span>
                     </div>
                     {order.tipo === 'delivery' && order.cliente.direccion && (
                          <div className="flex items-start">
-                            <MapPinIcon className="h-4 w-4 mr-2 mt-0.5 text-stone-400 flex-shrink-0" />
+                            <MapPinIcon className="h-4 w-4 mr-2.5 mt-0.5 text-text-primary/40 flex-shrink-0" />
                             {mapsLink ? (
-                                <a href={mapsLink} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline transition-colors">
-                                    Ver en Mapa
+                                <a href={mapsLink} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline transition-colors font-semibold">
+                                    Ver en Google Maps
                                 </a>
                             ) : (
                                 <span className="break-all">{order.cliente.direccion}</span>
@@ -97,7 +97,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, children, style }) => {
                     )}
                 </div>
                  {order.tipo === 'delivery' && order.metodoPago === 'efectivo' && (
-                    <div className="my-2 p-2 bg-blue-100 text-blue-800 rounded-lg text-sm font-semibold text-center">
+                    <div className="my-2 p-2 bg-blue-500/10 text-blue-700 rounded-lg text-sm font-semibold text-center">
                         {order.pagoExacto
                             ? 'Paga con monto exacto'
                             : `Paga con S/. ${order.pagoConEfectivo?.toFixed(2)}`
@@ -105,17 +105,17 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, children, style }) => {
                     </div>
                 )}
                 {order.notas && (
-                    <div className="my-2 p-2 bg-amber-100 text-amber-800 rounded-lg text-xs">
+                    <div className="my-2 p-3 bg-amber-500/10 text-amber-800 rounded-lg text-xs">
                         <span className="font-bold">Nota:</span> {order.notas}
                     </div>
                 )}
-                <div className="border-t border-stone-200 pt-3 mt-auto">
-                    <ul className="space-y-2 text-sm">
+                <div className="border-t border-text-primary/10 pt-3 mt-auto">
+                    <ul className="space-y-1.5 text-sm">
                         {order.productos.map((p, index) => (
                             <li key={index}>
                                 <div className="flex justify-between">
-                                    <span className="text-stone-700">{p.cantidad}x {p.nombre}</span>
-                                    <span className="font-mono text-stone-500">S/.{(p.cantidad * p.precio).toFixed(2)}</span>
+                                    <span className="text-text-primary">{p.cantidad}x {p.nombre}</span>
+                                    <span className="font-mono text-text-secondary">S/.{(p.cantidad * p.precio).toFixed(2)}</span>
                                 </div>
                                 {p.especificaciones && <p className="text-xs text-amber-600 mt-1 pl-2 italic">↳ {p.especificaciones}</p>}
                                 {p.salsas && p.salsas.length > 0 && (
@@ -129,10 +129,10 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, children, style }) => {
                 </div>
             </div>
             
-            <div className="px-4 pb-4">
-                <div className="flex justify-between items-center text-sm font-bold border-t border-stone-200 pt-2">
-                    <span className="text-stone-600">TOTAL</span>
-                    <span className="text-lg font-mono text-stone-800">S/.{order.total.toFixed(2)}</span>
+            <div className="px-5 pb-5">
+                <div className="flex justify-between items-center text-sm font-bold border-t border-text-primary/10 pt-3">
+                    <span className="text-text-secondary text-base">TOTAL</span>
+                    <span className="text-xl font-mono text-text-primary font-heading">S/.{order.total.toFixed(2)}</span>
                 </div>
                 {children && <div className="mt-4">{children}</div>}
             </div>

@@ -8,9 +8,9 @@ interface DashboardProps {
 }
 
 const MetricCard: React.FC<{ title: string; value: string | number; }> = ({ title, value }) => (
-    <div className="bg-white p-6 rounded-xl shadow-lg">
-        <h3 className="text-sm font-medium text-stone-500 uppercase tracking-wider">{title}</h3>
-        <p className="text-3xl font-bold text-stone-800 mt-1">{value}</p>
+    <div className="bg-surface p-6 rounded-2xl shadow-lg border border-text-primary/5">
+        <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider">{title}</h3>
+        <p className="text-4xl font-heading font-extrabold text-text-primary mt-1">{value}</p>
     </div>
 );
 
@@ -65,23 +65,23 @@ const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
                 <MetricCard title="Tiempo Promedio Prep." value={metrics.tiempoPromedio} />
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-                <div className="lg:col-span-3 bg-white p-6 rounded-xl shadow-lg">
-                    <h3 className="text-lg font-bold text-stone-800 mb-4">Top 5 Productos Vendidos</h3>
+                <div className="lg:col-span-3 bg-surface p-6 rounded-2xl shadow-lg border border-text-primary/5">
+                    <h3 className="text-lg font-heading font-bold text-text-primary mb-4">Top 5 Productos Vendidos</h3>
                     <ResponsiveContainer width="100%" height={300}>
                         <BarChart data={topProducts} layout="vertical" margin={{ top: 5, right: 20, left: 40, bottom: 5 }}>
-                             <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
-                            <XAxis type="number" stroke="#78716c" />
-                            <YAxis type="category" dataKey="name" stroke="#78716c" width={120} tick={{fontSize: 12}} />
+                             <CartesianGrid strokeDasharray="3 3" stroke="#F4F0ED" />
+                            <XAxis type="number" stroke="#A8A29E" />
+                            <YAxis type="category" dataKey="name" stroke="#A8A29E" width={120} tick={{fontSize: 12}} />
                             <Tooltip
-                                contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #d6d3d1', color: '#1c1917' }}
-                                cursor={{ fill: '#f5f5f4' }}
+                                contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e7e5e4', color: '#1c1917', borderRadius: '12px' }}
+                                cursor={{ fill: '#FDFCFB' }}
                             />
-                            <Bar dataKey="value" name="Cantidad Vendida" fill="#F97316" />
+                            <Bar dataKey="value" name="Cantidad Vendida" fill="#F97316" radius={[0, 8, 8, 0]} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
-                 <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg">
-                    <h3 className="text-lg font-bold text-stone-800 mb-4">Distribución de Pedidos</h3>
+                 <div className="lg:col-span-2 bg-surface p-6 rounded-2xl shadow-lg border border-text-primary/5">
+                    <h3 className="text-lg font-heading font-bold text-text-primary mb-4">Distribución de Pedidos</h3>
                      <ResponsiveContainer width="100%" height={300}>
                         <PieChart>
                             <Pie
@@ -94,13 +94,13 @@ const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
                                 dataKey="value"
                                 nameKey="name"
                                 label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
-                                stroke="#fafaf9"
+                                stroke="#FFFFFF"
                             >
                                 {topProducts.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                 ))}
                             </Pie>
-                            <Tooltip contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #d6d3d1' }}/>
+                            <Tooltip contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e7e5e4', borderRadius: '12px' }}/>
                             <Legend />
                         </PieChart>
                     </ResponsiveContainer>

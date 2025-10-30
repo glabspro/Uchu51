@@ -6,7 +6,7 @@
     <title>Uchu51</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&family=Fredoka:wght@600&family=Montserrat:wght@700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
     tailwind.config = {
@@ -14,26 +14,26 @@
         extend: {
           fontFamily: {
             sans: ['Inter', 'sans-serif'],
+            heading: ['Poppins', 'sans-serif'],
           },
           colors: {
-            primary: '#F97316', // Vibrant Orange
-            'primary-dark': '#EA580C',
-            accent: '#3b82f6',
-            success: '#22c55e',
-            danger: '#ef4444',
-            warning: '#f59e0b',
-            stone: {
-              50: '#fafaf9',
-              100: '#f5f5f4',
-              200: '#e7e5e4',
-              300: '#d6d3d1',
-              400: '#a8a29e',
-              500: '#78716c',
-              600: '#57534e',
-              700: '#44403c',
-              800: '#292524',
-              900: '#1c1917',
+            background: '#FDFCFB',
+            surface: '#FFFFFF',
+            primary: {
+              DEFAULT: '#F97316',
+              dark: '#EA580C',
             },
+            accent: {
+              DEFAULT: '#FFC700',
+              dark: '#EAB308',
+            },
+            text: {
+              primary: '#44281D',
+              secondary: '#786d69',
+            },
+            success: '#16A34A',
+            danger: '#DC2626',
+            warning: '#F59E0B',
           }
         }
       }
@@ -56,7 +56,7 @@
   @keyframes fade-in-right {
     from {
       opacity: 0;
-      transform: translateX(24px);
+      transform: translateX(16px);
     }
     to {
       opacity: 1;
@@ -64,12 +64,12 @@
     }
   }
   .animate-fade-in-right {
-    animation: fade-in-right 0.3s ease-out forwards;
+    animation: fade-in-right 0.4s ease-out forwards;
   }
   @keyframes fade-in-up {
     from {
       opacity: 0;
-      transform: translateY(24px);
+      transform: translateY(16px);
     }
     to {
       opacity: 1;
@@ -77,13 +77,13 @@
     }
   }
   .animate-fade-in-up {
-    animation: fade-in-up 0.4s ease-out forwards;
+    animation: fade-in-up 0.5s ease-out forwards;
     animation-delay: var(--delay, 0s);
   }
   @keyframes fade-in-scale {
     from {
       opacity: 0;
-      transform: scale(0.95);
+      transform: scale(0.98);
     }
     to {
       opacity: 1;
@@ -91,11 +91,11 @@
     }
   }
   .animate-fade-in-scale {
-    animation: fade-in-scale 0.2s ease-out forwards;
+    animation: fade-in-scale 0.3s ease-out forwards;
   }
 </style>
 </head>
-<body class="antialiased bg-stone-50">
+<body class="antialiased bg-background text-text-primary">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
 </body>

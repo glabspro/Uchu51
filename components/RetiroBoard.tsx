@@ -10,8 +10,8 @@ interface RetiroBoardProps {
 }
 
 const RetiroColumn: React.FC<{ title: string; children: React.ReactNode; count: number; }> = ({ title, children, count }) => (
-    <div className="bg-stone-100 rounded-xl w-full md:w-1/2 flex-shrink-0 shadow-sm flex flex-col">
-        <h2 className="text-lg font-bold text-stone-800 bg-stone-200 px-4 py-3 rounded-t-xl flex items-center justify-between">
+    <div className="bg-background rounded-2xl w-full md:w-1/2 flex-shrink-0 shadow-sm flex flex-col border border-text-primary/5">
+        <h2 className="text-lg font-heading font-bold text-text-primary bg-text-primary/10 px-4 py-3 rounded-t-2xl flex items-center justify-between">
             {title}
             <span className="bg-black/10 text-xs font-bold rounded-full px-2.5 py-1">{count}</span>
         </h2>
@@ -32,7 +32,7 @@ const RetiroBoard: React.FC<RetiroBoardProps> = ({ orders, updateOrderStatus }) 
                     <OrderCard key={order.id} order={order} style={{ '--delay': `${i * 50}ms` } as React.CSSProperties}>
                         <button
                             onClick={() => updateOrderStatus(order.id, 'recogido', 'recepcionista')}
-                            className="w-full mt-2 bg-success hover:brightness-110 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center transition-colors shadow-md"
+                            className="w-full mt-2 bg-success hover:brightness-105 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-success/30 hover:-translate-y-0.5"
                         >
                             <CheckCircleIcon className="h-5 w-5 mr-2" /> Marcar como Recogido
                         </button>
@@ -42,8 +42,8 @@ const RetiroBoard: React.FC<RetiroBoardProps> = ({ orders, updateOrderStatus }) 
             <RetiroColumn title="Recogidos" count={pickedUpOrders.length}>
                 {pickedUpOrders.map((order, i) => (
                     <OrderCard key={order.id} order={order} style={{ '--delay': `${i * 50}ms` } as React.CSSProperties}>
-                        <div className="text-center font-semibold text-success">
-                           Pedido Recogido por {order.cliente.nombre}
+                         <div className="text-center font-semibold text-success p-3 bg-success/10 rounded-lg">
+                           Recogido por {order.cliente.nombre}
                         </div>
                     </OrderCard>
                 ))}

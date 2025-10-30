@@ -19,11 +19,11 @@ const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
         };
     }, [onClose]);
 
-    const baseStyle = "text-white p-4 rounded-lg shadow-lg flex items-start w-full";
+    const baseStyle = "text-white p-4 rounded-xl shadow-2xl flex items-start w-full border border-white/10";
     const animationStyle = "animate-fade-in-right";
     const typeStyles = {
-        success: "bg-green-600",
-        info: "bg-stone-800",
+        success: "bg-success",
+        info: "bg-text-primary",
     };
     
     const Icon = type === 'success' ? CheckCircleIcon : InformationCircleIcon;
@@ -34,7 +34,7 @@ const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
                 <Icon className="h-6 w-6" />
             </div>
             <div className="ml-3 flex-1">
-                <p className="text-sm font-medium">{message}</p>
+                <p className="text-sm font-semibold">{message}</p>
             </div>
             <div className="ml-4 flex-shrink-0 flex">
                 <button onClick={onClose} className="-mx-1.5 -my-1.5 bg-transparent inline-flex rounded-md p-1.5 text-white/80 hover:text-white hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-blue-600 focus:ring-white">
