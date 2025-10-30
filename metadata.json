@@ -1,0 +1,7 @@
+{
+  "name": "Sistema de Gestión de Pedidos KDS",
+  "description": "Un sistema web completo de gestión de pedidos para restaurantes de comida rápida, con tableros visuales tipo Kanban para cocina, delivery y gestión local, métricas de turno y un formulario de creación de pedidos.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
