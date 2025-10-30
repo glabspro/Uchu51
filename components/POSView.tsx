@@ -231,7 +231,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
                              ) : (
                                 <button
                                     onClick={handleSendToKitchen}
-                                    className="w-full bg-[#44281D] text-white font-bold py-4 rounded-xl text-xl transition-all duration-300 shadow-lg hover:shadow-text-primary/30 hover:-translate-y-0.5 active:scale-95 disabled:bg-gray-400 dark:disabled:bg-slate-700 disabled:shadow-none disabled:translate-y-0 disabled:cursor-not-allowed border-2 border-blue-500"
+                                    className="w-full bg-success text-white font-bold py-4 rounded-xl text-xl transition-all duration-300 shadow-lg shadow-success/30 hover:shadow-success/40 hover:-translate-y-0.5 active:scale-95 disabled:bg-gray-400 dark:disabled:bg-slate-700 disabled:shadow-none disabled:translate-y-0 disabled:cursor-not-allowed"
                                     disabled={!currentOrder || currentOrder.productos.length === 0}
                                 >
                                     Enviar a Cocina

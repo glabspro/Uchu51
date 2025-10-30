@@ -301,14 +301,31 @@ const App: React.FC = () => {
     
     if (posMesaActiva !== null) {
         const activeOrder = orders.find(o => o.id === posMesaActiva.pedidoId) || null;
-        return <POSView
-            mesa={posMesaActiva}
-            onExit={handleExitPOS}
-            order={activeOrder}
-            products={initialProducts}
-            onSaveOrder={handleSavePOSOrder}
-            onGeneratePreBill={handleGeneratePreBill}
-         />;
+        return (
+            <>
+                {orderForPreBill && <PreBillModal order={orderForPreBill} onClose={() => setOrderForPreBill(null)} theme={theme} />}
+                {orderToPay && <PaymentModal order={orderToPay} onClose={() => setOrderToPay(null)} onConfirmPayment={handleConfirmPayment} />}
+                {orderForReceipt && <ReceiptModal order={orderForReceipt} onClose={handleCloseReceipt} theme={theme} />}
+                <POSView
+                    mesa={posMesaActiva}
+                    onExit={handleExitPOS}
+                    order={activeOrder}
+                    products={initialProducts}
+                    onSaveOrder={handleSavePOSOrder}
+                    onGeneratePreBill={handleGeneratePreBill}
+                 />
+                 <div className="fixed top-20 right-4 z-[100] space-y-2 w-full max-w-sm">
+                    {toasts.map(toast => (
+                        <Toast
+                            key={toast.id}
+                            message={toast.message}
+                            type={toast.type}
+                            onClose={() => removeToast(toast.id)}
+                        />
+                    ))}
+                </div>
+            </>
+        );
     }
 
     return (
