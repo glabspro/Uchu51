@@ -21,7 +21,7 @@ const PaymentMethodButton: React.FC<{
         className={`flex items-center justify-center space-x-2 w-full p-3 rounded-lg border-2 transition-all duration-200 ${
             currentMethod === method
                 ? 'bg-primary/10 border-primary text-primary font-bold shadow-inner'
-                : 'bg-white border-slate-200 text-slate-600 hover:border-slate-400'
+                : 'bg-white border-stone-200 text-stone-600 hover:border-stone-400'
         }`}
     >
         {icon}
@@ -54,20 +54,20 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ order, onClose, onConfirmPa
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-[100] p-4" onClick={onClose}>
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg" onClick={e => e.stopPropagation()}>
-                <div className="p-6 border-b border-slate-200 text-center">
-                    <h2 className="text-2xl font-bold text-slate-800">Registrar Pago</h2>
-                    <p className="text-slate-500">Pedido {order.id} - {order.tipo === 'local' ? `Mesa ${order.cliente.mesa}` : order.cliente.nombre}</p>
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg animate-fade-in-scale" onClick={e => e.stopPropagation()}>
+                <div className="p-6 border-b border-stone-200 text-center">
+                    <h2 className="text-2xl font-bold text-stone-800">Registrar Pago</h2>
+                    <p className="text-stone-500">Pedido {order.id} - {order.tipo === 'local' ? `Mesa ${order.cliente.mesa}` : order.cliente.nombre}</p>
                 </div>
 
                 <div className="p-6">
-                    <div className="bg-slate-100 p-4 rounded-xl text-center mb-6">
-                        <p className="text-lg text-slate-600">Total a Pagar</p>
-                        <p className="text-5xl font-extrabold text-slate-800 font-mono">S/.{order.total.toFixed(2)}</p>
+                    <div className="bg-stone-100 p-4 rounded-xl text-center mb-6">
+                        <p className="text-lg text-stone-600">Total a Pagar</p>
+                        <p className="text-5xl font-extrabold text-stone-800 font-mono">S/.{order.total.toFixed(2)}</p>
                     </div>
 
                     <div className="mb-6">
-                        <h3 className="text-lg font-semibold text-slate-600 mb-3">Método de Pago</h3>
+                        <h3 className="text-lg font-semibold text-stone-600 mb-3">Método de Pago</h3>
                         <div className="grid grid-cols-3 gap-3">
                             <PaymentMethodButton method="efectivo" label="Efectivo" icon={<CashIcon className="h-5 w-5"/>} currentMethod={selectedMethod} setMethod={setSelectedMethod} />
                             <PaymentMethodButton method="tarjeta" label="Tarjeta" icon={<CreditCardIcon className="h-5 w-5"/>} currentMethod={selectedMethod} setMethod={setSelectedMethod} />
@@ -78,19 +78,19 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ order, onClose, onConfirmPa
                     {selectedMethod === 'efectivo' && (
                         <div className="space-y-4 animate-fade-in-right">
                              <div>
-                                <label htmlFor="amount-received" className="block text-sm font-bold text-slate-700 mb-1">Monto Recibido</label>
+                                <label htmlFor="amount-received" className="block text-sm font-bold text-stone-700 mb-1">Monto Recibido</label>
                                 <input
                                     id="amount-received"
                                     type="number"
                                     value={amountReceived}
                                     onChange={(e) => setAmountReceived(e.target.value)}
                                     placeholder="Ej: 50.00"
-                                    className="bg-white border border-slate-300 rounded-lg p-3 w-full text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-primary focus:border-primary transition text-xl font-mono"
+                                    className="bg-white border border-stone-300 rounded-lg p-3 w-full text-stone-800 placeholder-stone-400 focus:ring-2 focus:ring-primary focus:border-primary transition text-xl font-mono"
                                 />
                             </div>
                             <div className="flex gap-2">
                                 {quickCashOptions.map(amount => (
-                                     <button key={amount} onClick={() => setAmountReceived(amount.toString())} className="flex-1 bg-slate-200 text-slate-700 font-semibold py-2 rounded-lg hover:bg-slate-300 transition-colors">
+                                     <button key={amount} onClick={() => setAmountReceived(amount.toString())} className="flex-1 bg-stone-200 text-stone-700 font-semibold py-2 rounded-lg hover:bg-stone-300 transition-colors">
                                         S/. {amount}
                                      </button>
                                 ))}
@@ -103,14 +103,14 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ order, onClose, onConfirmPa
                     )}
                 </div>
 
-                <div className="p-6 border-t mt-auto bg-slate-50 rounded-b-2xl grid grid-cols-2 gap-4">
-                    <button onClick={onClose} className="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3 px-6 rounded-lg transition-colors">
+                <div className="p-6 border-t mt-auto bg-stone-50 rounded-b-2xl grid grid-cols-2 gap-4">
+                    <button onClick={onClose} className="w-full bg-stone-200 hover:bg-stone-300 text-stone-700 font-bold py-3 px-6 rounded-lg transition-colors">
                         Cancelar
                     </button>
                     <button
                         onClick={handleConfirm}
                         disabled={isConfirmDisabled}
-                        className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 px-6 rounded-lg transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed shadow-lg"
+                        className="w-full bg-stone-800 hover:bg-stone-700 text-white font-bold py-3 px-6 rounded-lg transition-colors disabled:bg-stone-400 disabled:cursor-not-allowed shadow-lg"
                     >
                         Confirmar Pago
                     </button>

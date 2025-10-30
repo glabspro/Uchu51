@@ -19,13 +19,13 @@ const KitchenColumn: React.FC<{
     onDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
 }> = ({ title, children, count, onDrop, onDragOver }) => (
     <div 
-        className="bg-slate-200/60 rounded-xl p-4 flex-1 flex-shrink-0"
+        className="bg-stone-200/60 rounded-xl p-4 flex-1 flex-shrink-0"
         onDrop={onDrop}
         onDragOver={onDragOver}
     >
-        <h2 className="text-lg font-bold mb-4 text-slate-700 flex items-center justify-between bg-slate-300/70 px-3 py-2 rounded-lg">
+        <h2 className="text-lg font-bold mb-4 text-stone-700 flex items-center justify-between bg-stone-300/70 px-3 py-2 rounded-lg">
             {title}
-            <span className="bg-slate-400 text-white text-sm font-semibold rounded-full px-2.5 py-1">{count}</span>
+            <span className="bg-stone-400 text-white text-sm font-semibold rounded-full px-2.5 py-1">{count}</span>
         </h2>
         <div className="space-y-4 h-[calc(100vh-290px)] overflow-y-auto pr-2">
             {children}
@@ -44,14 +44,14 @@ const TabButton: React.FC<{
         onClick={onClick}
         className={`flex items-center space-x-2 py-3 px-4 font-semibold transition-colors rounded-t-lg ${
             isActive
-                ? 'bg-slate-100 text-primary border-b-2 border-primary'
-                : 'text-slate-500 hover:bg-slate-200'
+                ? 'bg-stone-100 text-primary border-b-2 border-primary'
+                : 'text-stone-500 hover:bg-stone-200'
         }`}
     >
         {icon}
         <span>{label}</span>
         <span className={`text-xs font-bold rounded-full px-2 py-0.5 transition-colors ${
-            isActive ? 'bg-primary text-white' : 'bg-slate-300 text-slate-600'
+            isActive ? 'bg-primary text-white' : 'bg-stone-300 text-stone-600'
         }`}>{count}</span>
     </button>
 );
@@ -129,7 +129,7 @@ const KitchenBoard: React.FC<KitchenBoardProps> = ({ orders, updateOrderStatus, 
     return (
         <div className="flex flex-col h-full">
             <div className="bg-white rounded-t-lg shadow-sm flex-shrink-0">
-                <div className="flex space-x-1 border-b border-slate-200">
+                <div className="flex space-x-1 border-b border-stone-200">
                     <TabButton 
                         isActive={activeTab === 'delivery'}
                         onClick={() => setActiveTab('delivery')}
@@ -153,17 +153,17 @@ const KitchenBoard: React.FC<KitchenBoardProps> = ({ orders, updateOrderStatus, 
                     />
                 </div>
             </div>
-            <div className="flex flex-col md:flex-row gap-6 pt-4 flex-grow bg-slate-100 p-4 rounded-b-lg">
+            <div className="flex flex-col md:flex-row gap-6 pt-4 flex-grow bg-stone-100 p-4 rounded-b-lg">
                 <KitchenColumn title="En Preparación" count={preparingOrders.length} onDrop={handleDrop('en preparación')} onDragOver={handleDragOver}>
                     {preparingOrders.map(order => (
                         <div key={order.id} draggable onDragStart={(e) => handleDragStart(e, order.id)}>
                             <OrderCard order={order}>
                                 <div className="flex items-center space-x-2 relative">
-                                    <UserIcon className="h-5 w-5 text-slate-400 absolute left-3"/>
+                                    <UserIcon className="h-5 w-5 text-stone-400 absolute left-3"/>
                                     <select 
                                         value={order.cocineroAsignado || ''} 
                                         onChange={(e) => assignCook(order.id, e.target.value)}
-                                        className="w-full bg-white text-slate-700 border-slate-300 border rounded-md py-2 pl-10 pr-4 appearance-none focus:outline-none focus:ring-2 focus:ring-primary"
+                                        className="w-full bg-white text-stone-700 border-stone-300 border rounded-md py-2 pl-10 pr-4 appearance-none focus:outline-none focus:ring-2 focus:ring-primary"
                                     >
                                         <option value="" disabled>Asignar Cocinero</option>
                                         {cooks.map(cook => <option key={cook} value={cook}>{cook}</option>)}
@@ -177,17 +177,17 @@ const KitchenBoard: React.FC<KitchenBoardProps> = ({ orders, updateOrderStatus, 
                     {assemblingOrders.map(order => (
                         <div key={order.id} draggable onDragStart={(e) => handleDragStart(e, order.id)}>
                             <OrderCard order={order}>
-                                <div className="text-center font-semibold text-slate-600">
+                                <div className="text-center font-semibold text-stone-600">
                                     {order.cocineroAsignado ? `Asignado a: ${order.cocineroAsignado}` : 'Sin cocinero asignado'}
                                 </div>
                             </OrderCard>
                         </div>
                     ))}
                 </KitchenColumn>
-                <div className="bg-slate-200/60 rounded-xl p-4 flex-1 flex-shrink-0" onDrop={handleDrop('listo')} onDragOver={handleDragOver}>
-                    <h2 className="text-lg font-bold mb-4 text-slate-700 bg-slate-300/70 px-3 py-2 rounded-lg">Listo para Entrega</h2>
-                    <div className="h-[calc(100vh-290px)] overflow-y-auto pr-2 flex items-center justify-center border-2 border-dashed border-slate-300 rounded-lg">
-                         <p className="text-slate-400 font-semibold">Arrastra aquí los pedidos listos</p>
+                <div className="bg-stone-200/60 rounded-xl p-4 flex-1 flex-shrink-0" onDrop={handleDrop('listo')} onDragOver={handleDragOver}>
+                    <h2 className="text-lg font-bold mb-4 text-stone-700 bg-stone-300/70 px-3 py-2 rounded-lg">Listo para Entrega</h2>
+                    <div className="h-[calc(100vh-290px)] overflow-y-auto pr-2 flex items-center justify-center border-2 border-dashed border-stone-300 rounded-lg">
+                         <p className="text-stone-400 font-semibold">Arrastra aquí los pedidos listos</p>
                     </div>
                 </div>
             </div>

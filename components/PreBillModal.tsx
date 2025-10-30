@@ -34,14 +34,14 @@ const PreBillModal: React.FC<PreBillModalProps> = ({ order, onClose }) => {
                 }`}
             </style>
             <div className="bg-white rounded-lg shadow-xl w-full max-w-sm" onClick={e => e.stopPropagation()}>
-                <div id="prebill-printable-area" className="p-6 text-sm text-slate-800">
+                <div id="prebill-printable-area" className="p-6 text-sm text-stone-800">
                     <div className="text-center mb-6">
-                        <h1 className="text-2xl font-black text-slate-900">UCHU51</h1>
-                        <p className="text-xs text-slate-500">Av. Ejemplo 123, Lima, Perú</p>
+                        <h1 className="text-2xl font-black text-stone-900">UCHU51</h1>
+                        <p className="text-xs text-stone-500">Av. Ejemplo 123, Lima, Perú</p>
                         <p className="text-lg font-bold mt-2">PRE-CUENTA</p>
                     </div>
 
-                    <div className="border-b border-dashed border-slate-300 pb-2 mb-2">
+                    <div className="border-b border-dashed border-stone-300 pb-2 mb-2">
                         <p><span className="font-semibold">Pedido:</span> {order.id}</p>
                         <p><span className="font-semibold">Fecha:</span> {new Date(order.fecha).toLocaleString()}</p>
                         <p><span className="font-semibold">Cliente:</span> {order.cliente.nombre}</p>
@@ -49,12 +49,12 @@ const PreBillModal: React.FC<PreBillModalProps> = ({ order, onClose }) => {
                     </div>
                     
                     {order.notas && (
-                        <div className="border-b border-dashed border-slate-300 pb-2 mb-2">
+                        <div className="border-b border-dashed border-stone-300 pb-2 mb-2">
                             <p><span className="font-semibold">Notas:</span> {order.notas}</p>
                         </div>
                     )}
 
-                    <div className="border-b border-dashed border-slate-300 pb-2 mb-2">
+                    <div className="border-b border-dashed border-stone-300 pb-2 mb-2">
                         <div className="flex justify-between font-semibold">
                             <span>Cant.</span>
                             <span className="flex-grow text-left pl-2">Descripción</span>
@@ -76,10 +76,10 @@ const PreBillModal: React.FC<PreBillModalProps> = ({ order, onClose }) => {
                         </div>
                     </div>
 
-                    <p className="text-center text-xs mt-6 text-slate-500">Este no es un comprobante de pago.</p>
+                    <p className="text-center text-xs mt-6 text-stone-500">Este no es un comprobante de pago.</p>
                 </div>
-                 <div className="p-4 bg-slate-100 rounded-b-lg grid grid-cols-2 gap-4 no-print">
-                    <button onClick={onClose} className="w-full bg-slate-300 hover:bg-slate-400 text-slate-800 font-bold py-2 px-4 rounded-lg">
+                 <div className="p-4 bg-stone-100 rounded-b-lg grid grid-cols-2 gap-4 no-print">
+                    <button onClick={onClose} className="w-full bg-stone-300 hover:bg-stone-400 text-stone-800 font-bold py-2 px-4 rounded-lg">
                         Cerrar
                     </button>
                     <button onClick={handlePrint} className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded-lg shadow-md">

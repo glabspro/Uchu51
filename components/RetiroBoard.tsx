@@ -10,10 +10,10 @@ interface RetiroBoardProps {
 }
 
 const RetiroColumn: React.FC<{ title: string; children: React.ReactNode; count: number; }> = ({ title, children, count }) => (
-    <div className="bg-slate-200/60 rounded-xl w-full md:w-1/2 flex-shrink-0 shadow-sm flex flex-col">
-        <h2 className="text-xl font-bold text-white bg-slate-700 px-4 py-3 rounded-t-xl flex items-center justify-between">
+    <div className="bg-stone-100 rounded-xl w-full md:w-1/2 flex-shrink-0 shadow-sm flex flex-col">
+        <h2 className="text-lg font-bold text-stone-800 bg-stone-200 px-4 py-3 rounded-t-xl flex items-center justify-between">
             {title}
-            <span className="bg-black/20 text-xs font-bold rounded-full px-2.5 py-1">{count}</span>
+            <span className="bg-black/10 text-xs font-bold rounded-full px-2.5 py-1">{count}</span>
         </h2>
         <div className="space-y-4 h-[calc(100vh-220px)] overflow-y-auto p-4">
             {children}
@@ -28,8 +28,8 @@ const RetiroBoard: React.FC<RetiroBoardProps> = ({ orders, updateOrderStatus }) 
     return (
         <div className="flex flex-col md:flex-row gap-6">
             <RetiroColumn title="Listos para Retirar" count={readyOrders.length}>
-                {readyOrders.map(order => (
-                    <OrderCard key={order.id} order={order}>
+                {readyOrders.map((order, i) => (
+                    <OrderCard key={order.id} order={order} style={{ '--delay': `${i * 50}ms` } as React.CSSProperties}>
                         <button
                             onClick={() => updateOrderStatus(order.id, 'recogido', 'recepcionista')}
                             className="w-full mt-2 bg-success hover:brightness-110 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center transition-colors shadow-md"
@@ -40,8 +40,8 @@ const RetiroBoard: React.FC<RetiroBoardProps> = ({ orders, updateOrderStatus }) 
                 ))}
             </RetiroColumn>
             <RetiroColumn title="Recogidos" count={pickedUpOrders.length}>
-                {pickedUpOrders.map(order => (
-                    <OrderCard key={order.id} order={order}>
+                {pickedUpOrders.map((order, i) => (
+                    <OrderCard key={order.id} order={order} style={{ '--delay': `${i * 50}ms` } as React.CSSProperties}>
                         <div className="text-center font-semibold text-success">
                            Pedido Recogido por {order.cliente.nombre}
                         </div>

@@ -8,13 +8,14 @@ interface DashboardProps {
 }
 
 const MetricCard: React.FC<{ title: string; value: string | number; }> = ({ title, value }) => (
-    <div className="bg-white p-6 rounded-xl shadow-lg border-t-4 border-primary">
-        <h3 className="text-sm font-medium text-slate-500 uppercase tracking-wider">{title}</h3>
-        <p className="text-3xl font-bold text-slate-800 mt-1">{value}</p>
+    <div className="bg-white p-6 rounded-xl shadow-lg">
+        <h3 className="text-sm font-medium text-stone-500 uppercase tracking-wider">{title}</h3>
+        <p className="text-3xl font-bold text-stone-800 mt-1">{value}</p>
     </div>
 );
 
-const COLORS = ['#10B981', '#34D399', '#6EE7B7', '#A7F3D0', '#D1FAE5'];
+const COLORS = ['#F97316', '#FB923C', '#FDBA74', '#FECACA', '#FDE68A'];
+
 
 const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
 
@@ -65,22 +66,22 @@ const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
                 <div className="lg:col-span-3 bg-white p-6 rounded-xl shadow-lg">
-                    <h3 className="text-lg font-bold text-slate-800 mb-4">Top 5 Productos Vendidos</h3>
+                    <h3 className="text-lg font-bold text-stone-800 mb-4">Top 5 Productos Vendidos</h3>
                     <ResponsiveContainer width="100%" height={300}>
                         <BarChart data={topProducts} layout="vertical" margin={{ top: 5, right: 20, left: 40, bottom: 5 }}>
-                             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                            <XAxis type="number" stroke="#64748b" />
-                            <YAxis type="category" dataKey="name" stroke="#64748b" width={120} tick={{fontSize: 12}} />
+                             <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
+                            <XAxis type="number" stroke="#78716c" />
+                            <YAxis type="category" dataKey="name" stroke="#78716c" width={120} tick={{fontSize: 12}} />
                             <Tooltip
-                                contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #cbd5e1', color: '#0f172a' }}
-                                cursor={{ fill: '#f1f5f9' }}
+                                contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #d6d3d1', color: '#1c1917' }}
+                                cursor={{ fill: '#f5f5f4' }}
                             />
-                            <Bar dataKey="value" name="Cantidad Vendida" fill="#10B981" />
+                            <Bar dataKey="value" name="Cantidad Vendida" fill="#F97316" />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
                  <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg">
-                    <h3 className="text-lg font-bold text-slate-800 mb-4">Distribución de Pedidos</h3>
+                    <h3 className="text-lg font-bold text-stone-800 mb-4">Distribución de Pedidos</h3>
                      <ResponsiveContainer width="100%" height={300}>
                         <PieChart>
                             <Pie
@@ -93,13 +94,13 @@ const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
                                 dataKey="value"
                                 nameKey="name"
                                 label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
-                                stroke="#f8fafc"
+                                stroke="#fafaf9"
                             >
                                 {topProducts.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                 ))}
                             </Pie>
-                            <Tooltip contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #cbd5e1' }}/>
+                            <Tooltip contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #d6d3d1' }}/>
                             <Legend />
                         </PieChart>
                     </ResponsiveContainer>

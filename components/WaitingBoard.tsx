@@ -10,10 +10,10 @@ interface WaitingBoardProps {
 }
 
 const BoardColumn: React.FC<{ title: string; children: React.ReactNode; count: number; bgColor: string; textColor: string; }> = ({ title, children, count, bgColor, textColor }) => (
-    <div className="bg-slate-200/60 rounded-xl w-full md:w-1/3 flex-shrink-0 shadow-sm flex flex-col">
-        <h2 className={`text-xl font-bold ${textColor} ${bgColor} px-4 py-3 rounded-t-xl flex items-center justify-between`}>
+    <div className="bg-stone-100 rounded-xl w-full md:w-1/3 flex-shrink-0 shadow-sm flex flex-col">
+        <h2 className={`text-lg font-bold ${textColor} ${bgColor} px-4 py-3 rounded-t-xl flex items-center justify-between`}>
             {title}
-            <span className={`bg-black/20 text-xs font-bold rounded-full px-2.5 py-1`}>{count}</span>
+            <span className={`bg-black/10 text-xs font-bold rounded-full px-2.5 py-1`}>{count}</span>
         </h2>
         <div className="space-y-4 h-[calc(100vh-220px)] overflow-y-auto p-4">
             {children}
@@ -28,33 +28,33 @@ const WaitingBoard: React.FC<WaitingBoardProps> = ({ orders, updateOrderStatus }
 
     return (
         <div className="flex flex-col md:flex-row gap-6">
-            <BoardColumn title="Pendiente de Confirmación" count={pendingConfirmationOrders.length} bgColor="bg-warning" textColor="text-white">
-                {pendingConfirmationOrders.map(order => (
-                    <OrderCard key={order.id} order={order}>
+            <BoardColumn title="Pendiente de Confirmación" count={pendingConfirmationOrders.length} bgColor="bg-yellow-100" textColor="text-yellow-800">
+                {pendingConfirmationOrders.map((order, i) => (
+                    <OrderCard key={order.id} order={order} style={{ '--delay': `${i * 50}ms` } as React.CSSProperties}>
                         <button 
                             onClick={() => updateOrderStatus(order.id, 'nuevo', 'recepcionista')}
-                            className="w-full bg-slate-700 hover:bg-slate-800 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center transition-colors shadow-md"
+                            className="w-full bg-stone-700 hover:bg-stone-800 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center transition-colors shadow-md"
                         >
                             <CheckCircleIcon className="h-5 w-5 mr-2" /> Validar Pedido
                         </button>
                     </OrderCard>
                 ))}
             </BoardColumn>
-            <BoardColumn title="Nuevos Pedidos" count={newOrders.length} bgColor="bg-accent" textColor="text-white">
-                {newOrders.map(order => (
-                    <OrderCard key={order.id} order={order}>
+            <BoardColumn title="Nuevos Pedidos" count={newOrders.length} bgColor="bg-blue-100" textColor="text-blue-800">
+                {newOrders.map((order, i) => (
+                    <OrderCard key={order.id} order={order} style={{ '--delay': `${i * 50}ms` } as React.CSSProperties}>
                         <button 
                             onClick={() => updateOrderStatus(order.id, 'confirmado', 'recepcionista')}
-                            className="w-full bg-slate-700 hover:bg-slate-800 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center transition-colors shadow-md"
+                            className="w-full bg-stone-700 hover:bg-stone-800 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center transition-colors shadow-md"
                         >
                             <CheckCircleIcon className="h-5 w-5 mr-2" /> Confirmar
                         </button>
                     </OrderCard>
                 ))}
             </BoardColumn>
-            <BoardColumn title="Confirmados (Para Cocina)" count={confirmedOrders.length} bgColor="bg-slate-700" textColor="text-white">
-                {confirmedOrders.map(order => (
-                    <OrderCard key={order.id} order={order}>
+            <BoardColumn title="Confirmados (Para Cocina)" count={confirmedOrders.length} bgColor="bg-stone-200" textColor="text-stone-800">
+                {confirmedOrders.map((order, i) => (
+                    <OrderCard key={order.id} order={order} style={{ '--delay': `${i * 50}ms` } as React.CSSProperties}>
                        <button
                          onClick={() => updateOrderStatus(order.id, 'en preparación', 'recepcionista')}
                          className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center transition-colors shadow-md"

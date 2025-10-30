@@ -193,38 +193,38 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
     };
 
     const renderSelectionScreen = () => (
-        <div className="text-center max-w-4xl mx-auto">
-            <h1 className="text-5xl font-extrabold text-slate-800 mb-4">UCHU<span className="text-primary">51</span></h1>
-            <p className="text-lg text-slate-600 mb-12">Pide tu comida favorita, rápido y a buen precio.</p>
+        <div className="text-center max-w-4xl mx-auto animate-fade-in-up">
+            <h1 className="text-5xl font-extrabold text-stone-800 mb-4">UCHU<span className="text-primary">51</span></h1>
+            <p className="text-lg text-stone-600 mb-12">Pide tu comida favorita, rápido y a buen precio.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <button onClick={() => handleSelectOrderType('retiro')} className="group bg-white p-8 rounded-2xl border border-slate-200 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300">
+                <button onClick={() => handleSelectOrderType('retiro')} className="group bg-white p-8 rounded-2xl border border-stone-200 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300">
                     <ShoppingBagIcon className="h-16 w-16 mx-auto text-primary group-hover:scale-110 transition-transform"/>
-                    <h3 className="text-2xl font-bold text-slate-800 mt-4">Para Llevar</h3>
-                    <p className="text-slate-600 mt-2">Pide y recoge en tienda.</p>
+                    <h3 className="text-2xl font-bold text-stone-800 mt-4">Para Llevar</h3>
+                    <p className="text-stone-600 mt-2">Pide y recoge en tienda.</p>
                 </button>
-                 <button onClick={() => handleSelectOrderType('delivery')} className="group bg-white p-8 rounded-2xl border border-slate-200 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300">
+                 <button onClick={() => handleSelectOrderType('delivery')} className="group bg-white p-8 rounded-2xl border border-stone-200 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300">
                     <TruckIcon className="h-16 w-16 mx-auto text-primary group-hover:scale-110 transition-transform"/>
-                    <h3 className="text-2xl font-bold text-slate-800 mt-4">Delivery</h3>
-                    <p className="text-slate-600 mt-2">Te lo llevamos a tu casa.</p>
+                    <h3 className="text-2xl font-bold text-stone-800 mt-4">Delivery</h3>
+                    <p className="text-stone-600 mt-2">Te lo llevamos a tu casa.</p>
                 </button>
             </div>
         </div>
     );
 
     const renderCatalog = () => (
-        <div className="w-full">
+        <div className="w-full animate-fade-in-up">
             <div className="mb-6">
-                <h2 className="text-3xl font-bold text-slate-900">Pide tu comida</h2>
-                <p className="text-slate-500">Rápido y Gratis</p>
+                <h2 className="text-3xl font-bold text-stone-900">Pide tu comida</h2>
+                <p className="text-stone-500">Rápido y Gratis</p>
             </div>
 
             <div className="flex space-x-4 mb-6">
                 <div className="relative flex-grow">
-                    <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-                    <input type="search" placeholder="Buscar comida..." className="w-full bg-white border border-slate-200 rounded-xl py-3 pl-12 pr-4 focus:ring-2 focus:ring-primary focus:border-primary transition" />
+                    <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-stone-400" />
+                    <input type="search" placeholder="Buscar comida..." className="w-full bg-white border border-stone-200 rounded-xl py-3 pl-12 pr-4 focus:ring-2 focus:ring-primary focus:border-primary transition" />
                 </div>
-                <button className="bg-white border border-slate-200 rounded-xl p-3 flex-shrink-0 hover:bg-slate-100 transition">
-                    <AdjustmentsHorizontalIcon className="h-6 w-6 text-slate-700" />
+                <button className="bg-white border border-stone-200 rounded-xl p-3 flex-shrink-0 hover:bg-stone-100 transition">
+                    <AdjustmentsHorizontalIcon className="h-6 w-6 text-stone-700" />
                 </button>
             </div>
             
@@ -237,7 +237,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
                             className={`whitespace-nowrap py-2 px-5 rounded-full font-semibold text-sm transition-colors focus:outline-none border-2 ${
                                 activeCategory === category 
                                     ? 'bg-primary text-white border-primary' 
-                                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100 hover:border-slate-300'
+                                    : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-100 hover:border-stone-300'
                             }`}
                         >
                             {category}
@@ -247,21 +247,21 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {(groupedProducts[activeCategory] || []).map((product) => (
-                    <div key={product.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col group p-4 hover:shadow-xl transition-shadow duration-300">
+                    <div key={product.id} className="bg-white rounded-2xl border border-stone-200 overflow-hidden flex flex-col group p-4 hover:shadow-xl transition-shadow duration-300">
                        <div className="h-48 w-full overflow-hidden rounded-xl mb-4 relative">
                           <img className="w-full h-full object-cover" src={product.imagenUrl} alt={product.nombre} />
                        </div>
                        <div className="flex flex-col justify-between flex-grow">
                           <div className="flex justify-between items-start">
-                             <h3 className="text-lg font-bold text-slate-800 leading-tight">{product.nombre}</h3>
+                             <h3 className="text-lg font-bold text-stone-800 leading-tight">{product.nombre}</h3>
                              <div className="flex items-center space-x-1 flex-shrink-0 ml-2">
                                 <StarIcon className="h-4 w-4 text-yellow-400"/>
-                                <span className="text-sm font-semibold text-slate-600">4.8</span>
+                                <span className="text-sm font-semibold text-stone-600">4.8</span>
                              </div>
                           </div>
-                           <p className="text-sm text-slate-500 mt-1 line-clamp-2">{product.descripcion}</p>
+                           <p className="text-sm text-stone-500 mt-1 line-clamp-2">{product.descripcion}</p>
                            <div className="flex justify-between items-center mt-4">
-                               <p className="text-xl font-extrabold text-slate-800">S/.{product.precio.toFixed(2)}</p>
+                               <p className="text-xl font-extrabold text-stone-800">S/.{product.precio.toFixed(2)}</p>
                                <button onClick={() => handleOpenSauceModal(product)} className="w-10 h-10 flex items-center justify-center bg-primary rounded-full text-white hover:bg-primary-dark transition-colors shadow-lg">
                                    <PlusIcon className="h-6 w-6" />
                                </button>
@@ -285,7 +285,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
             className={`flex items-center justify-center space-x-2 w-full p-3 rounded-xl border-2 transition-all duration-200 ${
                 currentMethod === method
                     ? 'bg-primary/10 border-primary text-primary font-bold shadow-inner'
-                    : 'bg-white border-slate-200 text-slate-600 hover:border-primary/50'
+                    : 'bg-white border-stone-200 text-stone-600 hover:border-primary/50'
             }`}
         >
             {icon}
@@ -294,12 +294,12 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
     );
 
     const renderCheckout = () => (
-         <div className="bg-white rounded-3xl shadow-xl border border-slate-200 p-6 md:p-8 max-w-5xl mx-auto">
-             <h2 className="text-4xl font-bold text-slate-800 mb-8 text-center">Finalizar Pedido</h2>
+         <div className="bg-white rounded-3xl shadow-xl border border-stone-200 p-6 md:p-8 max-w-5xl mx-auto animate-fade-in-scale">
+             <h2 className="text-4xl font-bold text-stone-800 mb-8 text-center">Finalizar Pedido</h2>
              
              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="bg-slate-50 p-6 rounded-2xl">
-                    <h3 className="text-2xl font-bold text-slate-800 mb-4">Resumen del Pedido</h3>
+                <div className="bg-stone-50 p-6 rounded-2xl">
+                    <h3 className="text-2xl font-bold text-stone-800 mb-4">Resumen del Pedido</h3>
                     <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
                         {cart.length > 0 ? cart.map(item => {
                             const unitPriceWithSauces = item.precio + (item.salsas || []).reduce((sum, s) => sum + s.precio, 0);
@@ -308,44 +308,44 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
                                 <div key={item.cartItemId} className="flex items-start">
                                     <img src={item.imagenUrl} alt={item.nombre} className="w-20 h-20 rounded-lg object-cover mr-4"/>
                                     <div className="flex-grow">
-                                        <p className="font-bold text-slate-800 leading-tight">{item.nombre}</p>
+                                        <p className="font-bold text-stone-800 leading-tight">{item.nombre}</p>
                                         {item.salsas && item.salsas.length > 0 && (
                                             <p className="text-xs text-primary/80 italic">
                                                 + {item.salsas.map(s => s.nombre).join(', ')}
                                             </p>
                                         )}
-                                        <p className="text-sm text-slate-500">S/.{unitPriceWithSauces.toFixed(2)} c/u</p>
+                                        <p className="text-sm text-stone-500">S/.{unitPriceWithSauces.toFixed(2)} c/u</p>
                                         <div className="flex items-center gap-2 mt-1">
-                                            <button onClick={() => updateQuantity(item.cartItemId, item.cantidad - 1)} className="bg-slate-200 rounded-full h-7 w-7 flex items-center justify-center font-bold text-slate-600 hover:bg-slate-300">
+                                            <button onClick={() => updateQuantity(item.cartItemId, item.cantidad - 1)} className="bg-stone-200 rounded-full h-7 w-7 flex items-center justify-center font-bold text-stone-600 hover:bg-stone-300">
                                                 {item.cantidad > 1 ? <MinusIcon className="h-4 w-4"/> : <TrashIcon className="h-4 w-4 text-danger" />}
                                             </button>
                                             <span className="font-bold w-6 text-center">{item.cantidad}</span>
-                                            <button onClick={() => updateQuantity(item.cartItemId, item.cantidad + 1)} className="bg-slate-200 rounded-full h-7 w-7 flex items-center justify-center font-bold text-slate-600 hover:bg-slate-300"><PlusIcon className="h-4 w-4"/></button>
+                                            <button onClick={() => updateQuantity(item.cartItemId, item.cantidad + 1)} className="bg-stone-200 rounded-full h-7 w-7 flex items-center justify-center font-bold text-stone-600 hover:bg-stone-300"><PlusIcon className="h-4 w-4"/></button>
                                         </div>
                                     </div>
-                                    <p className="font-bold w-24 text-right text-slate-800 text-lg">S/.{itemTotal.toFixed(2)}</p>
+                                    <p className="font-bold w-24 text-right text-stone-800 text-lg">S/.{itemTotal.toFixed(2)}</p>
                                 </div>
                             )
-                        }) : <p className="text-slate-600">Tu carrito está vacío.</p>}
+                        }) : <p className="text-stone-600">Tu carrito está vacío.</p>}
                     </div>
-                    <div className="border-t border-slate-200 mt-4 pt-4 flex justify-between items-center text-slate-800">
+                    <div className="border-t border-stone-200 mt-4 pt-4 flex justify-between items-center text-stone-800">
                         <span className="text-xl font-bold">TOTAL</span>
                         <span className="text-2xl font-bold text-primary">S/.{total.toFixed(2)}</span>
                     </div>
                 </div>
 
-                <div className="bg-slate-50 p-6 rounded-2xl flex flex-col">
-                    <h3 className="text-2xl font-bold text-slate-800 mb-4">Tus Datos y Pago</h3>
+                <div className="bg-stone-50 p-6 rounded-2xl flex flex-col">
+                    <h3 className="text-2xl font-bold text-stone-800 mb-4">Tus Datos y Pago</h3>
                      <p className="bg-primary/10 text-primary font-semibold p-3 rounded-lg mb-4 text-center">
                         Pedido para: <span className="font-bold">{orderType === 'delivery' ? 'Delivery' : 'Retiro en Tienda'}</span>
                      </p>
                     <div className="space-y-4">
                         <div>
-                            <input type="text" placeholder="Nombre (para llamar tu pedido)" value={customerInfo.nombre} onChange={e => setCustomerInfo({...customerInfo, nombre: e.target.value})} className={`bg-white border ${formErrors.nombre ? 'border-danger' : 'border-slate-200'} rounded-lg p-3 w-full text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-primary focus:border-primary transition`} />
+                            <input type="text" placeholder="Nombre (para llamar tu pedido)" value={customerInfo.nombre} onChange={e => setCustomerInfo({...customerInfo, nombre: e.target.value})} className={`bg-white border ${formErrors.nombre ? 'border-danger' : 'border-stone-200'} rounded-lg p-3 w-full text-stone-800 placeholder-stone-400 focus:ring-2 focus:ring-primary focus:border-primary transition`} />
                             {formErrors.nombre && <p className="text-danger text-xs mt-1">{formErrors.nombre}</p>}
                         </div>
                         <div>
-                            <input type="tel" placeholder="Teléfono de Contacto (9 dígitos)" value={customerInfo.telefono} onChange={e => setCustomerInfo({...customerInfo, telefono: e.target.value})} className={`bg-white border ${formErrors.telefono ? 'border-danger' : 'border-slate-200'} rounded-lg p-3 w-full text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-primary focus:border-primary transition`} />
+                            <input type="tel" placeholder="Teléfono de Contacto (9 dígitos)" value={customerInfo.telefono} onChange={e => setCustomerInfo({...customerInfo, telefono: e.target.value})} className={`bg-white border ${formErrors.telefono ? 'border-danger' : 'border-stone-200'} rounded-lg p-3 w-full text-stone-800 placeholder-stone-400 focus:ring-2 focus:ring-primary focus:border-primary transition`} />
                             {formErrors.telefono && <p className="text-danger text-xs mt-1">{formErrors.telefono}</p>}
                         </div>
                         {orderType === 'delivery' && (
@@ -356,7 +356,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
                                         placeholder="Dirección de Entrega" 
                                         value={customerInfo.direccion || ''} 
                                         onChange={e => setCustomerInfo({...customerInfo, direccion: e.target.value})} 
-                                        className={`bg-white border ${formErrors.direccion ? 'border-danger' : 'border-slate-200'} rounded-lg p-3 w-full text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-primary focus:border-primary transition pr-12`} 
+                                        className={`bg-white border ${formErrors.direccion ? 'border-danger' : 'border-stone-200'} rounded-lg p-3 w-full text-stone-800 placeholder-stone-400 focus:ring-2 focus:ring-primary focus:border-primary transition pr-12`} 
                                     />
                                     <button
                                         type="button"
@@ -379,47 +379,47 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
                             </div>
                         )}
                         <div>
-                            <textarea placeholder="Notas adicionales para tu pedido (ej. sin ají, tocar intercom...)" value={orderNotes} onChange={e => setOrderNotes(e.target.value)} className="bg-white border border-slate-200 rounded-lg p-3 w-full text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-primary focus:border-primary transition" rows={2} />
+                            <textarea placeholder="Notas adicionales para tu pedido (ej. sin ají, tocar intercom...)" value={orderNotes} onChange={e => setOrderNotes(e.target.value)} className="bg-white border border-stone-200 rounded-lg p-3 w-full text-stone-800 placeholder-stone-400 focus:ring-2 focus:ring-primary focus:border-primary transition" rows={2} />
                         </div>
                     </div>
                     <div className="mt-6">
-                        <h3 className="text-xl font-bold text-slate-800 mb-3">Método de Pago</h3>
+                        <h3 className="text-xl font-bold text-stone-800 mb-3">Método de Pago</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <PaymentButton method="efectivo" label="Efectivo" icon={<CashIcon className="h-5 w-5"/>} currentMethod={paymentMethod} setMethod={setPaymentMethod} />
                             <PaymentButton method="tarjeta" label="Tarjeta" icon={<CreditCardIcon className="h-5 w-5"/>} currentMethod={paymentMethod} setMethod={setPaymentMethod} />
                             <PaymentButton method="yape/plin" label="Yape/Plin" icon={<DevicePhoneMobileIcon className="h-5 w-5"/>} currentMethod={paymentMethod} setMethod={setPaymentMethod} />
                         </div>
-                         <div className="mt-3 p-3 bg-white/60 rounded-lg text-sm border border-slate-200">
+                         <div className="mt-3 p-3 bg-white/60 rounded-lg text-sm border border-stone-200">
                            {orderType === 'delivery' && (
                                 <>
                                     {paymentMethod === 'efectivo' && (
                                         <div className="space-y-3">
-                                            <label className="font-bold block text-slate-700">¿Con cuánto pagarás?</label>
-                                            <label className="flex items-center space-x-2 bg-white/70 p-3 rounded-lg border border-slate-300 cursor-pointer">
-                                                <input type="checkbox" checked={isExactCash} onChange={(e) => setIsExactCash(e.target.checked)} className="h-5 w-5 rounded border-slate-300 text-primary focus:ring-primary" />
+                                            <label className="font-bold block text-stone-700">¿Con cuánto pagarás?</label>
+                                            <label className="flex items-center space-x-2 bg-white/70 p-3 rounded-lg border border-stone-300 cursor-pointer">
+                                                <input type="checkbox" checked={isExactCash} onChange={(e) => setIsExactCash(e.target.checked)} className="h-5 w-5 rounded border-stone-300 text-primary focus:ring-primary" />
                                                 <span>Pagaré con el monto exacto</span>
                                             </label>
                                             {!isExactCash && (
-                                                <input id="cash-amount" type="number" value={cashPaymentAmount} onChange={e => setCashPaymentAmount(e.target.value)} placeholder="Ej: 50" className={`bg-white border ${formErrors.pagoConEfectivo ? 'border-danger' : 'border-slate-200'} rounded-lg p-2 w-full text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-primary focus:border-primary transition`} />
+                                                <input id="cash-amount" type="number" value={cashPaymentAmount} onChange={e => setCashPaymentAmount(e.target.value)} placeholder="Ej: 50" className={`bg-white border ${formErrors.pagoConEfectivo ? 'border-danger' : 'border-stone-200'} rounded-lg p-2 w-full text-stone-800 placeholder-stone-400 focus:ring-2 focus:ring-primary focus:border-primary transition`} />
                                             )}
                                             {formErrors.pagoConEfectivo && <p className="text-danger text-xs mt-1">{formErrors.pagoConEfectivo}</p>}
                                         </div>
                                     )}
                                     {paymentMethod === 'tarjeta' && (
-                                        <p className="font-semibold text-center text-slate-700">Llevaremos un POS para que puedas efectuar el pago.</p>
+                                        <p className="font-semibold text-center text-stone-700">Llevaremos un POS para que puedas efectuar el pago.</p>
                                     )}
                                 </>
                            )}
                            {orderType === 'retiro' && (
                                 <>
                                     {paymentMethod === 'efectivo' && (
-                                        <div className="text-center font-semibold space-y-2 text-slate-700">
+                                        <div className="text-center font-semibold space-y-2 text-stone-700">
                                             <p>Tu pedido será confirmado por nuestro personal en breve.</p>
                                             <p className="font-bold text-amber-700 bg-amber-100 p-2 rounded-md">Luego, acércate a caja para pagar y recoger tu pedido.</p>
                                         </div>
                                     )}
                                     {paymentMethod === 'tarjeta' && (
-                                        <div className="text-center font-semibold space-y-2 text-slate-700">
+                                        <div className="text-center font-semibold space-y-2 text-stone-700">
                                             <p>Tu pedido será confirmado por nuestro personal en breve.</p>
                                             <p className="font-bold text-amber-700 bg-amber-100 p-2 rounded-md">Luego, acércate a caja para pagar y recoger tu pedido.</p>
                                         </div>
@@ -428,18 +428,18 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
                            )}
                            {paymentMethod === 'yape/plin' && (
                                 <div className="text-center">
-                                     {orderType === 'retiro' && <p className="font-bold mb-2 text-slate-700">¡Paga ahora y tu pedido pasará directo a cocina!</p>}
-                                    <p className="font-bold mb-2 text-slate-700">Escanea para pagar:</p>
+                                     {orderType === 'retiro' && <p className="font-bold mb-2 text-stone-700">¡Paga ahora y tu pedido pasará directo a cocina!</p>}
+                                    <p className="font-bold mb-2 text-stone-700">Escanea para pagar:</p>
                                     <img src={yapePlinInfo.qrUrl} alt="QR Code" className="mx-auto rounded-lg w-32 h-32 mb-2"/>
-                                    <p className="text-slate-600">A nombre de: <span className="font-semibold text-slate-800">{yapePlinInfo.nombre}</span></p>
-                                    <p className="text-slate-600">Teléfono: <span className="font-semibold text-slate-800">{yapePlinInfo.telefono}</span></p>
+                                    <p className="text-stone-600">A nombre de: <span className="font-semibold text-stone-800">{yapePlinInfo.nombre}</span></p>
+                                    <p className="text-stone-600">Teléfono: <span className="font-semibold text-stone-800">{yapePlinInfo.telefono}</span></p>
                                 </div>
                             )}
                         </div>
                     </div>
                     <div className="mt-auto pt-6 grid grid-cols-2 gap-4">
-                        <button onClick={() => setStage('catalog')} className="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3 px-6 rounded-lg transition-colors">Volver</button>
-                        <button onClick={handlePlaceOrder} disabled={cart.length === 0} className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3 px-6 rounded-lg disabled:bg-slate-400 disabled:cursor-not-allowed transition-colors shadow-lg">Confirmar Pedido</button>
+                        <button onClick={() => setStage('catalog')} className="w-full bg-stone-200 hover:bg-stone-300 text-stone-700 font-bold py-3 px-6 rounded-lg transition-colors">Volver</button>
+                        <button onClick={handlePlaceOrder} disabled={cart.length === 0} className="w-full bg-gradient-to-r from-orange-400 to-primary text-white font-bold py-3 px-6 rounded-lg disabled:bg-stone-400 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-primary/40 hover:-translate-y-0.5">Confirmar Pedido</button>
                     </div>
                 </div>
              </div>
@@ -467,11 +467,11 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
 
 
         return (
-            <div className="bg-white rounded-3xl shadow-xl border border-slate-200 p-12 max-w-2xl mx-auto text-center">
+            <div className="bg-white rounded-3xl shadow-xl border border-stone-200 p-12 max-w-2xl mx-auto text-center animate-fade-in-scale">
                 <CheckCircleIcon className="h-20 w-20 text-primary mx-auto mb-6" />
-                <h2 className="text-4xl font-bold text-slate-800 mb-3">{titleMessage}</h2>
-                <p className="text-slate-600 text-lg mb-6">Gracias por tu compra. Tu número de referencia es <span className="font-bold text-primary">{newOrderId}</span>.</p>
-                <p className="text-slate-600">{confirmationMessage}</p>
+                <h2 className="text-4xl font-bold text-stone-800 mb-3">{titleMessage}</h2>
+                <p className="text-stone-600 text-lg mb-6">Gracias por tu compra. Tu número de referencia es <span className="font-bold text-primary">{newOrderId}</span>.</p>
+                <p className="text-stone-600">{confirmationMessage}</p>
                 <button onClick={() => setStage('selection')} className="mt-8 bg-primary hover:bg-primary-dark text-white font-bold py-3 px-8 rounded-lg transition-colors">Hacer otro Pedido</button>
             </div>
         );
@@ -480,19 +480,19 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
     const isCatalogStage = stage === 'catalog' || stage === 'checkout';
 
     return (
-        <div className="min-h-screen flex flex-col font-sans bg-slate-50 text-slate-800">
+        <div className="min-h-screen flex flex-col font-sans bg-stone-50 text-stone-800">
             {isSauceModalOpen && <SauceModal product={currentProduct} onClose={handleCloseSauceModal} onConfirm={handleConfirmSauces} />}
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow flex flex-col">
                 <header className={`flex justify-between items-center ${isCatalogStage ? 'mb-6' : ''}`}>
                      { isCatalogStage ? (
                         <div>
-                            <h1 className="text-2xl font-bold text-slate-900" onClick={() => setStage('selection')}>UCHU<span className="text-primary">51</span></h1>
+                            <h1 className="text-2xl font-bold text-stone-900" onClick={() => setStage('selection')}>UCHU<span className="text-primary">51</span></h1>
                         </div>
                      ) : (
                         <div/>
                      )}
                      {isCatalogStage && (
-                        <button onClick={() => cart.length > 0 ? setStage('checkout') : null} className="relative bg-white text-slate-800 rounded-full p-3 shadow-md transition-transform transform hover:scale-110 border border-slate-200">
+                        <button onClick={() => cart.length > 0 ? setStage('checkout') : null} className="relative bg-white text-stone-800 rounded-full p-3 shadow-md transition-transform transform hover:scale-110 border border-stone-200">
                             <ShoppingBagIcon className="h-6 w-6" />
                             {cartItemCount > 0 && <span className="absolute -top-1 -right-1 bg-primary text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">{cartItemCount}</span>}
                         </button>
@@ -505,8 +505,8 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
                     {stage === 'confirmation' && renderConfirmation()}
                 </main>
             </div>
-             <footer className="text-center py-4 border-t border-slate-200">
-                <button onClick={onNavigateToAdmin} className="text-sm text-slate-500 hover:text-primary hover:underline transition-colors">
+             <footer className="text-center py-4 border-t border-stone-200">
+                <button onClick={onNavigateToAdmin} className="text-sm text-stone-500 hover:text-primary hover:underline transition-colors">
                     Acceso Admin
                 </button>
             </footer>

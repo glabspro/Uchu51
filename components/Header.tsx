@@ -21,7 +21,7 @@ const NavButton: React.FC<{
         className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
             isActive
                 ? 'bg-primary text-white shadow-md'
-                : 'text-slate-300 hover:bg-slate-700 hover:text-white'
+                : 'text-stone-500 hover:bg-stone-100 hover:text-stone-800'
         }`}
     >
         {icon}
@@ -48,15 +48,15 @@ const Header: React.FC<HeaderProps> = ({
     ];
     
     return (
-        <header className="bg-slate-800 text-white shadow-lg sticky top-0 z-50">
+        <header className="bg-white/80 backdrop-blur-md text-stone-800 shadow-sm border-b border-stone-200 sticky top-0 z-50">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16">
                     <div className="flex items-center space-x-6">
-                        <h1 className="text-xl font-extrabold text-white flex items-center space-x-2">
+                        <h1 className="text-xl font-extrabold text-stone-800 flex items-center space-x-2">
                             <FireIcon className="h-6 w-6 text-primary" />
-                            <span>UCHU51 <span className="font-normal text-white/80">Admin</span></span>
+                            <span>UCHU51 <span className="font-normal text-stone-500">Admin</span></span>
                         </h1>
-                        <nav className="hidden md:flex items-center space-x-1 bg-slate-900/50 p-1 rounded-xl">
+                        <nav className="hidden md:flex items-center space-x-1 bg-stone-100/50 p-1 rounded-xl">
                            {navItems.map(item => (
                                 <NavButton 
                                     key={item.id}
@@ -74,7 +74,7 @@ const Header: React.FC<HeaderProps> = ({
                                 id="turno"
                                 value={currentTurno}
                                 onChange={(e) => onTurnoChange(e.target.value as Turno)}
-                                className="bg-slate-700 text-white border-slate-600 border rounded-md py-2 pl-3 pr-8 appearance-none focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                                className="bg-stone-100 text-stone-700 border-stone-300 border rounded-md py-2 pl-3 pr-8 appearance-none focus:outline-none focus:ring-2 focus:ring-primary text-sm font-semibold"
                             >
                                 <option value="mañana">Mañana</option>
                                 <option value="tarde">Tarde</option>
@@ -83,7 +83,7 @@ const Header: React.FC<HeaderProps> = ({
                         </div>
                         <button
                             onClick={onLogout}
-                            className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 text-slate-300 hover:bg-slate-700 hover:text-white"
+                            className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 text-stone-500 hover:bg-stone-100 hover:text-stone-800"
                         >
                             <LogoutIcon className="h-5 w-5" />
                             <span className="hidden md:inline">Salir</span>
