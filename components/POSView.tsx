@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Pedido, Producto, ProductoPedido, Mesa, Salsa } from '../types';
-import { ChevronLeftIcon, TrashIcon, MinusIcon, PlusIcon } from './icons';
+import { ChevronLeftIcon, TrashIcon, MinusIcon, PlusIcon, CheckCircleIcon } from './icons';
 import SauceModal from './SauceModal';
 
 interface POSViewProps {
@@ -76,7 +76,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
 
         let updatedProductos;
         if (existingItemIndex > -1) {
-            updatedProductos = productos.map((item, index) => index === existingItemIndex ? { ...item, cantidad: item.cantidad + 1 } : item);
+            updatedProductos = productos.map((item, index) => index === existingItemIndex ? { ...item, cantidad: item.cantidad + 1, sentToKitchen: false } : item);
         } else {
             const newItem: ProductoPedido = {
                 id: productForSauces.id,
@@ -85,6 +85,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
                 precio: productForSauces.precio,
                 imagenUrl: productForSauces.imagenUrl,
                 salsas: salsas,
+                sentToKitchen: false,
             };
             updatedProductos = [...productos, newItem];
         }
@@ -95,8 +96,26 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
     };
 
     const handleProductClick = (product: Producto) => {
-        setProductForSauces(product);
-        setIsSauceModalOpen(true);
+        if (['Bebidas', 'Postres'].includes(product.categoria)) {
+            const newItem: ProductoPedido = {
+                id: product.id,
+                nombre: product.nombre,
+                cantidad: 1,
+                precio: product.precio,
+                imagenUrl: product.imagenUrl,
+                salsas: [],
+                sentToKitchen: false,
+            };
+            const existingItem = (currentOrder?.productos || []).find(p => p.id === newItem.id && (!p.salsas || p.salsas.length === 0));
+            if (existingItem) {
+                handleQuantityChange(existingItem, 1);
+            } else {
+                updateCurrentOrder([...(currentOrder?.productos || []), newItem]);
+            }
+        } else {
+            setProductForSauces(product);
+            setIsSauceModalOpen(true);
+        }
     };
 
     const handleQuantityChange = (itemToUpdate: ProductoPedido, change: number) => {
@@ -107,14 +126,19 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
         if (newQuantity <= 0) {
             updatedProductos = currentOrder.productos.filter(p => p !== itemToUpdate);
         } else {
-            updatedProductos = currentOrder.productos.map(p => p === itemToUpdate ? { ...p, cantidad: newQuantity } : p);
+            updatedProductos = currentOrder.productos.map(p => p === itemToUpdate ? { ...p, cantidad: newQuantity, sentToKitchen: false } : p);
         }
         updateCurrentOrder(updatedProductos);
     };
     
     const handleSendToKitchen = () => {
         if(currentOrder && currentOrder.productos.length > 0) {
-            const orderToSend = { ...currentOrder, estado: 'en preparación' as const };
+            const productosEnviados = currentOrder.productos.map(p => ({...p, sentToKitchen: true}));
+            const orderToSend = { 
+                ...currentOrder, 
+                productos: productosEnviados,
+                estado: 'en preparación' as const 
+            };
             onSaveOrder(orderToSend);
         }
     };
@@ -153,7 +177,10 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
                                 <div key={index} onClick={() => setSelectedItem(item)} className={`p-3 rounded-lg cursor-pointer mb-2 relative ${selectedItem === item ? 'bg-primary/10' : 'hover:bg-background dark:hover:bg-slate-700/50'}`}>
                                     <div className="flex justify-between items-start">
                                         <div className="flex-grow">
-                                            <p className="font-semibold text-text-primary dark:text-slate-200 pr-20">{item.nombre}</p>
+                                            <div className="flex items-center">
+                                                <p className="font-semibold text-text-primary dark:text-slate-200 pr-20">{item.nombre}</p>
+                                                {item.sentToKitchen && <span className="text-xs font-bold bg-success/20 text-success dark:bg-green-500/20 dark:text-green-300 rounded-full px-2 py-0.5">Enviado</span>}
+                                            </div>
                                              {item.salsas && item.salsas.length > 0 && (
                                                 <p className="text-xs text-sky-600 dark:text-sky-400 italic mt-1">
                                                     + {item.salsas.map(s => s.nombre).join(', ')}
@@ -185,28 +212,26 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
                         </div>
                         <div className="space-y-3">
                              {isSentToKitchen ? (
-                                <>
-                                 <button
-                                    onClick={handleSendToKitchen}
-                                    className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl text-lg transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:-translate-y-0.5 disabled:bg-gray-400 dark:disabled:bg-slate-700 disabled:shadow-none disabled:translate-y-0 disabled:cursor-not-allowed"
-                                    disabled={!currentOrder || currentOrder.productos.length === 0}
-                                >
-                                    Adicionar y Enviar
-                                </button>
-                                <div className="grid grid-cols-1 gap-3">
+                                <div className="grid grid-cols-2 gap-3">
                                     <button
                                         onClick={() => onGeneratePreBill(currentOrder!)}
-                                        className="w-full bg-text-primary dark:bg-slate-600 text-white font-bold py-3 rounded-xl text-base hover:bg-text-primary/90 dark:hover:bg-slate-500 transition-all duration-300 shadow-lg hover:shadow-text-primary/20 hover:-translate-y-0.5"
+                                        className="w-full bg-text-primary/80 dark:bg-slate-600 text-white font-bold py-3 rounded-xl text-base hover:bg-text-primary/90 dark:hover:bg-slate-500 transition-all duration-300 shadow-lg hover:shadow-text-primary/20 hover:-translate-y-0.5"
                                         aria-label="Ver o imprimir la pre-cuenta del pedido"
                                     >
                                         Ver Cuenta
                                     </button>
+                                    <button
+                                        onClick={handleSendToKitchen}
+                                        className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl text-base transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:-translate-y-0.5 disabled:bg-gray-400 dark:disabled:bg-slate-700 disabled:shadow-none disabled:translate-y-0 disabled:cursor-not-allowed"
+                                        disabled={!currentOrder || currentOrder.productos.every(p => p.sentToKitchen)}
+                                    >
+                                        Adicionar y Enviar
+                                    </button>
                                 </div>
-                                </>
                              ) : (
                                 <button
                                     onClick={handleSendToKitchen}
-                                    className="w-full bg-text-primary dark:bg-slate-600 text-white font-bold py-4 rounded-xl text-xl transition-all duration-300 shadow-lg hover:shadow-text-primary/30 hover:-translate-y-0.5 disabled:bg-gray-400 dark:disabled:bg-slate-700 disabled:shadow-none disabled:translate-y-0 disabled:cursor-not-allowed"
+                                    className="w-full bg-[#44281D] text-white font-bold py-4 rounded-xl text-xl transition-all duration-300 shadow-lg hover:shadow-text-primary/30 hover:-translate-y-0.5 disabled:bg-gray-400 dark:disabled:bg-slate-700 disabled:shadow-none disabled:translate-y-0 disabled:cursor-not-allowed border-2 border-blue-500"
                                     disabled={!currentOrder || currentOrder.productos.length === 0}
                                 >
                                     Enviar a Cocina

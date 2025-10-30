@@ -29,6 +29,7 @@ export interface ProductoPedido {
     especificaciones?: string;
     imagenUrl?: string;
     salsas?: Salsa[];
+    sentToKitchen?: boolean;
 }
 
 export interface Producto {

@@ -123,6 +123,29 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
         handleCloseSauceModal();
     };
     
+    const handleProductClick = (product: Producto) => {
+        if (['Bebidas', 'Postres'].includes(product.categoria)) {
+            // Add directly to cart without sauces
+            const existingItem = cart.find(item => item.id === product.id && (!item.salsas || item.salsas.length === 0));
+            if (existingItem) {
+                updateQuantity(existingItem.cartItemId, existingItem.cantidad + 1);
+            } else {
+                const newItem: CartItem = {
+                    id: product.id,
+                    cartItemId: Date.now(),
+                    nombre: product.nombre,
+                    cantidad: 1,
+                    precio: product.precio,
+                    imagenUrl: product.imagenUrl,
+                    salsas: [],
+                };
+                setCart(currentCart => [...currentCart, newItem]);
+            }
+        } else {
+            handleOpenSauceModal(product);
+        }
+    };
+
     const validateForm = (): boolean => {
         const errors: FormErrors = {};
         if (!customerInfo.nombre.trim()) errors.nombre = 'El nombre es obligatorio.';
@@ -289,7 +312,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
                             <p className="text-sm text-text-secondary dark:text-slate-400 mt-1 line-clamp-2 mb-2">{product.descripcion}</p>
                             <div className="flex justify-between items-center mt-2">
                                 <p className="text-xl font-heading font-extrabold text-text-primary dark:text-white">S/.{product.precio.toFixed(2)}</p>
-                                <button onClick={() => handleOpenSauceModal(product)} className="w-9 h-9 flex items-center justify-center bg-primary rounded-full text-white hover:bg-primary-dark transition-all duration-300 shadow-lg hover:shadow-primary/30 transform hover:scale-110">
+                                <button onClick={() => handleProductClick(product)} className="w-9 h-9 flex items-center justify-center bg-primary rounded-full text-white hover:bg-primary-dark transition-all duration-300 shadow-lg hover:shadow-primary/30 transform hover:scale-110">
                                     <PlusIcon className="h-5 w-5" />
                                 </button>
                             </div>
