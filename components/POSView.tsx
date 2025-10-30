@@ -17,23 +17,21 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
     const [selectedItem, setSelectedItem] = useState<ProductoPedido | null>(null);
     const [currentOrder, setCurrentOrder] = useState<Pedido | null>(order);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showExitConfirm, setShowExitConfirm] = useState(false);
 
     const [isSauceModalOpen, setIsSauceModalOpen] = useState(false);
     const [productForSauces, setProductForSauces] = useState<Producto | null>(null);
 
     useEffect(() => {
         setCurrentOrder(order);
+        // Cuando el componente recibe una nueva prop 'order' (después de guardar),
+        // reseteamos el estado 'isSubmitting' para volver a habilitar los botones.
+        setIsSubmitting(false);
     }, [order]);
-
-    useEffect(() => {
-        if (isSubmitting && order && currentOrder && order.id === currentOrder.id) {
-            setIsSubmitting(false);
-        }
-    }, [order, isSubmitting, currentOrder]);
 
     const hasUnsavedChanges = useMemo(() => {
         if (!currentOrder) return false;
-        // An item is considered an "unsaved change" if it hasn't been sent to the kitchen yet.
+        // Un cambio no guardado es cualquier producto que no ha sido enviado a cocina.
         return currentOrder.productos.some(p => !p.sentToKitchen);
     }, [currentOrder]);
     
@@ -150,15 +148,29 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
         setIsSubmitting(true);
 
         const productosEnviados = currentOrder.productos.map(p => ({...p, sentToKitchen: true}));
+        const newStatus = currentOrder.id ? 'en preparación' : 'nuevo';
+        
         const orderToSend: Pedido = { 
             ...currentOrder, 
             productos: productosEnviados,
-            estado: currentOrder.id ? 'en preparación' : 'nuevo', // Keep status if updating, set to new if creating
-            historial: currentOrder.id ? currentOrder.historial : [{ estado: 'nuevo', fecha: new Date().toISOString(), usuario: 'admin' }],
+            estado: newStatus,
+            historial: [
+                ...currentOrder.historial,
+                { estado: newStatus, fecha: new Date().toISOString(), usuario: 'admin' }
+            ],
         };
         
         onSaveOrder(orderToSend, mesa.numero);
     };
+    
+    const handleExitClick = () => {
+        if (hasUnsavedChanges) {
+            setShowExitConfirm(true);
+        } else {
+            onExit();
+        }
+    };
+
 
     const isSentToKitchen = currentOrder?.id && currentOrder?.estado !== 'nuevo';
 
@@ -167,9 +179,21 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
             {isSauceModalOpen && (
                 <SauceModal product={productForSauces} onClose={() => setIsSauceModalOpen(false)} onConfirm={handleAddToCartWithSauces} />
             )}
+            {showExitConfirm && (
+                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[101] p-4">
+                    <div className="bg-surface dark:bg-slate-800 rounded-2xl shadow-xl p-6 max-w-sm w-full text-center animate-fade-in-scale">
+                        <h3 className="text-xl font-heading font-bold text-text-primary dark:text-white">Cambios sin guardar</h3>
+                        <p className="text-text-secondary dark:text-slate-400 my-3">Tienes items sin enviar a cocina. Si sales, se perderán. ¿Deseas salir de todas formas?</p>
+                        <div className="grid grid-cols-2 gap-3 mt-6">
+                            <button onClick={() => setShowExitConfirm(false)} className="bg-text-primary/10 dark:bg-slate-700 hover:bg-text-primary/20 dark:hover:bg-slate-600 text-text-primary dark:text-slate-200 font-bold py-2 px-4 rounded-lg transition-colors active:scale-95">Cancelar</button>
+                            <button onClick={onExit} className="bg-danger hover:brightness-110 text-white font-bold py-2 px-4 rounded-lg transition-all active:scale-95">Salir sin guardar</button>
+                        </div>
+                    </div>
+                </div>
+            )}
             <header className="flex-shrink-0 bg-surface dark:bg-slate-800 shadow-md z-10">
                 <div className="flex items-center justify-between p-3 border-b border-text-primary/5 dark:border-slate-700">
-                    <button onClick={onExit} className="flex items-center font-semibold text-text-secondary dark:text-slate-400 hover:text-primary dark:hover:text-orange-400 transition-colors">
+                    <button onClick={handleExitClick} disabled={hasUnsavedChanges} className="flex items-center font-semibold text-text-secondary dark:text-slate-400 hover:text-primary dark:hover:text-orange-400 transition-colors disabled:text-text-secondary/50 dark:disabled:text-slate-600 disabled:cursor-not-allowed">
                         <ChevronLeftIcon className="h-6 w-6 mr-1" />
                         VOLVER AL SALÓN
                     </button>
