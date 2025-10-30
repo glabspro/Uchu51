@@ -21,7 +21,7 @@ const PaymentMethodButton: React.FC<{
         className={`flex items-center justify-center space-x-2 w-full p-3 rounded-xl border-2 transition-all duration-200 ${
             currentMethod === method
                 ? 'bg-primary/10 border-primary text-primary font-bold shadow-inner'
-                : 'bg-surface border-text-primary/10 text-text-primary hover:border-primary/50'
+                : 'bg-surface dark:bg-slate-700 border-text-primary/10 dark:border-slate-600 text-text-primary dark:text-slate-200 hover:border-primary/50 dark:hover:border-primary/80'
         }`}
     >
         {icon}
@@ -55,20 +55,20 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ order, onClose, onConfirmPa
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-[100] p-4 font-sans" onClick={onClose}>
-            <div className="bg-surface rounded-2xl shadow-xl w-full max-w-lg animate-fade-in-scale" onClick={e => e.stopPropagation()}>
-                <div className="p-6 border-b border-text-primary/10 text-center">
-                    <h2 className="text-2xl font-heading font-bold text-text-primary">Registrar Pago</h2>
-                    <p className="text-text-secondary">Pedido {order.id} - {order.tipo === 'local' ? `Mesa ${order.cliente.mesa}` : order.cliente.nombre}</p>
+            <div className="bg-surface dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-lg animate-fade-in-scale" onClick={e => e.stopPropagation()}>
+                <div className="p-6 border-b border-text-primary/10 dark:border-slate-700 text-center">
+                    <h2 className="text-2xl font-heading font-bold text-text-primary dark:text-slate-100">Registrar Pago</h2>
+                    <p className="text-text-secondary dark:text-slate-400">Pedido {order.id} - {order.tipo === 'local' ? `Mesa ${order.cliente.mesa}` : order.cliente.nombre}</p>
                 </div>
 
                 <div className="p-6">
-                    <div className="bg-background border border-text-primary/5 p-4 rounded-xl text-center mb-6">
-                        <p className="text-lg text-text-secondary">Total a Pagar</p>
-                        <p className="text-5xl font-heading font-extrabold text-text-primary font-mono">S/.{order.total.toFixed(2)}</p>
+                    <div className="bg-background dark:bg-slate-900/50 border border-text-primary/5 dark:border-slate-700 p-4 rounded-xl text-center mb-6">
+                        <p className="text-lg text-text-secondary dark:text-slate-400">Total a Pagar</p>
+                        <p className="text-5xl font-heading font-extrabold text-text-primary dark:text-white font-mono">S/.{order.total.toFixed(2)}</p>
                     </div>
 
                     <div className="mb-6">
-                        <h3 className="text-lg font-semibold text-text-secondary mb-3">Método de Pago</h3>
+                        <h3 className="text-lg font-semibold text-text-secondary dark:text-slate-300 mb-3">Método de Pago</h3>
                         <div className="grid grid-cols-3 gap-3">
                             <PaymentMethodButton method="efectivo" label="Efectivo" icon={<CashIcon className="h-5 w-5"/>} currentMethod={selectedMethod} setMethod={setSelectedMethod} />
                             <PaymentMethodButton method="tarjeta" label="Tarjeta" icon={<CreditCardIcon className="h-5 w-5"/>} currentMethod={selectedMethod} setMethod={setSelectedMethod} />
@@ -79,39 +79,39 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ order, onClose, onConfirmPa
                     {selectedMethod === 'efectivo' && (
                         <div className="space-y-4 animate-fade-in-right">
                              <div>
-                                <label htmlFor="amount-received" className="block text-sm font-bold text-text-primary mb-1">Monto Recibido</label>
+                                <label htmlFor="amount-received" className="block text-sm font-bold text-text-primary dark:text-slate-200 mb-1">Monto Recibido</label>
                                 <input
                                     id="amount-received"
                                     type="number"
                                     value={amountReceived}
                                     onChange={(e) => setAmountReceived(e.target.value)}
                                     placeholder="Ej: 50.00"
-                                    className="bg-background border border-text-primary/10 rounded-lg p-3 w-full text-text-primary placeholder-text-secondary/70 focus:ring-2 focus:ring-primary focus:border-primary transition text-xl font-mono"
+                                    className="bg-background dark:bg-slate-700 border border-text-primary/10 dark:border-slate-600 rounded-lg p-3 w-full text-text-primary dark:text-slate-100 placeholder-text-secondary/70 dark:placeholder-slate-400 focus:ring-2 focus:ring-primary focus:border-primary transition text-xl font-mono"
                                 />
                             </div>
                             <div className="flex gap-2">
                                 {quickCashOptions.map(amount => (
-                                     <button key={amount} onClick={() => setAmountReceived(amount.toFixed(2))} className="flex-1 bg-text-primary/10 text-text-primary font-semibold py-2 rounded-lg hover:bg-text-primary/20 transition-colors">
+                                     <button key={amount} onClick={() => setAmountReceived(amount.toFixed(2))} className="flex-1 bg-text-primary/10 dark:bg-slate-700 text-text-primary dark:text-slate-200 font-semibold py-2 rounded-lg hover:bg-text-primary/20 dark:hover:bg-slate-600 transition-colors">
                                         S/. {amount.toFixed(2)}
                                      </button>
                                 ))}
                             </div>
-                            <div className="bg-blue-500/10 p-4 rounded-xl text-center">
-                                <p className="text-lg text-blue-800">Vuelto</p>
-                                <p className="text-4xl font-extrabold text-blue-900 font-mono">S/.{vuelto.toFixed(2)}</p>
+                            <div className="bg-blue-500/10 dark:bg-blue-500/20 p-4 rounded-xl text-center">
+                                <p className="text-lg text-blue-800 dark:text-blue-300">Vuelto</p>
+                                <p className="text-4xl font-extrabold text-blue-900 dark:text-blue-200 font-mono">S/.{vuelto.toFixed(2)}</p>
                             </div>
                         </div>
                     )}
                 </div>
 
-                <div className="p-6 border-t mt-auto bg-background rounded-b-2xl grid grid-cols-2 gap-4">
-                    <button onClick={onClose} className="w-full bg-text-primary/10 hover:bg-text-primary/20 text-text-primary font-bold py-3 px-6 rounded-xl transition-colors">
+                <div className="p-6 border-t dark:border-slate-700 mt-auto bg-background dark:bg-slate-900/50 rounded-b-2xl grid grid-cols-2 gap-4">
+                    <button onClick={onClose} className="w-full bg-text-primary/10 dark:bg-slate-700 hover:bg-text-primary/20 dark:hover:bg-slate-600 text-text-primary dark:text-slate-200 font-bold py-3 px-6 rounded-xl transition-colors">
                         Cancelar
                     </button>
                     <button
                         onClick={handleConfirm}
                         disabled={isConfirmDisabled}
-                        className="w-full bg-text-primary hover:bg-text-primary/90 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg hover:shadow-text-primary/20 hover:-translate-y-0.5 disabled:bg-gray-400 disabled:shadow-none disabled:translate-y-0"
+                        className="w-full bg-text-primary dark:bg-slate-600 hover:bg-text-primary/90 dark:hover:bg-slate-500 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg hover:shadow-text-primary/20 hover:-translate-y-0.5 disabled:bg-gray-400 dark:disabled:bg-slate-600/50 dark:disabled:text-slate-400 disabled:shadow-none disabled:translate-y-0"
                     >
                         Confirmar Pago
                     </button>

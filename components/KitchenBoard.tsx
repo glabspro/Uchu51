@@ -19,13 +19,13 @@ const KitchenColumn: React.FC<{
     onDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
 }> = ({ title, children, count, onDrop, onDragOver }) => (
     <div 
-        className="bg-text-primary/5 rounded-xl p-4 flex-1 flex-shrink-0"
+        className="bg-text-primary/5 dark:bg-slate-800/50 rounded-xl p-4 flex-1 flex-shrink-0"
         onDrop={onDrop}
         onDragOver={onDragOver}
     >
-        <h2 className="text-lg font-heading font-bold mb-4 text-text-primary flex items-center justify-between bg-text-primary/10 px-3 py-2 rounded-lg">
+        <h2 className="text-lg font-heading font-bold mb-4 text-text-primary dark:text-slate-200 flex items-center justify-between bg-text-primary/10 dark:bg-slate-700/50 px-3 py-2 rounded-lg">
             {title}
-            <span className="bg-text-primary/20 text-text-primary text-sm font-semibold rounded-full px-2.5 py-1">{count}</span>
+            <span className="bg-text-primary/20 dark:bg-slate-600 text-text-primary dark:text-slate-200 text-sm font-semibold rounded-full px-2.5 py-1">{count}</span>
         </h2>
         <div className="space-y-4 h-[calc(100vh-290px)] overflow-y-auto pr-2">
             {children}
@@ -44,14 +44,14 @@ const TabButton: React.FC<{
         onClick={onClick}
         className={`flex items-center space-x-2 py-3 px-4 font-semibold transition-colors rounded-t-lg border-b-2 ${
             isActive
-                ? 'bg-background text-primary border-primary'
-                : 'text-text-secondary hover:bg-background/50 border-transparent'
+                ? 'bg-background dark:bg-slate-900 text-primary border-primary'
+                : 'text-text-secondary dark:text-slate-400 hover:bg-background/50 dark:hover:bg-slate-800/50 border-transparent'
         }`}
     >
         {icon}
         <span>{label}</span>
         <span className={`text-xs font-bold rounded-full px-2 py-0.5 transition-colors ${
-            isActive ? 'bg-primary text-white' : 'bg-text-primary/10 text-text-primary'
+            isActive ? 'bg-primary text-white' : 'bg-text-primary/10 dark:bg-slate-700 text-text-primary dark:text-slate-200'
         }`}>{count}</span>
     </button>
 );
@@ -128,8 +128,8 @@ const KitchenBoard: React.FC<KitchenBoardProps> = ({ orders, updateOrderStatus, 
     
     return (
         <div className="flex flex-col h-full">
-            <div className="bg-surface rounded-t-lg shadow-sm flex-shrink-0">
-                <div className="flex space-x-1 border-b border-text-primary/5">
+            <div className="bg-surface dark:bg-slate-800 rounded-t-lg shadow-sm flex-shrink-0">
+                <div className="flex space-x-1 border-b border-text-primary/5 dark:border-slate-700">
                     <TabButton 
                         isActive={activeTab === 'delivery'}
                         onClick={() => setActiveTab('delivery')}
@@ -153,17 +153,17 @@ const KitchenBoard: React.FC<KitchenBoardProps> = ({ orders, updateOrderStatus, 
                     />
                 </div>
             </div>
-            <div className="flex flex-col md:flex-row gap-6 pt-4 flex-grow bg-background p-4 rounded-b-lg">
+            <div className="flex flex-col md:flex-row gap-6 pt-4 flex-grow bg-background dark:bg-slate-900 p-4 rounded-b-lg">
                 <KitchenColumn title="En Preparación" count={preparingOrders.length} onDrop={handleDrop('en preparación')} onDragOver={handleDragOver}>
                     {preparingOrders.map(order => (
                         <div key={order.id} draggable onDragStart={(e) => handleDragStart(e, order.id)}>
                             <OrderCard order={order}>
                                 <div className="flex items-center space-x-2 relative">
-                                    <UserIcon className="h-5 w-5 text-text-primary/40 absolute left-3"/>
+                                    <UserIcon className="h-5 w-5 text-text-primary/40 dark:text-slate-500 absolute left-3"/>
                                     <select 
                                         value={order.cocineroAsignado || ''} 
                                         onChange={(e) => assignCook(order.id, e.target.value)}
-                                        className="w-full bg-surface text-text-primary border-text-primary/10 border rounded-md py-2 pl-10 pr-4 appearance-none focus:outline-none focus:ring-2 focus:ring-primary font-semibold"
+                                        className="w-full bg-surface dark:bg-slate-700 text-text-primary dark:text-slate-200 border-text-primary/10 dark:border-slate-600 border rounded-md py-2 pl-10 pr-4 appearance-none focus:outline-none focus:ring-2 focus:ring-primary font-semibold"
                                     >
                                         <option value="" disabled>Asignar Cocinero</option>
                                         {cooks.map(cook => <option key={cook} value={cook}>{cook}</option>)}
@@ -177,17 +177,17 @@ const KitchenBoard: React.FC<KitchenBoardProps> = ({ orders, updateOrderStatus, 
                     {assemblingOrders.map(order => (
                         <div key={order.id} draggable onDragStart={(e) => handleDragStart(e, order.id)}>
                             <OrderCard order={order}>
-                                <div className="text-center font-semibold text-text-secondary">
+                                <div className="text-center font-semibold text-text-secondary dark:text-slate-400">
                                     {order.cocineroAsignado ? `Asignado a: ${order.cocineroAsignado}` : 'Sin cocinero asignado'}
                                 </div>
                             </OrderCard>
                         </div>
                     ))}
                 </KitchenColumn>
-                <div className="bg-text-primary/5 rounded-xl p-4 flex-1 flex-shrink-0" onDrop={handleDrop('listo')} onDragOver={handleDragOver}>
-                    <h2 className="text-lg font-heading font-bold mb-4 text-text-primary bg-text-primary/10 px-3 py-2 rounded-lg">Listo para Entrega</h2>
-                    <div className="h-[calc(100vh-290px)] overflow-y-auto pr-2 flex items-center justify-center border-2 border-dashed border-text-primary/20 rounded-lg">
-                         <p className="text-text-secondary font-semibold">Arrastra aquí los pedidos listos</p>
+                <div className="bg-text-primary/5 dark:bg-slate-800/50 rounded-xl p-4 flex-1 flex-shrink-0" onDrop={handleDrop('listo')} onDragOver={handleDragOver}>
+                    <h2 className="text-lg font-heading font-bold mb-4 text-text-primary dark:text-slate-200 bg-text-primary/10 dark:bg-slate-700/50 px-3 py-2 rounded-lg">Listo para Entrega</h2>
+                    <div className="h-[calc(100vh-290px)] overflow-y-auto pr-2 flex items-center justify-center border-2 border-dashed border-text-primary/20 dark:border-slate-700 rounded-lg">
+                         <p className="text-text-secondary dark:text-slate-500 font-semibold">Arrastra aquí los pedidos listos</p>
                     </div>
                 </div>
             </div>

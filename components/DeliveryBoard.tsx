@@ -12,8 +12,8 @@ interface DeliveryBoardProps {
 }
 
 const DeliveryColumn: React.FC<{ title: string; children: React.ReactNode; count: number; }> = ({ title, children, count }) => (
-    <div className="bg-background rounded-2xl w-full md:w-1/3 flex-shrink-0 shadow-sm flex flex-col border border-text-primary/5">
-        <h2 className="text-lg font-heading font-bold text-text-primary bg-text-primary/10 px-4 py-3 rounded-t-2xl flex items-center justify-between">
+    <div className="bg-background dark:bg-slate-800/50 rounded-2xl w-full md:w-1/3 flex-shrink-0 shadow-sm flex flex-col border border-text-primary/5 dark:border-slate-700">
+        <h2 className="text-lg font-heading font-bold text-text-primary dark:text-slate-200 bg-text-primary/10 dark:bg-slate-700/50 px-4 py-3 rounded-t-2xl flex items-center justify-between">
             {title}
             <span className="bg-black/10 text-xs font-bold rounded-full px-2.5 py-1">{count}</span>
         </h2>
@@ -60,11 +60,11 @@ const DeliveryBoard: React.FC<DeliveryBoardProps> = ({ orders, updateOrderStatus
                 {readyOrders.map((order, i) => (
                     <OrderCard key={order.id} order={order} style={{ '--delay': `${i * 50}ms` } as React.CSSProperties}>
                         <div className="flex items-center space-x-2 relative mt-2">
-                            <UserIcon className="h-5 w-5 text-text-primary/40 absolute left-3" />
+                            <UserIcon className="h-5 w-5 text-text-primary/40 dark:text-slate-500 absolute left-3" />
                             <select
                                 value={order.repartidorAsignado || ''}
                                 onChange={(e) => assignDriver(order.id, e.target.value)}
-                                className="w-full bg-surface text-text-primary border-text-primary/10 border rounded-lg py-2 pl-10 pr-4 appearance-none focus:outline-none focus:ring-2 focus:ring-primary font-semibold"
+                                className="w-full bg-surface dark:bg-slate-700 text-text-primary dark:text-slate-200 border-text-primary/10 dark:border-slate-600 border rounded-lg py-2 pl-10 pr-4 appearance-none focus:outline-none focus:ring-2 focus:ring-primary font-semibold"
                             >
                                 <option value="" disabled>Asignar Repartidor</option>
                                 {deliveryDrivers.map(driver => <option key={driver} value={driver}>{driver}</option>)}
@@ -83,7 +83,7 @@ const DeliveryBoard: React.FC<DeliveryBoardProps> = ({ orders, updateOrderStatus
             <DeliveryColumn title="En Camino" count={onTheWayOrders.length}>
                 {onTheWayOrders.map((order, i) => (
                     <OrderCard key={order.id} order={order} style={{ '--delay': `${i * 50}ms` } as React.CSSProperties}>
-                        <div className="text-center font-semibold text-text-secondary mb-2">
+                        <div className="text-center font-semibold text-text-secondary dark:text-slate-400 mb-2">
                             Repartidor: {order.repartidorAsignado}
                         </div>
                         <button
@@ -98,7 +98,7 @@ const DeliveryBoard: React.FC<DeliveryBoardProps> = ({ orders, updateOrderStatus
             <DeliveryColumn title="Entregados" count={deliveredOrders.length}>
                 {deliveredOrders.map((order, i) => (
                     <OrderCard key={order.id} order={order} style={{ '--delay': `${i * 50}ms` } as React.CSSProperties}>
-                        <div className="text-center font-semibold text-success p-3 bg-success/10 rounded-lg">
+                        <div className="text-center font-semibold text-success dark:text-green-400 p-3 bg-success/10 dark:bg-green-500/10 rounded-lg">
                            Entregado por: {order.repartidorAsignado}
                         </div>
                     </OrderCard>

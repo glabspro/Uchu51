@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { initialOrders, initialProducts, cooks, deliveryDrivers, mesasDisponibles } from './constants';
-import type { Pedido, EstadoPedido, Turno, UserRole, View, Toast as ToastType, AreaPreparacion, Producto, ProductoPedido, Mesa, MetodoPago } from './types';
+import type { Pedido, EstadoPedido, Turno, UserRole, View, Toast as ToastType, AreaPreparacion, Producto, ProductoPedido, Mesa, MetodoPago, Theme } from './types';
 import Header from './components/Header';
 import WaitingBoard from './components/WaitingBoard';
 import KitchenBoard from './components/KitchenBoard';
@@ -35,6 +35,16 @@ const App: React.FC = () => {
     const [currentUserRole, setCurrentUserRole] = useState<UserRole>('cliente');
     const [toasts, setToasts] = useState<ToastType[]>([]);
 
+    const [theme, setTheme] = useState<Theme>(() => {
+        if (typeof window !== 'undefined' && localStorage.getItem('theme') === 'dark') {
+            return 'dark';
+        }
+        if (typeof window !== 'undefined' && !('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            return 'dark';
+        }
+        return 'light';
+    });
+
     // State management for the payment and receipt flow
     const [orderForPreBill, setOrderForPreBill] = useState<Pedido | null>(null); // Order to display in the pre-bill modal
     const [orderToPay, setOrderToPay] = useState<Pedido | null>(null); // Order to process in the payment modal
@@ -54,8 +64,19 @@ const App: React.FC = () => {
     }, [orders]);
     
     useEffect(() => {
-        document.body.className = appView === 'admin' ? 'bg-background text-text-primary antialiased' : 'bg-surface text-text-primary antialiased';
-    }, [appView]);
+        const root = window.document.documentElement;
+        if (theme === 'dark') {
+            root.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            root.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+        }
+    }, [theme]);
+
+    const toggleTheme = useCallback(() => {
+        setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
+    }, []);
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -267,11 +288,11 @@ const App: React.FC = () => {
     };
 
     if (appView === 'customer') {
-        return <CustomerView products={initialProducts} onPlaceOrder={handleSaveOrder} onNavigateToAdmin={() => setAppView('login')} />;
+        return <CustomerView products={initialProducts} onPlaceOrder={handleSaveOrder} onNavigateToAdmin={() => setAppView('login')} theme={theme} onToggleTheme={toggleTheme} />;
     }
     
     if (appView === 'login') {
-        return <Login onLogin={handleLogin} error={loginError} onNavigateToCustomerView={() => setAppView('customer')} />;
+        return <Login onLogin={handleLogin} error={loginError} onNavigateToCustomerView={() => setAppView('customer')} theme={theme} />;
     }
     
     if (posMesaActiva !== null) {
@@ -289,15 +310,17 @@ const App: React.FC = () => {
 
     return (
         <div className="min-h-screen flex flex-col">
-            {orderForPreBill && <PreBillModal order={orderForPreBill} onClose={() => setOrderForPreBill(null)} />}
+            {orderForPreBill && <PreBillModal order={orderForPreBill} onClose={() => setOrderForPreBill(null)} theme={theme} />}
             {orderToPay && <PaymentModal order={orderToPay} onClose={() => setOrderToPay(null)} onConfirmPayment={handleConfirmPayment} />}
-            {orderForReceipt && <ReceiptModal order={orderForReceipt} onClose={handleCloseReceipt} />}
+            {orderForReceipt && <ReceiptModal order={orderForReceipt} onClose={handleCloseReceipt} theme={theme} />}
             <Header
                 currentView={view}
                 onNavigate={setView}
                 currentTurno={turno}
                 onTurnoChange={setTurno}
                 onLogout={handleLogout}
+                currentTheme={theme}
+                onToggleTheme={toggleTheme}
             />
             <main className="flex-grow p-4 md:p-6 lg:p-8">
                 {renderView()}

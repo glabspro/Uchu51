@@ -10,6 +10,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
     tailwind.config = {
+      darkMode: 'class',
       theme: {
         extend: {
           fontFamily: {
@@ -52,6 +53,7 @@
 <style>
   body {
     font-family: 'Inter', sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
   @keyframes fade-in-right {
     from {
@@ -95,7 +97,7 @@
   }
 </style>
 </head>
-<body class="antialiased bg-background text-text-primary">
+<body class="antialiased bg-background text-text-primary dark:bg-slate-900 dark:text-slate-200">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
 </body>

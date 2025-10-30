@@ -21,13 +21,13 @@ const TabButton: React.FC<{
         className={`flex-1 flex items-center justify-center space-x-2 py-3 px-2 font-semibold transition-colors border-b-4 ${
             isActive
                 ? 'border-primary text-primary'
-                : 'border-transparent text-text-secondary hover:text-primary hover:bg-background'
+                : 'border-transparent text-text-secondary dark:text-slate-400 hover:text-primary dark:hover:text-orange-400 hover:bg-background dark:hover:bg-slate-700/50'
         }`}
     >
         {icon}
         <span>{label}</span>
         <span className={`text-xs font-bold rounded-full px-2 py-0.5 transition-colors ${
-            isActive ? 'bg-primary text-white' : 'bg-text-primary/10 text-text-primary'
+            isActive ? 'bg-primary text-white' : 'bg-text-primary/10 dark:bg-slate-700 text-text-primary dark:text-slate-200'
         }`}>{count}</span>
     </button>
 );
@@ -56,9 +56,9 @@ const CajaView: React.FC<CajaViewProps> = ({ orders, onInitiatePayment, onGenera
 
 
     return (
-        <div className="flex h-[calc(100vh-100px)] gap-6">
-            <div className="w-1/3 bg-surface rounded-2xl shadow-lg p-0 flex flex-col border border-text-primary/5">
-                 <div className="flex-shrink-0 border-b border-text-primary/5">
+        <div className="flex flex-col lg:flex-row h-[calc(100vh-100px)] gap-6">
+            <div className="w-full lg:w-1/3 bg-surface dark:bg-slate-800 rounded-2xl shadow-lg p-0 flex flex-col border border-text-primary/5 dark:border-slate-700">
+                 <div className="flex-shrink-0 border-b border-text-primary/5 dark:border-slate-700">
                     <div className="flex">
                         <TabButton
                             isActive={activeTab === 'local'}
@@ -91,37 +91,37 @@ const CajaView: React.FC<CajaViewProps> = ({ orders, onInitiatePayment, onGenera
                             className={`w-full text-left p-4 rounded-xl transition-all duration-200 ${
                                 selectedOrder?.id === order.id
                                     ? 'bg-primary text-white font-bold shadow-lg -translate-x-1'
-                                    : 'bg-background hover:bg-text-primary/5'
+                                    : 'bg-background dark:bg-slate-700/50 hover:bg-text-primary/5 dark:hover:bg-slate-700'
                             }`}
                         >
                             <div className="flex justify-between items-center">
                                 <div>
-                                    <p className="font-semibold">{order.tipo === 'local' ? `Mesa ${order.cliente.mesa}` : `${order.cliente.nombre}`}</p>
+                                    <p className={`font-semibold ${selectedOrder?.id !== order.id && 'dark:text-slate-200'}`}>{order.tipo === 'local' ? `Mesa ${order.cliente.mesa}` : `${order.cliente.nombre}`}</p>
                                     <p className="text-xs font-mono">{order.id}</p>
                                 </div>
                                 <p className="font-mono text-lg font-semibold">S/.{order.total.toFixed(2)}</p>
                             </div>
                         </button>
                     )) : (
-                        <p className="text-center text-text-secondary mt-8">No hay cuentas abiertas en esta sección.</p>
+                        <p className="text-center text-text-secondary dark:text-slate-500 mt-8">No hay cuentas abiertas en esta sección.</p>
                     )}
                 </div>
             </div>
 
-            <div className="w-2/3 bg-surface rounded-2xl shadow-lg p-8 flex flex-col border border-text-primary/5">
+            <div className="w-full lg:w-2/3 bg-surface dark:bg-slate-800 rounded-2xl shadow-lg p-8 flex flex-col border border-text-primary/5 dark:border-slate-700">
                 {selectedOrder ? (
                     <>
-                        <h2 className="text-3xl font-heading font-bold text-text-primary mb-1">Pedido {selectedOrder.id}</h2>
-                        <p className="text-text-secondary text-lg mb-4">{selectedOrder.tipo === 'local' ? `Mesa ${selectedOrder.cliente.mesa}` : selectedOrder.cliente.nombre}</p>
+                        <h2 className="text-3xl font-heading font-bold text-text-primary dark:text-slate-100 mb-1">Pedido {selectedOrder.id}</h2>
+                        <p className="text-text-secondary dark:text-slate-400 text-lg mb-4">{selectedOrder.tipo === 'local' ? `Mesa ${selectedOrder.cliente.mesa}` : selectedOrder.cliente.nombre}</p>
                         
-                        <div className="flex-grow border-t border-b border-text-primary/10 py-4 overflow-y-auto my-4">
+                        <div className="flex-grow border-t border-b border-text-primary/10 dark:border-slate-700 py-4 overflow-y-auto my-4">
                             <ul className="space-y-2">
                                 {selectedOrder.productos.map((p, index) => (
-                                    <li key={index} className="flex justify-between items-center text-text-primary">
+                                    <li key={index} className="flex justify-between items-center text-text-primary dark:text-slate-200">
                                         <div>
                                             <span className="font-semibold">{p.cantidad}x {p.nombre}</span>
                                             {p.salsas && p.salsas.length > 0 && (
-                                                <p className="text-xs text-sky-600 italic">
+                                                <p className="text-xs text-sky-600 dark:text-sky-400 italic">
                                                     + {p.salsas.map(s => s.nombre).join(', ')}
                                                 </p>
                                             )}
@@ -131,21 +131,21 @@ const CajaView: React.FC<CajaViewProps> = ({ orders, onInitiatePayment, onGenera
                                 ))}
                             </ul>
                              {selectedOrder.notas && (
-                                <div className="mt-4 p-3 bg-amber-500/10 text-amber-800 rounded-lg text-sm">
+                                <div className="mt-4 p-3 bg-amber-500/10 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 rounded-lg text-sm">
                                     <p><span className="font-bold">Nota del Cliente:</span> {selectedOrder.notas}</p>
                                 </div>
                             )}
                         </div>
 
                         <div className="flex-shrink-0">
-                             <div className="flex justify-between items-center text-4xl font-heading font-extrabold mb-6 text-text-primary">
+                             <div className="flex justify-between items-center text-4xl font-heading font-extrabold mb-6 text-text-primary dark:text-slate-100">
                                 <span>TOTAL</span>
                                 <span className="font-mono">S/.{selectedOrder.total.toFixed(2)}</span>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <button
                                     onClick={() => onGeneratePreBill(selectedOrder)}
-                                    className="w-full bg-text-primary text-white font-bold py-4 rounded-xl text-lg hover:bg-text-primary/90 transition-all duration-300 shadow-lg hover:shadow-text-primary/20 hover:-translate-y-0.5"
+                                    className="w-full bg-text-primary dark:bg-slate-600 text-white font-bold py-4 rounded-xl text-lg hover:bg-text-primary/90 dark:hover:bg-slate-500 transition-all duration-300 shadow-lg hover:shadow-text-primary/20 hover:-translate-y-0.5"
                                     aria-label={`Generar pre-cuenta para el pedido ${selectedOrder.id}`}
                                 >
                                     Generar Cuenta
@@ -161,9 +161,9 @@ const CajaView: React.FC<CajaViewProps> = ({ orders, onInitiatePayment, onGenera
                         </div>
                     </>
                 ) : (
-                    <div className="h-full flex flex-col items-center justify-center text-center text-text-secondary/50">
+                    <div className="h-full flex flex-col items-center justify-center text-center text-text-secondary/50 dark:text-slate-500">
                         <CheckCircleIcon className="h-24 w-24 mb-4" />
-                        <h2 className="text-xl font-semibold text-text-primary">Seleccione una cuenta para cobrar</h2>
+                        <h2 className="text-xl font-semibold text-text-primary dark:text-slate-200">Seleccione una cuenta para cobrar</h2>
                         <p>Los detalles del pedido y las opciones de pago aparecerán aquí.</p>
                     </div>
                 )}

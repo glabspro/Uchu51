@@ -23,7 +23,7 @@ const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
     const animationStyle = "animate-fade-in-right";
     const typeStyles = {
         success: "bg-success",
-        info: "bg-text-primary",
+        info: "bg-text-primary dark:bg-slate-700",
     };
     
     const Icon = type === 'success' ? CheckCircleIcon : InformationCircleIcon;
