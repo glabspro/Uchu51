@@ -37,6 +37,7 @@ export interface Producto {
     nombre: string;
     categoria: string;
     precio: number;
+    costo: number;
     descripcion?: string;
     imagenUrl?: string;
 }
@@ -100,6 +101,7 @@ export interface CajaSession {
         [key in MetodoPago]?: number;
     };
     totalVentas: number;
+    gananciaTotal?: number;
     totalEfectivoEsperado: number;
     efectivoContadoAlCierre?: number;
     diferencia?: number;

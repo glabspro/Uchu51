@@ -49,7 +49,7 @@ const App: React.FC = () => {
 
     const [cajaSession, setCajaSession] = useState<CajaSession>(() => {
         const savedSession = localStorage.getItem('cajaSession');
-        return savedSession ? JSON.parse(savedSession) : { estado: 'cerrada', saldoInicial: 0, ventasPorMetodo: {}, totalVentas: 0, totalEfectivoEsperado: 0, fechaApertura: '' };
+        return savedSession ? JSON.parse(savedSession) : { estado: 'cerrada', saldoInicial: 0, ventasPorMetodo: {}, totalVentas: 0, totalEfectivoEsperado: 0, fechaApertura: '', gananciaTotal: 0 };
     });
 
     // State management for the payment and receipt flow
@@ -238,6 +238,7 @@ const App: React.FC = () => {
             saldoInicial: saldoInicial,
             ventasPorMetodo: {},
             totalVentas: 0,
+            gananciaTotal: 0,
             totalEfectivoEsperado: saldoInicial,
         };
         setCajaSession(newSession);
@@ -258,20 +259,31 @@ const App: React.FC = () => {
         showToast(`Caja cerrada. ${diferencia === 0 ? 'Cuadre perfecto.' : (diferencia > 0 ? `Sobrante: S/.${diferencia.toFixed(2)}` : `Faltante: S/.${Math.abs(diferencia).toFixed(2)}`)}`, 'info');
     };
 
-    const registrarVentaEnCaja = useCallback((monto: number, metodo: MetodoPago) => {
-        if (cajaSession.estado !== 'abierta') return;
+    const registrarVentaEnCaja = useCallback((order: Pedido) => {
+        if (cajaSession.estado !== 'abierta' || !order.pagoRegistrado) return;
+
+        const { total: monto, pagoRegistrado: { metodo } } = order;
+
+        const costoTotal = order.productos.reduce((acc, productoPedido) => {
+            const productoMaestro = initialProducts.find(p => p.id === productoPedido.id);
+            return acc + (productoMaestro ? productoMaestro.costo * productoPedido.cantidad : 0);
+        }, 0);
+
+        const ganancia = monto - costoTotal;
 
         setCajaSession(prevSession => {
             const newVentasPorMetodo = { ...prevSession.ventasPorMetodo };
             newVentasPorMetodo[metodo] = (newVentasPorMetodo[metodo] || 0) + monto;
 
             const newTotalVentas = prevSession.totalVentas + monto;
+            const newGananciaTotal = (prevSession.gananciaTotal || 0) + ganancia;
             const newTotalEfectivo = prevSession.saldoInicial + (newVentasPorMetodo.efectivo || 0);
 
             return {
                 ...prevSession,
                 ventasPorMetodo: newVentasPorMetodo,
                 totalVentas: newTotalVentas,
+                gananciaTotal: newGananciaTotal,
                 totalEfectivoEsperado: newTotalEfectivo
             };
         });
@@ -294,8 +306,6 @@ const App: React.FC = () => {
         const order = orders.find(o => o.id === orderId);
         if (!order) return;
         
-        registrarVentaEnCaja(order.total, details.metodo);
-
         let vuelto = 0;
         if (details.metodo === 'efectivo' && details.montoPagado && details.montoPagado >= order.total) {
             vuelto = details.montoPagado - order.total;
@@ -314,6 +324,8 @@ const App: React.FC = () => {
             },
         };
 
+        registrarVentaEnCaja(updatedOrder);
+
         setOrders(prevOrders => prevOrders.map(o => (o.id === orderId ? updatedOrder : o)));
         generateAndShowNotification(updatedOrder);
         setOrderToPay(null);
@@ -323,8 +335,6 @@ const App: React.FC = () => {
     const handleConfirmDeliveryPayment = (orderId: string, details: { metodo: MetodoPago; montoPagado?: number }) => {
         const order = orders.find(o => o.id === orderId);
         if (!order) return;
-
-        registrarVentaEnCaja(order.total, details.metodo);
 
         let vuelto = 0;
         if (details.metodo === 'efectivo' && details.montoPagado && details.montoPagado >= order.total) {
@@ -343,6 +353,8 @@ const App: React.FC = () => {
                 fecha: new Date().toISOString(),
             },
         };
+        
+        registrarVentaEnCaja(updatedOrder);
 
         setOrders(prevOrders => prevOrders.map(o => (o.id === orderId ? updatedOrder : o)));
         showToast(`Pedido ${orderId} entregado y pagado.`, 'success');
@@ -385,7 +397,7 @@ const App: React.FC = () => {
             case 'local':
                 return <LocalBoard mesas={mesas} onSelectMesa={handleSelectMesa} />;
             case 'caja':
-                return <CajaView orders={openOrders} onInitiatePayment={handleInitiatePayment} onGeneratePreBill={handleGeneratePreBill} cajaSession={cajaSession} onOpenCaja={handleOpenCaja} onCloseCaja={handleCloseCaja} />;
+                return <CajaView orders={openOrders.filter(o => o.estado === 'cuenta solicitada')} onInitiatePayment={handleInitiatePayment} cajaSession={cajaSession} onOpenCaja={handleOpenCaja} onCloseCaja={handleCloseCaja} />;
             case 'dashboard':
                 return <Dashboard orders={orders} />;
             default:
