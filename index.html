@@ -96,35 +96,54 @@
     animation: fade-in-scale 0.3s ease-out forwards;
   }
   @media print {
-    body.uchu-printing .printable-modal-content {
-      font-family: 'Courier New', Courier, monospace !important;
-      color: #000 !important;
+    body.uchu-printing {
+      background-color: #fff !important;
     }
-    body.uchu-printing .printable-modal-content .text-text-secondary {
-      color: #555 !important;
+    /* Hide everything by default when printing */
+    body.uchu-printing > * {
+      visibility: hidden !important;
     }
-    body.uchu-printing > #root > *:not(.printable-modal) {
-      display: none;
+    /* Make only the printable modal and its contents visible */
+    body.uchu-printing .printable-modal,
+    body.uchu-printing .printable-modal * {
+        visibility: visible !important;
     }
     body.uchu-printing .printable-modal {
-      display: block !important;
       position: absolute !important;
       top: 0 !important;
       left: 0 !important;
       width: 100% !important;
       height: auto !important;
-      background-color: #fff !important;
       overflow: visible !important;
       padding: 0 !important;
       margin: 0 !important;
+      background-color: #fff !important;
     }
     body.uchu-printing .printable-modal > div {
        box-shadow: none !important;
        border: none !important;
-       width: 100% !important;
-       max-width: 100% !important;
-       margin: 0 !important;
+       background-color: #fff !important;
     }
+    body.uchu-printing .printable-modal-content {
+      font-family: 'Courier New', Courier, monospace !important;
+    }
+    /* Force all text inside the receipt to be black for printing */
+    body.uchu-printing .printable-modal-content,
+    body.uchu-printing .printable-modal-content * {
+      color: #000 !important;
+    }
+    /* Handle specific secondary text colors */
+    body.uchu-printing .printable-modal-content .text-text-secondary,
+    body.uchu-printing .printable-modal-content .dark\:text-slate-400,
+    body.uchu-printing .printable-modal-content .dark\:text-slate-500 {
+        color: #444 !important;
+    }
+    /* Ensure borders are visible */
+     body.uchu-printing .printable-modal-content .border-gray-300,
+     body.uchu-printing .printable-modal-content .dark\:border-slate-600 {
+        border-color: #888 !important;
+    }
+    /* Hide elements that should not be printed */
     body.uchu-printing .no-print {
       display: none !important;
     }
