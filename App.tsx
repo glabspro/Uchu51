@@ -53,7 +53,7 @@ const App: React.FC = () => {
     useEffect(() => {
         localStorage.setItem('orders', JSON.stringify(orders));
         const updatedMesas = mesasDisponibles.map(n => {
-            const activeOrder = orders.find(o => o.tipo === 'local' && o.cliente.mesa === n && !['entregado', 'recogido', 'cancelado', 'pagado'].includes(o.estado));
+            const activeOrder = orders.find(o => o.tipo === 'local' && o.cliente.mesa === n && !['cancelado', 'pagado'].includes(o.estado));
             return {
                 numero: n,
                 ocupada: !!activeOrder,
@@ -268,7 +268,7 @@ const App: React.FC = () => {
     };
 
     const filteredOrders = useMemo(() => orders.filter(order => order.turno === turno), [orders, turno]);
-    const openOrders = useMemo(() => orders.filter(o => !['pagado', 'cancelado', 'entregado', 'recogido'].includes(o.estado)), [orders]);
+    const openOrders = useMemo(() => orders.filter(o => !['pagado', 'cancelado'].includes(o.estado)), [orders]);
 
     const renderView = () => {
         switch (view) {
