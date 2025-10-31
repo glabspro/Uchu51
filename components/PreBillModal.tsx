@@ -10,36 +10,20 @@ interface PreBillModalProps {
 
 const PreBillModal: React.FC<PreBillModalProps> = ({ order, onClose, theme }) => {
     
-    // This is a simple but effective print method. It replaces the body content,
-    // triggers print, and then restores it. Reloading is necessary to re-initialize React's state.
     const handlePrint = () => {
-        const printContents = document.getElementById('prebill-printable-area')?.innerHTML;
-        const originalContents = document.body.innerHTML;
-        if (printContents) {
-            document.body.innerHTML = printContents;
-            window.print();
-            document.body.innerHTML = originalContents;
-            window.location.reload(); 
-        }
+        const handleAfterPrint = () => {
+            document.body.classList.remove('uchu-printing');
+            window.removeEventListener('afterprint', handleAfterPrint);
+        };
+        window.addEventListener('afterprint', handleAfterPrint);
+        document.body.classList.add('uchu-printing');
+        window.print();
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-[100] p-4">
-            <style>
-                {`@media print {
-                    .no-print { display: none; }
-                    body { margin: 0; background-color: #fff; }
-                     #prebill-printable-area {
-                        font-family: 'Courier New', Courier, monospace;
-                        color: #000 !important;
-                    }
-                     .text-text-secondary {
-                         color: #555 !important;
-                    }
-                }`}
-            </style>
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-[100] p-4 printable-modal" onClick={onClose}>
             <div className="bg-surface dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-sm" onClick={e => e.stopPropagation()}>
-                <div id="prebill-printable-area" className="p-6 text-sm text-text-primary dark:text-slate-200">
+                <div className="p-6 text-sm text-text-primary dark:text-slate-200 printable-modal-content">
                     <div className="text-center mb-6">
                         <Logo className="h-10 w-auto mx-auto mb-2" variant={theme === 'dark' ? 'light' : 'default'} />
                         <p className="text-xs text-text-secondary dark:text-slate-400">Av. Ejemplo 123, Lima, Perú</p>

@@ -95,6 +95,40 @@
   .animate-fade-in-scale {
     animation: fade-in-scale 0.3s ease-out forwards;
   }
+  @media print {
+    body.uchu-printing .printable-modal-content {
+      font-family: 'Courier New', Courier, monospace !important;
+      color: #000 !important;
+    }
+    body.uchu-printing .printable-modal-content .text-text-secondary {
+      color: #555 !important;
+    }
+    body.uchu-printing > #root > *:not(.printable-modal) {
+      display: none;
+    }
+    body.uchu-printing .printable-modal {
+      display: block !important;
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      height: auto !important;
+      background-color: #fff !important;
+      overflow: visible !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    body.uchu-printing .printable-modal > div {
+       box-shadow: none !important;
+       border: none !important;
+       width: 100% !important;
+       max-width: 100% !important;
+       margin: 0 !important;
+    }
+    body.uchu-printing .no-print {
+      display: none !important;
+    }
+  }
 </style>
 </head>
 <body class="antialiased bg-background text-text-primary dark:bg-slate-900 dark:text-slate-200">
