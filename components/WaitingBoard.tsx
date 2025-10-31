@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import type { Pedido, EstadoPedido, UserRole } from '../types';
 import OrderCard from './OrderCard';
@@ -9,8 +10,8 @@ interface WaitingBoardProps {
     updateOrderStatus: (orderId: string, newStatus: EstadoPedido, user: UserRole) => void;
 }
 
-const BoardColumn: React.FC<{ title: string; children: React.ReactNode; count: number; bgColor: string; textColor: string; }> = ({ title, children, count, bgColor, textColor }) => (
-    <div className="bg-background dark:bg-slate-800/50 rounded-2xl w-full md:w-1/3 flex-shrink-0 shadow-sm flex flex-col border border-text-primary/5 dark:border-slate-700">
+const BoardColumn: React.FC<{ title: string; children: React.ReactNode; count: number; bgColor: string; textColor: string; widthClass?: string; }> = ({ title, children, count, bgColor, textColor, widthClass = 'md:w-1/4' }) => (
+    <div className={`bg-background dark:bg-slate-800/50 rounded-2xl w-full ${widthClass} flex-shrink-0 shadow-sm flex flex-col border border-text-primary/5 dark:border-slate-700`}>
         <h2 className={`text-lg font-heading font-bold ${textColor} ${bgColor} px-4 py-3 rounded-t-2xl flex items-center justify-between`}>
             {title}
             <span className={`bg-black/10 text-xs font-bold rounded-full px-2.5 py-1`}>{count}</span>
@@ -22,12 +23,25 @@ const BoardColumn: React.FC<{ title: string; children: React.ReactNode; count: n
 );
 
 const WaitingBoard: React.FC<WaitingBoardProps> = ({ orders, updateOrderStatus }) => {
+    const paymentConfirmationOrders = orders.filter(o => o.estado === 'pendiente confirmar pago');
     const pendingConfirmationOrders = orders.filter(o => o.estado === 'pendiente de confirmación');
     const newOrders = orders.filter(o => o.estado === 'nuevo');
     const confirmedOrders = orders.filter(o => o.estado === 'confirmado');
 
     return (
         <div className="flex flex-col md:flex-row gap-6">
+             <BoardColumn title="Pagos por Confirmar" count={paymentConfirmationOrders.length} bgColor="bg-purple-400/20 dark:bg-purple-500/10" textColor="text-purple-900 dark:text-purple-200">
+                {paymentConfirmationOrders.map((order, i) => (
+                    <OrderCard key={order.id} order={order} style={{ '--delay': `${i * 50}ms` } as React.CSSProperties}>
+                        <button 
+                            onClick={() => updateOrderStatus(order.id, 'confirmado', 'recepcionista')}
+                            className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-purple-500/30 hover:-translate-y-0.5 active:scale-95"
+                        >
+                            <CheckCircleIcon className="h-5 w-5 mr-2" /> Validar Pago
+                        </button>
+                    </OrderCard>
+                ))}
+            </BoardColumn>
             <BoardColumn title="Pendiente de Confirmación" count={pendingConfirmationOrders.length} bgColor="bg-yellow-400/20 dark:bg-yellow-500/10" textColor="text-yellow-900 dark:text-yellow-200">
                 {pendingConfirmationOrders.map((order, i) => (
                     <OrderCard key={order.id} order={order} style={{ '--delay': `${i * 50}ms` } as React.CSSProperties}>

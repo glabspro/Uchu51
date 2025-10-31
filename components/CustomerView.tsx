@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo } from 'react';
 import type { Pedido, Producto, ProductoPedido, Cliente, Salsa, TipoPedido, MetodoPago, Theme } from '../types';
 import { ShoppingBagIcon, TrashIcon, CheckCircleIcon, TruckIcon, UserIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon, MapPinIcon, SearchIcon, AdjustmentsHorizontalIcon, MinusIcon, PlusIcon, StarIcon, SunIcon, MoonIcon, ChevronLeftIcon } from './icons';
@@ -23,6 +24,7 @@ type FormErrors = {
     direccion?: string;
     pagoConEfectivo?: string;
 };
+type PaymentChoice = 'payNow' | 'payLater';
 
 const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onNavigateToAdmin, theme, onToggleTheme }) => {
     const [cart, setCart] = useState<CartItem[]>([]);
@@ -31,7 +33,9 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
     const [stage, setStage] = useState<Stage>('selection');
     const [newOrderId, setNewOrderId] = useState('');
     const [activeCategory, setActiveCategory] = useState('Hamburguesas');
-    const [paymentMethod, setPaymentMethod] = useState<MetodoPago>('efectivo');
+    const [paymentMethod, setPaymentMethod] = useState<MetodoPago>('yape/plin');
+    const [paymentChoice, setPaymentChoice] = useState<PaymentChoice>('payNow');
+
     const [formErrors, setFormErrors] = useState<FormErrors>({});
     const [cashPaymentAmount, setCashPaymentAmount] = useState('');
     const [isExactCash, setIsExactCash] = useState(false);
@@ -44,7 +48,6 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
     const [searchTerm, setSearchTerm] = useState('');
     const [showGoBackConfirm, setShowGoBackConfirm] = useState(false);
 
-    // FIX: `groupedProducts` must be declared before `filteredProducts` because `filteredProducts` depends on it.
     const groupedProducts = useMemo(() => {
         return products.reduce((acc, product) => {
             const category = product.categoria;
@@ -159,7 +162,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
         if (orderType === 'delivery' && !customerInfo.direccion?.trim()) {
             errors.direccion = 'La dirección es obligatoria para delivery.';
         }
-        if (orderType === 'delivery' && paymentMethod === 'efectivo' && !isExactCash) {
+        if (paymentChoice === 'payLater' && paymentMethod === 'efectivo' && !isExactCash) {
             if (!cashPaymentAmount.trim()) {
                 errors.pagoConEfectivo = 'Indica con cuánto pagarás.';
             } else if (parseFloat(cashPaymentAmount) < total) {
@@ -175,14 +178,17 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
         if (!validateForm() || !orderType) return;
         
         const finalCart: ProductoPedido[] = cart.map(({ cartItemId, ...rest }) => rest);
+        
+        const effectivePaymentMethod = paymentChoice === 'payNow' ? 'yape/plin' : paymentMethod;
+
         const newOrder: Omit<Pedido, 'id' | 'fecha' | 'turno' | 'historial' | 'areaPreparacion' | 'estado'> = {
             tipo: orderType,
             cliente: customerInfo,
             productos: finalCart,
             total: total,
-            metodoPago: paymentMethod,
-            pagoConEfectivo: (orderType === 'delivery' && paymentMethod === 'efectivo' && !isExactCash) ? parseFloat(cashPaymentAmount) : undefined,
-            pagoExacto: (orderType === 'delivery' && paymentMethod === 'efectivo' && isExactCash) ? true : undefined,
+            metodoPago: effectivePaymentMethod,
+            pagoConEfectivo: (paymentChoice === 'payLater' && paymentMethod === 'efectivo' && !isExactCash) ? parseFloat(cashPaymentAmount) : undefined,
+            pagoExacto: (paymentChoice === 'payLater' && paymentMethod === 'efectivo' && isExactCash) ? true : undefined,
             notas: orderNotes,
             tiempoEstimado: orderType === 'delivery' ? 30 : 15,
         };
@@ -350,23 +356,23 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
         </div>
     );
     
-    const PaymentButton: React.FC<{
-        method: MetodoPago;
+    const PaymentChoiceButton: React.FC<{
+        choice: PaymentChoice;
         label: string;
-        icon: React.ReactNode;
-        currentMethod: MetodoPago;
-        setMethod: (method: MetodoPago) => void;
-    }> = ({ method, label, icon, currentMethod, setMethod }) => (
+        description: string;
+        currentChoice: PaymentChoice;
+        setChoice: (choice: PaymentChoice) => void;
+    }> = ({ choice, label, description, currentChoice, setChoice }) => (
         <button
-            onClick={() => setMethod(method)}
-            className={`flex items-center justify-center space-x-2 w-full p-3 rounded-xl border-2 transition-all duration-200 active:scale-95 ${
-                currentMethod === method
-                    ? 'bg-primary/10 border-primary text-primary font-bold shadow-inner'
-                    : 'bg-surface dark:bg-slate-700 border-text-primary/10 dark:border-slate-600 text-text-primary dark:text-slate-200 hover:border-primary/50 dark:hover:border-primary/80'
+            onClick={() => setChoice(choice)}
+            className={`p-4 rounded-xl border-2 text-left transition-all duration-200 w-full ${
+                currentChoice === choice
+                    ? 'bg-primary/10 border-primary shadow-inner'
+                    : 'bg-surface dark:bg-slate-700 border-text-primary/10 dark:border-slate-600 hover:border-primary/50'
             }`}
         >
-            {icon}
-            <span>{label}</span>
+            <p className={`font-bold text-lg ${currentChoice === choice ? 'text-primary' : 'text-text-primary dark:text-slate-100'}`}>{label}</p>
+            <p className="text-sm text-text-secondary dark:text-slate-400">{description}</p>
         </button>
     );
 
@@ -460,21 +466,36 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
                         </div>
                     </div>
                     <div className="mt-6">
-                        <h3 className="text-xl font-heading font-bold text-text-primary dark:text-white mb-3">Método de Pago</h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            <PaymentButton method="efectivo" label="Efectivo" icon={<CashIcon className="h-5 w-5"/>} currentMethod={paymentMethod} setMethod={setPaymentMethod} />
-                            <PaymentButton method="tarjeta" label="Tarjeta" icon={<CreditCardIcon className="h-5 w-5"/>} currentMethod={paymentMethod} setMethod={setPaymentMethod} />
-                            <PaymentButton method="yape/plin" label="Yape/Plin" icon={<DevicePhoneMobileIcon className="h-5 w-5"/>} currentMethod={paymentMethod} setMethod={setPaymentMethod} />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                           <PaymentChoiceButton choice="payNow" label="Pagar Ahora (Recomendado)" description="Con Yape/Plin para agilizar tu pedido." currentChoice={paymentChoice} setChoice={setPaymentChoice} />
+                           <PaymentChoiceButton choice="payLater" label={orderType === 'delivery' ? 'Pago Contraentrega' : 'Pagar en Tienda'} description="Paga con efectivo o tarjeta al recibir." currentChoice={paymentChoice} setChoice={setPaymentChoice} />
                         </div>
-                         <div className="mt-3 p-3 bg-surface/60 dark:bg-slate-700/50 rounded-lg text-sm border border-text-primary/10 dark:border-slate-600">
-                           {orderType === 'delivery' && (
-                                <>
+
+                         <div className="mt-3 p-3 bg-surface/60 dark:bg-slate-700/50 rounded-lg text-sm border border-text-primary/10 dark:border-slate-600 min-h-[180px]">
+                           {paymentChoice === 'payNow' ? (
+                                <div className="text-center animate-fade-in-right">
+                                     <p className="font-bold mb-2 text-text-primary dark:text-slate-200">¡Paga ahora y tu pedido pasará directo a cocina!</p>
+                                    <img src={yapePlinInfo.qrUrl} alt="QR Code" className="mx-auto rounded-lg w-24 h-24 mb-2"/>
+                                    <p className="text-text-secondary dark:text-slate-400">A nombre de: <span className="font-semibold text-text-primary dark:text-slate-200">{yapePlinInfo.nombre}</span></p>
+                                    <p className="text-text-secondary dark:text-slate-400">Teléfono: <span className="font-semibold text-text-primary dark:text-slate-200">{yapePlinInfo.telefono}</span></p>
+                                    <p className="mt-2 font-bold text-amber-700 dark:text-amber-300 bg-amber-500/10 dark:bg-amber-500/20 p-2 rounded-md text-xs">IMPORTANTE: Envía la captura de tu pago a nuestro WhatsApp para confirmar.</p>
+                                </div>
+                           ) : (
+                                <div className="animate-fade-in-right">
+                                    <div className="grid grid-cols-2 gap-2 mb-3">
+                                        <button onClick={() => setPaymentMethod('efectivo')} className={`flex items-center justify-center space-x-2 w-full p-2 rounded-lg border-2 transition-colors ${paymentMethod === 'efectivo' ? 'border-primary' : 'border-transparent'}`}>
+                                            <CashIcon className="h-5 w-5"/><span>Efectivo</span>
+                                        </button>
+                                         <button onClick={() => setPaymentMethod('tarjeta')} className={`flex items-center justify-center space-x-2 w-full p-2 rounded-lg border-2 transition-colors ${paymentMethod === 'tarjeta' ? 'border-primary' : 'border-transparent'}`}>
+                                            <CreditCardIcon className="h-5 w-5"/><span>Tarjeta</span>
+                                        </button>
+                                    </div>
                                     {paymentMethod === 'efectivo' && (
-                                        <div className="space-y-3">
-                                            <label className="font-bold block text-text-primary dark:text-slate-100">¿Con cuánto pagarás?</label>
-                                            <label className="flex items-center space-x-2 bg-surface/70 dark:bg-slate-600/50 p-3 rounded-lg border border-text-primary/10 dark:border-slate-600 cursor-pointer">
-                                                <input type="checkbox" checked={isExactCash} onChange={(e) => setIsExactCash(e.target.checked)} className="h-5 w-5 rounded border-text-primary/20 dark:border-slate-500 text-primary focus:ring-primary bg-transparent dark:bg-slate-800" />
-                                                <span className="dark:text-slate-200">Pagaré con el monto exacto</span>
+                                        <div className="space-y-2">
+                                            <label className="font-semibold block text-text-primary dark:text-slate-100 text-xs">¿Con cuánto pagarás?</label>
+                                            <label className="flex items-center space-x-2 bg-surface/70 dark:bg-slate-600/50 p-2 rounded-lg border border-text-primary/10 dark:border-slate-600 cursor-pointer">
+                                                <input type="checkbox" checked={isExactCash} onChange={(e) => setIsExactCash(e.target.checked)} className="h-4 w-4 rounded border-text-primary/20 dark:border-slate-500 text-primary focus:ring-primary bg-transparent dark:bg-slate-800" />
+                                                <span className="dark:text-slate-200 text-xs">Pagaré con el monto exacto</span>
                                             </label>
                                             {!isExactCash && (
                                                 <input id="cash-amount" type="number" value={cashPaymentAmount} onChange={e => setCashPaymentAmount(e.target.value)} placeholder="Ej: 50" className={`bg-surface dark:bg-slate-700 border ${formErrors.pagoConEfectivo ? 'border-danger' : 'border-text-primary/10 dark:border-slate-600'} rounded-lg p-2 w-full text-text-primary dark:text-slate-200 placeholder-text-secondary/70 dark:placeholder-slate-400 focus:ring-2 focus:ring-primary focus:border-primary transition`} />
@@ -482,30 +503,11 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
                                             {formErrors.pagoConEfectivo && <p className="text-danger text-xs mt-1">{formErrors.pagoConEfectivo}</p>}
                                         </div>
                                     )}
-                                    {paymentMethod === 'tarjeta' && (
-                                        <p className="font-semibold text-center text-text-primary dark:text-slate-200">Llevaremos un POS para que puedas efectuar el pago.</p>
+                                     {paymentMethod === 'tarjeta' && (
+                                        <p className="font-semibold text-center text-text-primary dark:text-slate-200 pt-8">{orderType === 'delivery' ? 'Llevaremos un POS.' : 'Paga con POS en tienda.'}</p>
                                     )}
-                                </>
-                           )}
-                           {orderType === 'retiro' && (
-                                <>
-                                    {(paymentMethod === 'efectivo' || paymentMethod === 'tarjeta') && (
-                                        <div className="text-center font-semibold space-y-2 text-text-primary dark:text-slate-200">
-                                            <p>Tu pedido será confirmado por nuestro personal en breve.</p>
-                                            <p className="font-bold text-amber-700 dark:text-amber-300 bg-amber-500/10 dark:bg-amber-500/20 p-2 rounded-md">Luego, acércate a caja para pagar y recoger tu pedido.</p>
-                                        </div>
-                                    )}
-                                </>
-                           )}
-                           {paymentMethod === 'yape/plin' && (
-                                <div className="text-center">
-                                     {orderType === 'retiro' && <p className="font-bold mb-2 text-text-primary dark:text-slate-200">¡Paga ahora y tu pedido pasará directo a cocina!</p>}
-                                    <p className="font-bold mb-2 text-text-primary dark:text-slate-200">Escanea para pagar:</p>
-                                    <img src={yapePlinInfo.qrUrl} alt="QR Code" className="mx-auto rounded-lg w-32 h-32 mb-2"/>
-                                    <p className="text-text-secondary dark:text-slate-400">A nombre de: <span className="font-semibold text-text-primary dark:text-slate-200">{yapePlinInfo.nombre}</span></p>
-                                    <p className="text-text-secondary dark:text-slate-400">Teléfono: <span className="font-semibold text-text-primary dark:text-slate-200">{yapePlinInfo.telefono}</span></p>
                                 </div>
-                            )}
+                           )}
                         </div>
                     </div>
                     <div className="mt-auto pt-6 grid grid-cols-2 gap-4">
@@ -521,8 +523,13 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
         let confirmationMessage = '';
         let titleMessage = '¡Pedido Recibido!';
         
-        const isRiskyRetiro = orderType === 'retiro' && (paymentMethod === 'efectivo' || paymentMethod === 'tarjeta');
-        if (isRiskyRetiro) {
+        const isPayNow = paymentChoice === 'payNow';
+        const isRiskyRetiro = orderType === 'retiro' && paymentChoice === 'payLater';
+
+        if (isPayNow) {
+            titleMessage = '¡Pedido Recibido!';
+            confirmationMessage = `Recibimos tu pedido. Por favor, envía la captura de tu pago a nuestro WhatsApp para que podamos confirmarlo y empezar a prepararlo.`;
+        } else if (isRiskyRetiro) {
             titleMessage = '¡Pedido en Espera!';
             confirmationMessage = `Estaremos validando tu pedido en breve. Recibirás una notificación cuando sea confirmado y comience a prepararse.`;
         } else {

@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { initialOrders, initialProducts, cooks, deliveryDrivers, mesasDisponibles } from './constants';
 import type { Pedido, EstadoPedido, Turno, UserRole, View, Toast as ToastType, AreaPreparacion, Producto, ProductoPedido, Mesa, MetodoPago, Theme } from './types';
@@ -168,8 +169,17 @@ const App: React.FC = () => {
     
     const handleSaveOrder = (orderData: Omit<Pedido, 'id' | 'fecha' | 'turno' | 'historial' | 'areaPreparacion' | 'estado'>) => {
         
+        const isPayNow = orderData.metodoPago === 'yape/plin';
         const isRiskyRetiro = orderData.tipo === 'retiro' && (orderData.metodoPago === 'efectivo' || orderData.metodoPago === 'tarjeta');
-        const initialState: EstadoPedido = isRiskyRetiro ? 'pendiente de confirmación' : 'nuevo';
+
+        let initialState: EstadoPedido;
+        if (isPayNow) {
+            initialState = 'pendiente confirmar pago';
+        } else if (isRiskyRetiro) {
+            initialState = 'pendiente de confirmación';
+        } else {
+            initialState = 'nuevo';
+        }
 
         const newOrder: Pedido = {
             ...orderData,
@@ -180,8 +190,16 @@ const App: React.FC = () => {
             historial: [{ estado: initialState, fecha: new Date().toISOString(), usuario: currentUserRole }],
             areaPreparacion: getAreaPreparacion(orderData.tipo),
         };
+
         setOrders(prevOrders => [newOrder, ...prevOrders]);
-        showToast(isRiskyRetiro ? `Pedido ${newOrder.id} pendiente de confirmación.` : `Nuevo pedido ${newOrder.id} recibido.`, 'success');
+
+        let toastMessage = `Nuevo pedido ${newOrder.id} recibido.`;
+        if (isPayNow) {
+            toastMessage = `Pedido ${newOrder.id} recibido. Esperando confirmación de pago.`;
+        } else if (isRiskyRetiro) {
+            toastMessage = `Pedido ${newOrder.id} pendiente de confirmación.`;
+        }
+        showToast(toastMessage, 'success');
     };
     
     const handleSavePOSOrder = (orderData: Pedido, mesaNumero: number) => {

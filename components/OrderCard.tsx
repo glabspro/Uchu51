@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import type { Pedido } from '../types';
 import { ClockIcon, UserIcon, PhoneIcon, MapPinIcon } from './icons';
@@ -13,6 +14,7 @@ const getStatusAppearance = (status: Pedido['estado']) => {
     switch (status) {
         case 'nuevo': return { color: 'bg-gray-500', text: 'text-gray-800 dark:text-gray-200', label: 'Nuevo' };
         case 'pendiente de confirmación': return { color: 'bg-yellow-500', text: 'text-yellow-800 dark:text-yellow-200', label: 'Pendiente' };
+        case 'pendiente confirmar pago': return { color: 'bg-purple-500', text: 'text-purple-800 dark:text-purple-200', label: 'Pago por Confirmar' };
         case 'confirmado': return { color: 'bg-primary', text: 'text-primary-dark dark:text-orange-200', label: 'Confirmado' };
         case 'en preparación': return { color: 'bg-amber-500', text: 'text-amber-800 dark:text-amber-200', label: 'En Preparación' };
         case 'en armado': return { color: 'bg-yellow-400', text: 'text-yellow-800 dark:text-yellow-200', label: 'En Armado' };
