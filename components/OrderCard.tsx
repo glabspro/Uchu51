@@ -18,6 +18,7 @@ const getStatusAppearance = (status: Pedido['estado']) => {
         case 'confirmado': return { color: 'bg-primary', text: 'text-primary-dark dark:text-orange-200', label: 'Confirmado' };
         case 'en preparación': return { color: 'bg-amber-500', text: 'text-amber-800 dark:text-amber-200', label: 'En Preparación' };
         case 'en armado': return { color: 'bg-yellow-400', text: 'text-yellow-800 dark:text-yellow-200', label: 'En Armado' };
+        case 'listo para armado': return { color: 'bg-yellow-400', text: 'text-yellow-800 dark:text-yellow-200', label: 'Listo p/ Armado' };
         case 'listo': return { color: 'bg-green-500', text: 'text-green-800 dark:text-green-200', label: 'Listo' };
         case 'en camino': return { color: 'bg-teal-500', text: 'text-teal-800 dark:text-teal-200', label: 'En Camino' };
         case 'entregado': return { color: 'bg-emerald-500', text: 'text-emerald-800 dark:text-emerald-200', label: 'Entregado' };

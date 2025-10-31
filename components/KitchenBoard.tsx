@@ -2,13 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import type { Pedido, EstadoPedido, UserRole, AreaPreparacion } from '../types';
 import OrderCard from './OrderCard';
-import { UserIcon, HomeIcon, TruckIcon, ShoppingBagIcon } from './icons';
+import { HomeIcon, TruckIcon, ShoppingBagIcon } from './icons';
 
 interface KitchenBoardProps {
     orders: Pedido[];
     updateOrderStatus: (orderId: string, newStatus: EstadoPedido, user: UserRole) => void;
-    assignCook: (orderId: string, cookName: string) => void;
-    cooks: string[];
 }
 
 const KitchenColumn: React.FC<{ 
@@ -57,7 +55,7 @@ const TabButton: React.FC<{
 );
 
 
-const KitchenBoard: React.FC<KitchenBoardProps> = ({ orders, updateOrderStatus, assignCook, cooks }) => {
+const KitchenBoard: React.FC<KitchenBoardProps> = ({ orders, updateOrderStatus }) => {
     const [draggedOrderId, setDraggedOrderId] = useState<string | null>(null);
     const [announcedOrders, setAnnouncedOrders] = useState<Set<string>>(new Set());
     const [activeTab, setActiveTab] = useState<AreaPreparacion>('delivery');
@@ -158,17 +156,16 @@ const KitchenBoard: React.FC<KitchenBoardProps> = ({ orders, updateOrderStatus, 
                     {preparingOrders.map((order, i) => (
                         <div key={order.id} draggable onDragStart={(e) => handleDragStart(e, order.id)} className="animate-fade-in-up" style={{ '--delay': `${i * 50}ms` } as React.CSSProperties}>
                             <OrderCard order={order}>
-                                <div className="flex items-center space-x-2 relative">
-                                    <UserIcon className="h-5 w-5 text-text-primary/40 dark:text-slate-500 absolute left-3"/>
-                                    <select 
-                                        value={order.cocineroAsignado || ''} 
-                                        onChange={(e) => assignCook(order.id, e.target.value)}
-                                        className="w-full bg-surface dark:bg-slate-700 text-text-primary dark:text-slate-200 border-text-primary/10 dark:border-slate-600 border rounded-md py-2 pl-10 pr-4 appearance-none focus:outline-none focus:ring-2 focus:ring-primary font-semibold"
-                                    >
-                                        <option value="" disabled>Asignar Cocinero</option>
-                                        {cooks.map(cook => <option key={cook} value={cook}>{cook}</option>)}
-                                    </select>
-                                </div>
+                                <select
+                                    value={order.estado}
+                                    onChange={(e) => updateOrderStatus(order.id, e.target.value as EstadoPedido, 'cocinero')}
+                                    className="w-full bg-surface dark:bg-slate-700 text-text-primary dark:text-slate-200 border-text-primary/10 dark:border-slate-600 border rounded-md py-2 pl-3 pr-4 appearance-none focus:outline-none focus:ring-2 focus:ring-primary font-semibold"
+                                >
+                                    <option value="en preparación">En Preparación</option>
+                                    <option value="en armado">En Armado</option>
+                                    <option value="listo para armado">Listo p/ Armado</option>
+                                    <option value="listo">Listo para Entrega</option>
+                                </select>
                             </OrderCard>
                         </div>
                     ))}
@@ -177,9 +174,16 @@ const KitchenBoard: React.FC<KitchenBoardProps> = ({ orders, updateOrderStatus, 
                     {assemblingOrders.map((order, i) => (
                         <div key={order.id} draggable onDragStart={(e) => handleDragStart(e, order.id)} className="animate-fade-in-up" style={{ '--delay': `${i * 50}ms` } as React.CSSProperties}>
                             <OrderCard order={order}>
-                                <div className="text-center font-semibold text-text-secondary dark:text-slate-400">
-                                    {order.cocineroAsignado ? `Asignado a: ${order.cocineroAsignado}` : 'Sin cocinero asignado'}
-                                </div>
+                               <select
+                                    value={order.estado}
+                                    onChange={(e) => updateOrderStatus(order.id, e.target.value as EstadoPedido, 'cocinero')}
+                                    className="w-full bg-surface dark:bg-slate-700 text-text-primary dark:text-slate-200 border-text-primary/10 dark:border-slate-600 border rounded-md py-2 pl-3 pr-4 appearance-none focus:outline-none focus:ring-2 focus:ring-primary font-semibold"
+                                >
+                                    <option value="en preparación">En Preparación</option>
+                                    <option value="en armado">En Armado</option>
+                                    <option value="listo para armado">Listo p/ Armado</option>
+                                    <option value="listo">Listo para Entrega</option>
+                                </select>
                             </OrderCard>
                         </div>
                     ))}

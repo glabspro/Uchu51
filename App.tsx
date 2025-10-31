@@ -1,7 +1,7 @@
 
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { initialOrders, initialProducts, cooks, deliveryDrivers, mesasDisponibles } from './constants';
+import { initialOrders, initialProducts, deliveryDrivers, mesasDisponibles } from './constants';
 import type { Pedido, EstadoPedido, Turno, UserRole, View, Toast as ToastType, AreaPreparacion, Producto, ProductoPedido, Mesa, MetodoPago, Theme } from './types';
 import Header from './components/Header';
 import WaitingBoard from './components/WaitingBoard';
@@ -141,14 +141,6 @@ const App: React.FC = () => {
             )
         );
     }, [orders, generateAndShowNotification]);
-
-    const assignCook = useCallback((orderId: string, cookName: string) => {
-        setOrders(prevOrders =>
-            prevOrders.map(order =>
-                order.id === orderId ? { ...order, cocineroAsignado: cookName } : order
-            )
-        );
-    }, []);
     
     const assignDriver = useCallback((orderId: string, driverName: string) => {
         setOrders(prevOrders =>
@@ -324,7 +316,7 @@ const App: React.FC = () => {
             case 'espera':
                 return <WaitingBoard orders={filteredOrders} updateOrderStatus={updateOrderStatus} />;
             case 'cocina':
-                return <KitchenBoard orders={filteredOrders.filter(o => ['en preparación', 'en armado', 'listo para armado'].includes(o.estado))} updateOrderStatus={updateOrderStatus} assignCook={assignCook} cooks={cooks} />;
+                return <KitchenBoard orders={filteredOrders.filter(o => ['en preparación', 'en armado', 'listo para armado'].includes(o.estado))} updateOrderStatus={updateOrderStatus} />;
             case 'delivery':
                 return <DeliveryBoard orders={filteredOrders.filter(o => o.tipo === 'delivery' && ['listo', 'en camino', 'entregado', 'pagado'].includes(o.estado))} updateOrderStatus={updateOrderStatus} assignDriver={assignDriver} deliveryDrivers={deliveryDrivers} onInitiateDeliveryPayment={handleInitiateDeliveryPayment} />;
             case 'retiro':
