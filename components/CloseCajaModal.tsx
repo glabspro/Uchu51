@@ -1,4 +1,5 @@
 
+
 import React, { useState, useRef, useEffect } from 'react';
 import type { CajaSession, MetodoPago, MovimientoCaja } from '../types';
 import { CheckCircleIcon, PrinterIcon, WhatsAppIcon, InformationCircleIcon } from './icons';

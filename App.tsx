@@ -47,9 +47,9 @@ const App: React.FC = () => {
     const [turno, setTurno] = useState<Turno>('tarde');
     const [posMesaActiva, setPosMesaActiva] = useState<Mesa | null>(null);
 
-    const [appView, setAppView] = useState<AppView>('admin');
+    const [appView, setAppView] = useState<AppView>('customer');
     const [loginError, setLoginError] = useState<string | null>(null);
-    const [currentUserRole, setCurrentUserRole] = useState<UserRole>('admin');
+    const [currentUserRole, setCurrentUserRole] = useState<UserRole>('cliente');
     const [toasts, setToasts] = useState<ToastType[]>([]);
 
     const [theme, setTheme] = useState<Theme>(() => {
