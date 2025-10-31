@@ -95,6 +95,30 @@
   .animate-fade-in-scale {
     animation: fade-in-scale 0.3s ease-out forwards;
   }
+
+  /* New styles for LocalBoard */
+  .table-card {
+    transform-style: preserve-3d;
+    transform: perspective(1000px);
+    transition: transform 0.4s ease-out, box-shadow 0.4s ease-out;
+  }
+  .table-card:hover {
+    transform: perspective(1000px) rotateX(4deg) rotateY(-4deg) scale3d(1.05, 1.05, 1.05);
+  }
+  @keyframes pulse-glow {
+    0%, 100% {
+      box-shadow: 0 0 12px 0px rgba(var(--glow-color), 0.6);
+    }
+    50% {
+      box-shadow: 0 0 24px 10px rgba(var(--glow-color), 0.3);
+    }
+  }
+  .animate-pulse-glow {
+    --glow-color: 249, 115, 22; /* Default: Primary color */
+    animation: pulse-glow 2.5s infinite ease-in-out;
+  }
+
+
   @media print {
     body.uchu-printing {
       background-color: #fff !important;
