@@ -1,0 +1,21 @@
+{
+  "name": "Uchu51",
+  "short_name": "Uchu51",
+  "description": "Uchu51 es un Sistema todo en uno para restaurantes peruanos (POS + gestión + delivery + reservas).",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#FDFCFB",
+  "theme_color": "#F97316",
+  "icons": [
+    {
+      "src": "icon-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
