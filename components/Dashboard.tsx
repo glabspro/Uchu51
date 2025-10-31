@@ -1,7 +1,9 @@
 
-import React, { useMemo } from 'react';
-import type { Pedido } from '../types';
+import React, { useMemo, useState, useEffect } from 'react';
+import type { Pedido, MetodoPago } from '../types';
+import { initialProducts } from '../constants';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { PrinterIcon, DocumentArrowDownIcon } from './icons';
 
 interface DashboardProps {
     orders: Pedido[];
@@ -16,8 +18,69 @@ const MetricCard: React.FC<{ title: string; value: string | number; }> = ({ titl
 
 const COLORS = ['#F97316', '#FB923C', '#FDBA74', '#FECACA', '#FDE68A'];
 
+interface ReportFilters {
+    startDate: string;
+    endDate: string;
+    paymentMethods: MetodoPago[];
+    productId: string;
+}
+
+const ReportPrintView: React.FC<{ data: Pedido[], filters: ReportFilters }> = ({ data, filters }) => {
+    const total = data.reduce((sum, order) => sum + order.total, 0);
+    const product = initialProducts.find(p => p.id === filters.productId);
+
+    return (
+        <div className="printable-report">
+            <h1 className="text-2xl font-bold mb-2">Informe de Pagos POS</h1>
+            <div className="text-sm mb-4">
+                <p><strong>Periodo:</strong> {new Date(filters.startDate).toLocaleDateString()} - {new Date(filters.endDate).toLocaleDateString()}</p>
+                <p><strong>Métodos de Pago:</strong> {filters.paymentMethods.join(', ') || 'Todos'}</p>
+                <p><strong>Producto:</strong> {product?.nombre || 'Todos'}</p>
+            </div>
+            <table className="w-full text-sm border-collapse">
+                <thead>
+                    <tr className="bg-gray-100">
+                        <th className="p-2 border">Fecha</th>
+                        <th className="p-2 border">Pedido ID</th>
+                        <th className="p-2 border">Mesa</th>
+                        <th className="p-2 border">Productos</th>
+                        <th className="p-2 border">Método</th>
+                        <th className="p-2 border">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {data.map(order => (
+                        <tr key={order.id}>
+                            <td className="p-2 border">{order.pagoRegistrado ? new Date(order.pagoRegistrado.fecha).toLocaleString() : ''}</td>
+                            <td className="p-2 border">{order.id}</td>
+                            <td className="p-2 border">{order.cliente.mesa}</td>
+                            <td className="p-2 border">{order.productos.map(p => `${p.cantidad}x ${p.nombre}`).join(', ')}</td>
+                            <td className="p-2 border">{order.pagoRegistrado?.metodo}</td>
+                            <td className="p-2 border text-right">S/.{order.total.toFixed(2)}</td>
+                        </tr>
+                    ))}
+                </tbody>
+                <tfoot>
+                    <tr className="font-bold bg-gray-100">
+                        <td colSpan={5} className="p-2 border text-right">Total General</td>
+                        <td className="p-2 border text-right">S/.{total.toFixed(2)}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    );
+};
+
 
 const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
+    const [reportData, setReportData] = useState<Pedido[] | null>(null);
+    const [isPrinting, setIsPrinting] = useState(false);
+    const [filters, setFilters] = useState<ReportFilters>({
+        startDate: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
+        endDate: new Date().toISOString().split('T')[0],
+        paymentMethods: [],
+        productId: 'todos',
+    });
 
     const metrics = useMemo(() => {
         const totalPedidos = orders.length;
@@ -63,6 +126,95 @@ const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
             .slice(0, 5)
             .map(([name, value]) => ({ name, value }));
     }, [orders]);
+    
+     const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value, type } = e.target;
+        if (type === 'checkbox') {
+            const { checked } = e.target as HTMLInputElement;
+            setFilters(prev => ({
+                ...prev,
+                paymentMethods: checked
+                    ? [...prev.paymentMethods, value as MetodoPago]
+                    : prev.paymentMethods.filter(m => m !== value)
+            }));
+        } else {
+            setFilters(prev => ({ ...prev, [name]: value }));
+        }
+    };
+
+    const handleGenerateReport = (e: React.FormEvent) => {
+        e.preventDefault();
+        const filtered = orders.filter(order => {
+            if (order.tipo !== 'local' || order.estado !== 'pagado' || !order.pagoRegistrado) {
+                return false;
+            }
+            const paymentDate = new Date(order.pagoRegistrado.fecha);
+            const startDate = new Date(filters.startDate);
+            const endDate = new Date(filters.endDate);
+            endDate.setHours(23, 59, 59, 999); 
+
+            const inDateRange = paymentDate >= startDate && paymentDate <= endDate;
+            const hasPaymentMethod = filters.paymentMethods.length === 0 || filters.paymentMethods.includes(order.pagoRegistrado.metodo);
+            const hasProduct = filters.productId === 'todos' || order.productos.some(p => p.id === filters.productId);
+
+            return inDateRange && hasPaymentMethod && hasProduct;
+        });
+        setReportData(filtered);
+    };
+    
+    const handleExportCSV = () => {
+        if (!reportData) return;
+        const csvRows = [];
+        const headers = ['Fecha Pago', 'Pedido ID', 'Mesa', 'Productos', 'Metodo de Pago', 'Total'];
+        csvRows.push(headers.join(','));
+
+        for (const order of reportData) {
+            if (!order.pagoRegistrado) continue;
+            const values = [
+                new Date(order.pagoRegistrado.fecha).toLocaleString(),
+                order.id,
+                order.cliente.mesa,
+                `"${order.productos.map(p => `${p.cantidad}x ${p.nombre}`).join('; ')}"`,
+                order.pagoRegistrado.metodo,
+                order.total.toFixed(2)
+            ].join(',');
+            csvRows.push(values);
+        }
+
+        const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.setAttribute('href', url);
+        a.setAttribute('download', 'informe_pagos_pos.csv');
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    };
+
+    const handlePrintPDF = () => {
+        setIsPrinting(true);
+    };
+    
+    useEffect(() => {
+        if (isPrinting) {
+            const handleAfterPrint = () => {
+                document.body.classList.remove('uchu-printing');
+                setIsPrinting(false);
+                window.removeEventListener('afterprint', handleAfterPrint);
+            };
+            window.addEventListener('afterprint', handleAfterPrint);
+            document.body.classList.add('uchu-printing');
+            window.print();
+        }
+    }, [isPrinting]);
+
+    const reportTotal = useMemo(() => {
+        if (!reportData) return 0;
+        return reportData.reduce((sum, order) => sum + order.total, 0);
+    }, [reportData]);
+
+
+    const paymentMethods: MetodoPago[] = ['efectivo', 'tarjeta', 'yape/plin', 'online'];
 
     return (
         <div className="space-y-8">
@@ -119,6 +271,84 @@ const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
                     </ResponsiveContainer>
                 </div>
             </div>
+
+            {/* Reports Section */}
+            <div className="bg-surface dark:bg-slate-800 p-6 rounded-2xl shadow-lg border border-text-primary/5 dark:border-slate-700">
+                <h3 className="text-xl font-heading font-bold text-text-primary dark:text-slate-100 mb-4">Informes de Pagos POS (Salón)</h3>
+                <form onSubmit={handleGenerateReport}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 items-end">
+                        <div>
+                            <label className="block text-sm font-medium text-text-secondary dark:text-slate-400 mb-1">Desde</label>
+                            <input type="date" name="startDate" value={filters.startDate} onChange={handleFilterChange} className="w-full bg-background dark:bg-slate-700 border border-text-primary/10 dark:border-slate-600 rounded-md p-2"/>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-text-secondary dark:text-slate-400 mb-1">Hasta</label>
+                            <input type="date" name="endDate" value={filters.endDate} onChange={handleFilterChange} className="w-full bg-background dark:bg-slate-700 border border-text-primary/10 dark:border-slate-600 rounded-md p-2"/>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-text-secondary dark:text-slate-400 mb-1">Producto</label>
+                            <select name="productId" value={filters.productId} onChange={handleFilterChange} className="w-full bg-background dark:bg-slate-700 border border-text-primary/10 dark:border-slate-600 rounded-md p-2">
+                                <option value="todos">Todos los productos</option>
+                                {initialProducts.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <button type="submit" className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded-md transition-all">Generar Informe</button>
+                        </div>
+                        <div className="md:col-span-2 lg:col-span-4">
+                            <label className="block text-sm font-medium text-text-secondary dark:text-slate-400 mb-2">Método de Pago</label>
+                            <div className="flex flex-wrap gap-x-4 gap-y-2">
+                                {paymentMethods.map(method => (
+                                <label key={method} className="flex items-center space-x-2">
+                                    <input type="checkbox" name="paymentMethods" value={method} checked={filters.paymentMethods.includes(method)} onChange={handleFilterChange} className="h-4 w-4 rounded border-text-primary/20 dark:border-slate-500 text-primary focus:ring-primary bg-transparent dark:bg-slate-800" />
+                                    <span className="capitalize">{method.replace('yape/plin', 'Yape/Plin')}</span>
+                                </label>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                {reportData && (
+                     <div className="mt-6 animate-fade-in-up">
+                        <div className="flex justify-between items-center mb-4">
+                            <h4 className="text-lg font-bold">Resultados del Informe ({reportData.length} registros)</h4>
+                            <div className="flex items-center space-x-2">
+                                <button onClick={handleExportCSV} className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-3 rounded-md text-sm"><DocumentArrowDownIcon className="h-4 w-4" /><span>Excel (CSV)</span></button>
+                                <button onClick={handlePrintPDF} className="flex items-center space-x-2 bg-text-primary dark:bg-slate-600 hover:bg-text-primary/80 text-white font-semibold py-2 px-3 rounded-md text-sm"><PrinterIcon className="h-4 w-4"/><span>Imprimir PDF</span></button>
+                            </div>
+                        </div>
+                         <div className="overflow-x-auto max-h-96">
+                            <table className="w-full text-sm text-left">
+                                <thead className="bg-background dark:bg-slate-700 sticky top-0">
+                                    <tr>
+                                        <th className="p-2">Fecha</th>
+                                        <th className="p-2">Pedido</th>
+                                        <th className="p-2">Mesa</th>
+                                        <th className="p-2">Método</th>
+                                        <th className="p-2 text-right">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-text-primary/5 dark:divide-slate-700">
+                                {reportData.map(order => (
+                                    <tr key={order.id} className="hover:bg-background dark:hover:bg-slate-700/50">
+                                        <td className="p-2">{new Date(order.pagoRegistrado!.fecha).toLocaleDateString()}</td>
+                                        <td className="p-2 font-mono">{order.id}</td>
+                                        <td className="p-2">{order.cliente.mesa}</td>
+                                        <td className="p-2 capitalize">{order.pagoRegistrado!.metodo.replace('yape/plin', 'Yape/Plin')}</td>
+                                        <td className="p-2 text-right font-mono">S/.{order.total.toFixed(2)}</td>
+                                    </tr>
+                                ))}
+                                </tbody>
+                            </table>
+                         </div>
+                         <div className="mt-4 text-right font-bold text-lg pr-2">
+                            Total del Informe: <span className="font-mono text-primary dark:text-orange-400">S/.{reportTotal.toFixed(2)}</span>
+                        </div>
+                     </div>
+                )}
+            </div>
+            {isPrinting && reportData && <ReportPrintView data={reportData} filters={filters} />}
         </div>
     );
 };
