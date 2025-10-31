@@ -113,16 +113,6 @@ const CloseCajaModal: React.FC<CloseCajaModalProps> = ({ onClose, onCloseCaja, s
             <div className="bg-surface dark:bg-slate-800 rounded-2xl shadow-xl p-6 max-w-lg w-full animate-fade-in-scale">
                 <h3 className="text-2xl font-heading font-bold text-text-primary dark:text-white text-center mb-6">Arqueo y Cierre de Caja</h3>
                 
-                <div className="bg-background dark:bg-slate-900/50 p-4 rounded-xl space-y-2 mb-6">
-                    <p className="font-semibold text-text-primary dark:text-slate-200 mb-2">Resumen de ventas (No efectivo)</p>
-                     {metodos.filter(m => m !== 'efectivo').map(metodo => (
-                        <div key={metodo} className="flex justify-between items-center text-text-secondary dark:text-slate-400">
-                            <span className="capitalize">{metodo.replace('yape/plin', 'Yape/Plin')}:</span>
-                            <span className="font-mono font-semibold text-text-primary dark:text-slate-200">S/.{(session.ventasPorMetodo[metodo] || 0).toFixed(2)}</span>
-                        </div>
-                    ))}
-                </div>
-
                 <div className="bg-amber-500/10 dark:bg-amber-500/20 p-4 rounded-xl text-amber-800 dark:text-amber-300 flex items-start gap-3 mb-6">
                     <InformationCircleIcon className="h-6 w-6 flex-shrink-0 mt-0.5"/>
                     <p className="text-sm"><span className="font-bold">Arqueo a Ciegas:</span> Cuenta todo el dinero en efectivo de la caja e ingresa el monto total. El sistema te mostrará el resultado después de confirmar.</p>
