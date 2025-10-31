@@ -29,7 +29,9 @@ const URLS_TO_CACHE = [
   'components/Logo.tsx',
   'components/DeliveryPaymentModal.tsx',
   'components/CloseCajaModal.tsx',
-  'components/SalesHistoryModal.tsx'
+  'components/SalesHistoryModal.tsx',
+  'icon-192x192.png',
+  'icon-512x512.png'
 ];
 
 // Install event: cache the application shell

@@ -292,7 +292,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
                      <div className="space-y-3 text-left">
                          <p>1. Presiona el botón de **menú** (tres puntos) en tu navegador.</p>
                          <div className="flex justify-center my-2"><EllipsisVerticalIcon className="h-10 w-10 text-primary" /></div>
-                         <p>2. Busca y presiona la opción **"Instalar aplicación"** (o similar).</p>
+                         <p>2. Busca y presiona la opción **"Agregar a la pantalla de inicio"**.</p>
                          <p>3. ¡Listo! La app aparecerá en tu teléfono.</p>
                      </div>
                  )}
