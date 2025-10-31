@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import type { CajaSession, MetodoPago } from '../types';
+import type { CajaSession, MetodoPago, MovimientoCaja } from '../types';
 import { CheckCircleIcon, PrinterIcon, WhatsAppIcon, InformationCircleIcon } from './icons';
 
 interface CloseCajaModalProps {
@@ -43,17 +43,27 @@ const CloseCajaModal: React.FC<CloseCajaModalProps> = ({ onClose, onCloseCaja, s
     };
     
     const handleSendWhatsApp = () => {
-        const { diferencia = 0, totalVentas = 0, gananciaTotal = 0 } = session;
+        const { diferencia = 0, totalVentas = 0, gananciaTotal = 0, movimientos = [] } = session;
         const resultText = diferencia === 0 ? 'Cuadre Perfecto' : (diferencia > 0 ? `Sobrante: S/.${diferencia.toFixed(2)}` : `Faltante: S/.${Math.abs(diferencia).toFixed(2)}`);
 
         let message = `*Resumen de Cierre de Caja - ${new Date().toLocaleString()}*\n\n`;
         message += `*Venta Total:* S/.${totalVentas.toFixed(2)}\n`;
-        message += `*Ganancia Total:* S/.${(gananciaTotal || 0).toFixed(2)}\n`;
-        message += `*Resultado:* ${resultText}\n\n`;
-        message += `*Desglose de Ventas:*\n`;
+        message += `*Ganancia Estimada:* S/.${(gananciaTotal || 0).toFixed(2)}\n`;
+        message += `*Resultado del Arqueo:* ${resultText}\n\n`;
+        message += `*Desglose de Pagos:*\n`;
         Object.entries(session.ventasPorMetodo).forEach(([metodo, monto]) => {
-            message += `- ${metodo.charAt(0).toUpperCase() + metodo.slice(1)}: S/.${(monto || 0).toFixed(2)}\n`;
+            // FIX: Explicitly cast `monto` to a number. `Object.entries` can sometimes infer value types as `unknown`.
+            message += `- ${metodo.charAt(0).toUpperCase() + metodo.slice(1)}: S/.${(Number(monto) || 0).toFixed(2)}\n`;
         });
+        message += `\n*Movimientos de Caja:*\n`;
+        movimientos.forEach(mov => {
+             message += `- ${mov.tipo === 'ingreso' ? 'Ingreso' : 'Egreso'}: S/.${mov.monto.toFixed(2)} (${mov.descripcion})\n`;
+        });
+        message += `\n*Resumen de Efectivo:*\n`;
+        message += `Saldo Inicial: S/.${session.saldoInicial.toFixed(2)}\n`;
+        message += `Efectivo Esperado: S/.${session.totalEfectivoEsperado.toFixed(2)}\n`;
+        message += `Efectivo Contado: S/.${(session.efectivoContadoAlCierre || 0).toFixed(2)}\n`;
+
 
         const encodedMessage = encodeURIComponent(message);
         const whatsappUrl = `https://wa.me/${OWNER_WHATSAPP_NUMBER}?text=${encodedMessage}`;
@@ -66,7 +76,9 @@ const CloseCajaModal: React.FC<CloseCajaModalProps> = ({ onClose, onCloseCaja, s
         const { diferencia = 0 } = session;
         const resultType = diferencia === 0 ? 'success' : (diferencia > 0 ? 'warning' : 'danger');
         const resultText = diferencia === 0 ? 'Cuadre Perfecto' : (diferencia > 0 ? `Sobrante de S/.${diferencia.toFixed(2)}` : `Faltante de S/.${Math.abs(diferencia).toFixed(2)}`);
-        
+        const totalIngresos = (session.movimientos || []).filter(m => m.tipo === 'ingreso').reduce((s, m) => s + m.monto, 0);
+        const totalEgresos = (session.movimientos || []).filter(m => m.tipo === 'egreso').reduce((s, m) => s + m.monto, 0);
+
         return (
              <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[101] p-4 printable-modal">
                 <div className="bg-surface dark:bg-slate-800 rounded-2xl shadow-xl p-8 max-w-md w-full text-center animate-fade-in-scale">
@@ -79,18 +91,22 @@ const CloseCajaModal: React.FC<CloseCajaModalProps> = ({ onClose, onCloseCaja, s
                     <div ref={printRef} className="text-left text-sm space-y-2 printable-modal-content">
                         <p className="text-center font-bold text-lg mb-4">Resumen del Turno</p>
                         <div className="flex justify-between"><span>Venta Total:</span><span className="font-bold">S/.{session.totalVentas.toFixed(2)}</span></div>
-                        <div className="flex justify-between"><span>Ganancia Total:</span><span className="font-bold">S/.{(session.gananciaTotal || 0).toFixed(2)}</span></div>
+                        <div className="flex justify-between"><span>Ganancia Estimada:</span><span className="font-bold">S/.{(session.gananciaTotal || 0).toFixed(2)}</span></div>
                         <hr className="my-2 border-dashed border-text-primary/10 dark:border-slate-600"/>
+                        <p className="font-semibold">Desglose de Pagos:</p>
                         {metodos.map(metodo => (
-                            <div key={metodo} className="flex justify-between text-text-secondary dark:text-slate-400">
+                            <div key={metodo} className="flex justify-between text-text-secondary dark:text-slate-400 pl-2">
                                 <span className="capitalize">{metodo.replace('yape/plin', 'Yape/Plin')}:</span>
                                 <span>S/.{(session.ventasPorMetodo[metodo] || 0).toFixed(2)}</span>
                             </div>
                         ))}
                          <hr className="my-2 border-dashed border-text-primary/10 dark:border-slate-600"/>
-                        <div className="flex justify-between"><span>Saldo Inicial:</span><span>S/.{session.saldoInicial.toFixed(2)}</span></div>
-                        <div className="flex justify-between"><span>Ventas Efectivo:</span><span>S/.{(session.ventasPorMetodo.efectivo || 0).toFixed(2)}</span></div>
-                        <div className="flex justify-between font-semibold"><span>Efectivo Esperado:</span><span>S/.{session.totalEfectivoEsperado.toFixed(2)}</span></div>
+                         <p className="font-semibold">Resumen de Efectivo:</p>
+                        <div className="flex justify-between pl-2"><span>Saldo Inicial:</span><span>S/.{session.saldoInicial.toFixed(2)}</span></div>
+                        <div className="flex justify-between pl-2"><span>Ventas Efectivo:</span><span>S/.{(session.ventasPorMetodo.efectivo || 0).toFixed(2)}</span></div>
+                        <div className="flex justify-between pl-2"><span>Otros Ingresos:</span><span>S/.{totalIngresos.toFixed(2)}</span></div>
+                        <div className="flex justify-between pl-2"><span>Egresos:</span><span>- S/.{totalEgresos.toFixed(2)}</span></div>
+                        <div className="flex justify-between font-semibold mt-1"><span>Efectivo Esperado:</span><span>S/.{session.totalEfectivoEsperado.toFixed(2)}</span></div>
                         <div className="flex justify-between font-semibold"><span>Efectivo Contado:</span><span>S/.{(session.efectivoContadoAlCierre || 0).toFixed(2)}</span></div>
                     </div>
 
@@ -99,7 +115,7 @@ const CloseCajaModal: React.FC<CloseCajaModalProps> = ({ onClose, onCloseCaja, s
                             <PrinterIcon className="h-5 w-5"/> Imprimir
                         </button>
                          <button onClick={handleSendWhatsApp} className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition-all active:scale-95 flex items-center justify-center gap-2">
-                            <WhatsAppIcon className="h-5 w-5"/> Enviar a Dueño
+                            <WhatsAppIcon className="h-5 w-5"/> Enviar Reporte
                         </button>
                     </div>
                     <button onClick={onClose} className="mt-3 w-full bg-primary hover:bg-primary-dark text-white font-bold py-3 px-4 rounded-lg transition-all active:scale-95 no-print">Finalizar</button>

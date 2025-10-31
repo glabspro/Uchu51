@@ -92,6 +92,13 @@ export interface Mesa {
     estadoPedido?: EstadoPedido;
 }
 
+export interface MovimientoCaja {
+    tipo: 'ingreso' | 'egreso';
+    monto: number;
+    descripcion: string;
+    fecha: string;
+}
+
 export interface CajaSession {
     estado: 'abierta' | 'cerrada';
     fechaApertura: string;
@@ -105,4 +112,5 @@ export interface CajaSession {
     totalEfectivoEsperado: number;
     efectivoContadoAlCierre?: number;
     diferencia?: number;
+    movimientos?: MovimientoCaja[];
 }

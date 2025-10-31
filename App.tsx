@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { initialOrders, initialProducts, deliveryDrivers, mesasDisponibles } from './constants';
-import type { Pedido, EstadoPedido, Turno, UserRole, View, Toast as ToastType, AreaPreparacion, Producto, ProductoPedido, Mesa, MetodoPago, Theme, CajaSession } from './types';
+import type { Pedido, EstadoPedido, Turno, UserRole, View, Toast as ToastType, AreaPreparacion, Producto, ProductoPedido, Mesa, MetodoPago, Theme, CajaSession, MovimientoCaja } from './types';
 import Header from './components/Header';
 import WaitingBoard from './components/WaitingBoard';
 import KitchenBoard from './components/KitchenBoard';
@@ -49,7 +49,7 @@ const App: React.FC = () => {
 
     const [cajaSession, setCajaSession] = useState<CajaSession>(() => {
         const savedSession = localStorage.getItem('cajaSession');
-        return savedSession ? JSON.parse(savedSession) : { estado: 'cerrada', saldoInicial: 0, ventasPorMetodo: {}, totalVentas: 0, totalEfectivoEsperado: 0, fechaApertura: '', gananciaTotal: 0 };
+        return savedSession ? JSON.parse(savedSession) : { estado: 'cerrada', saldoInicial: 0, ventasPorMetodo: {}, totalVentas: 0, totalEfectivoEsperado: 0, fechaApertura: '', gananciaTotal: 0, movimientos: [] };
     });
 
     // State management for the payment and receipt flow
@@ -240,6 +240,7 @@ const App: React.FC = () => {
             totalVentas: 0,
             gananciaTotal: 0,
             totalEfectivoEsperado: saldoInicial,
+            movimientos: [],
         };
         setCajaSession(newSession);
         showToast('Caja abierta con éxito.', 'success');
@@ -257,6 +258,31 @@ const App: React.FC = () => {
         };
         setCajaSession(closedSession);
         showToast(`Caja cerrada. ${diferencia === 0 ? 'Cuadre perfecto.' : (diferencia > 0 ? `Sobrante: S/.${diferencia.toFixed(2)}` : `Faltante: S/.${Math.abs(diferencia).toFixed(2)}`)}`, 'info');
+    };
+    
+    const handleMovimientoCaja = (monto: number, descripcion: string, tipo: 'ingreso' | 'egreso') => {
+        if (cajaSession.estado !== 'abierta') return;
+
+        const newMovimiento: MovimientoCaja = {
+            tipo,
+            monto,
+            descripcion,
+            fecha: new Date().toISOString(),
+        };
+
+        setCajaSession(prevSession => {
+            const nuevosMovimientos = [...(prevSession.movimientos || []), newMovimiento];
+            const totalIngresos = nuevosMovimientos.filter(m => m.tipo === 'ingreso').reduce((sum, m) => sum + m.monto, 0);
+            const totalEgresos = nuevosMovimientos.filter(m => m.tipo === 'egreso').reduce((sum, m) => sum + m.monto, 0);
+            const nuevoTotalEfectivoEsperado = prevSession.saldoInicial + (prevSession.ventasPorMetodo.efectivo || 0) + totalIngresos - totalEgresos;
+
+            return {
+                ...prevSession,
+                movimientos: nuevosMovimientos,
+                totalEfectivoEsperado: nuevoTotalEfectivoEsperado,
+            };
+        });
+        showToast(`Se ${tipo === 'ingreso' ? 'agregó' : 'retiró'} S/.${monto.toFixed(2)} de la caja.`, 'info');
     };
 
     const registrarVentaEnCaja = useCallback((order: Pedido) => {
@@ -277,7 +303,10 @@ const App: React.FC = () => {
 
             const newTotalVentas = prevSession.totalVentas + monto;
             const newGananciaTotal = (prevSession.gananciaTotal || 0) + ganancia;
-            const newTotalEfectivo = prevSession.saldoInicial + (newVentasPorMetodo.efectivo || 0);
+            
+            const totalIngresos = (prevSession.movimientos || []).filter(m => m.tipo === 'ingreso').reduce((sum, m) => sum + m.monto, 0);
+            const totalEgresos = (prevSession.movimientos || []).filter(m => m.tipo === 'egreso').reduce((sum, m) => sum + m.monto, 0);
+            const newTotalEfectivo = prevSession.saldoInicial + (newVentasPorMetodo.efectivo || 0) + totalIngresos - totalEgresos;
 
             return {
                 ...prevSession,
@@ -287,7 +316,7 @@ const App: React.FC = () => {
                 totalEfectivoEsperado: newTotalEfectivo
             };
         });
-    }, [cajaSession.estado, cajaSession.saldoInicial]);
+    }, [cajaSession.estado, cajaSession.saldoInicial, cajaSession.movimientos]);
 
 
     // --- Payment Flow Handlers ---
@@ -384,6 +413,15 @@ const App: React.FC = () => {
     const filteredOrders = useMemo(() => orders.filter(order => order.turno === turno), [orders, turno]);
     const openOrders = useMemo(() => orders.filter(o => !['pagado', 'cancelado'].includes(o.estado)), [orders]);
 
+    const paidOrdersInSession = useMemo(() => {
+        if (cajaSession.estado !== 'abierta') return [];
+        return orders.filter(o => 
+            o.estado === 'pagado' &&
+            o.pagoRegistrado &&
+            new Date(o.pagoRegistrado.fecha) >= new Date(cajaSession.fechaApertura)
+        );
+    }, [orders, cajaSession.estado, cajaSession.fechaApertura]);
+
     const renderView = () => {
         switch (view) {
             case 'espera':
@@ -397,7 +435,7 @@ const App: React.FC = () => {
             case 'local':
                 return <LocalBoard mesas={mesas} onSelectMesa={handleSelectMesa} />;
             case 'caja':
-                return <CajaView orders={openOrders.filter(o => o.estado === 'cuenta solicitada')} onInitiatePayment={handleInitiatePayment} cajaSession={cajaSession} onOpenCaja={handleOpenCaja} onCloseCaja={handleCloseCaja} />;
+                return <CajaView orders={openOrders.filter(o => o.estado === 'cuenta solicitada')} paidOrders={paidOrdersInSession} onInitiatePayment={handleInitiatePayment} cajaSession={cajaSession} onOpenCaja={handleOpenCaja} onCloseCaja={handleCloseCaja} onAddMovimiento={handleMovimientoCaja} />;
             case 'dashboard':
                 return <Dashboard orders={orders} />;
             default:
