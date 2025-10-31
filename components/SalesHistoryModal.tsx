@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import type { Pedido, MetodoPago } from '../types';
-import { ChevronDownIcon, ChevronUpIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon } from './icons';
+import { ChevronDownIcon, ChevronUpIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon, DocumentMagnifyingGlassIcon } from './icons';
 
 // This is a type guard to check if an object is a valid order for history display.
 const isValidHistoryOrder = (order: any): order is Pedido => {
@@ -23,10 +23,8 @@ const SalesHistoryModal: React.FC<{
     paidOrders: Pedido[];
 }> = ({ isOpen, onClose, paidOrders }) => {
     const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+    const [activeFilter, setActiveFilter] = useState<'all' | MetodoPago>('all');
 
-    // This useMemo hook now performs a deep validation of each order.
-    // It ensures that any corrupted or malformed data from localStorage is filtered out
-    // before it can cause a rendering crash.
     const { safeOrders, totalRevenue, summaryByPaymentMethod } = useMemo(() => {
         if (!Array.isArray(paidOrders)) {
             return { safeOrders: [], totalRevenue: 0, summaryByPaymentMethod: {} };
@@ -49,6 +47,12 @@ const SalesHistoryModal: React.FC<{
         return { safeOrders: validOrders, totalRevenue: revenue, summaryByPaymentMethod: summary };
     }, [paidOrders]);
 
+    const filteredOrders = useMemo(() => {
+        if (activeFilter === 'all') {
+            return safeOrders;
+        }
+        return safeOrders.filter(order => order.pagoRegistrado?.metodo === activeFilter);
+    }, [safeOrders, activeFilter]);
 
     if (!isOpen) return null;
 
@@ -58,8 +62,36 @@ const SalesHistoryModal: React.FC<{
         'yape/plin': <DevicePhoneMobileIcon className="h-6 w-6 text-purple-500" />,
         'online': <DevicePhoneMobileIcon className="h-6 w-6 text-indigo-500" />,
     };
+    
+    const FilterButton: React.FC<{
+        filterKey: 'all' | MetodoPago;
+        label: string;
+        count: number;
+        total: number;
+        icon?: React.ReactNode;
+    }> = ({ filterKey, label, count, total, icon }) => {
+        const isActive = activeFilter === filterKey;
+        return (
+            <button
+                onClick={() => {
+                    setActiveFilter(filterKey);
+                    setExpandedOrderId(null); // Collapse all items on filter change
+                }}
+                className={`p-3 rounded-lg border-2 text-left flex items-center gap-3 w-full transition-all duration-200 ${
+                    isActive
+                        ? 'bg-primary/10 border-primary shadow-inner'
+                        : 'bg-background dark:bg-slate-900/50 border-text-primary/5 dark:border-slate-700 hover:border-primary/40'
+                }`}
+            >
+                {icon}
+                <div>
+                    <span className={`text-xs font-semibold capitalize ${isActive ? 'text-primary' : 'text-text-secondary dark:text-slate-400'}`}>{label} ({count})</span>
+                    <p className={`font-bold text-lg ${isActive ? 'text-primary' : 'text-text-primary dark:text-slate-200'}`}>S/.{total.toFixed(2)}</p>
+                </div>
+            </button>
+        );
+    };
 
-    // Safely format time to prevent crashes from invalid date strings.
     const safeFormatTime = (dateString?: string) => {
         if (!dateString || typeof dateString !== 'string') return 'Hora Inválida';
         try {
@@ -80,29 +112,36 @@ const SalesHistoryModal: React.FC<{
                 </header>
 
                 <main className="p-6 flex-1 overflow-y-auto min-h-0">
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                         <FilterButton
+                            filterKey="all"
+                            label="Todas las Ventas"
+                            count={safeOrders.length}
+                            total={totalRevenue}
+                            icon={<DocumentMagnifyingGlassIcon className={`h-6 w-6 ${activeFilter === 'all' ? 'text-primary' : 'text-text-secondary dark:text-slate-400'}`}/>}
+                        />
                         {Object.entries(summaryByPaymentMethod).map(([method, data]) => {
-                            // Robustly cast data to its expected shape to prevent runtime errors.
                             const summaryData = data as { count: number, total: number };
                             const count = Number(summaryData?.count) || 0;
                             const total = Number(summaryData?.total) || 0;
                             return (
-                                <div key={method} className="bg-background dark:bg-slate-900/50 p-3 rounded-lg border border-text-primary/5 dark:border-slate-700 flex items-center gap-3">
-                                    {paymentMethodIcons[method as MetodoPago]}
-                                    <div>
-                                        <span className="text-xs font-semibold capitalize text-text-secondary dark:text-slate-400">{method.replace('yape/plin', 'Yape/Plin')} ({count})</span>
-                                        <p className="font-bold text-lg text-text-primary dark:text-slate-200">S/.{total.toFixed(2)}</p>
-                                    </div>
-                                </div>
+                                <FilterButton
+                                    key={method}
+                                    filterKey={method as MetodoPago}
+                                    label={method.replace('yape/plin', 'Yape/Plin')}
+                                    count={count}
+                                    total={total}
+                                    icon={paymentMethodIcons[method as MetodoPago]}
+                                />
                             );
                         })}
                     </div>
 
-                    {safeOrders.length === 0 ? (
-                        <p className="text-center text-text-secondary dark:text-slate-400 mt-8">No se han registrado ventas en este turno.</p>
+                    {filteredOrders.length === 0 ? (
+                        <p className="text-center text-text-secondary dark:text-slate-400 mt-8">No hay ventas que coincidan con el filtro.</p>
                     ) : (
                         <div className="space-y-3">
-                            {safeOrders.slice().reverse().map(order => {
+                            {filteredOrders.slice().reverse().map(order => {
                                 const isExpanded = expandedOrderId === order.id;
                                 return (
                                     <div key={order.id} className="bg-background dark:bg-slate-900/50 rounded-lg border border-text-primary/5 dark:border-slate-700">

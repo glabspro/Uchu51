@@ -126,7 +126,8 @@ const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
         });
 
         return Object.entries(productCounts)
-            .sort(([, a], [, b]) => b - a)
+            // FIX: Explicitly cast values to numbers to satisfy TypeScript when it cannot infer types correctly.
+            .sort(([, a], [, b]) => Number(b) - Number(a))
             .slice(0, 5)
             .map(([name, value]) => ({ name, value }));
     }, [orders]);
