@@ -27,16 +27,41 @@ const getStatusAppearance = (status: Pedido['estado']) => {
 };
 
 const OrderCard: React.FC<OrderCardProps> = ({ order, children, style }) => {
-    const [currentTime, setCurrentTime] = useState(() => new Date().getTime());
+    const [tiempoTranscurrido, setTiempoTranscurrido] = useState(0);
+
+    const finalStates: Pedido['estado'][] = ['entregado', 'recogido', 'pagado', 'cancelado'];
+    const isFinalState = finalStates.includes(order.estado);
 
     useEffect(() => {
-        const timerId = setInterval(() => {
-            setCurrentTime(new Date().getTime());
-        }, 1000);
-        return () => clearInterval(timerId);
-    }, []);
+        let timerId: number | undefined;
 
-    const tiempoTranscurrido = Math.floor((currentTime - new Date(order.fecha).getTime()) / 1000);
+        if (isFinalState) {
+            const firstHistory = order.historial[0];
+            const lastHistory = order.historial[order.historial.length - 1];
+            if (firstHistory && lastHistory) {
+                const startTime = new Date(firstHistory.fecha).getTime();
+                const endTime = new Date(lastHistory.fecha).getTime();
+                const durationInSeconds = Math.floor((endTime - startTime) / 1000);
+                setTiempoTranscurrido(durationInSeconds > 0 ? durationInSeconds : 0);
+            } else {
+                setTiempoTranscurrido(0);
+            }
+        } else {
+            const calculateElapsedTime = () => {
+                const elapsed = Math.floor((new Date().getTime() - new Date(order.fecha).getTime()) / 1000);
+                setTiempoTranscurrido(elapsed > 0 ? elapsed : 0);
+            };
+            calculateElapsedTime(); // Initial calculation
+            timerId = window.setInterval(calculateElapsedTime, 1000);
+        }
+
+        return () => {
+            if (timerId) {
+                clearInterval(timerId);
+            }
+        };
+    }, [order.estado, order.fecha, order.historial, isFinalState]);
+
 
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
@@ -45,6 +70,9 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, children, style }) => {
     };
 
     const getTimerColor = (timeInSeconds: number, timeEstimatedInMinutes: number) => {
+        if (isFinalState) {
+            return 'text-text-secondary dark:text-slate-400';
+        }
         const percentage = timeInSeconds / (timeEstimatedInMinutes * 60);
         if (percentage < 0.75) return 'text-success dark:text-green-400';
         if (percentage <= 1) return 'text-warning dark:text-yellow-400';
