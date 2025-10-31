@@ -118,7 +118,10 @@ const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
         const productCounts: { [key: string]: number } = {};
         orders.forEach(order => {
             order.productos.forEach(p => {
-                productCounts[p.nombre] = (productCounts[p.nombre] || 0) + p.cantidad;
+                // FIX: The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+                // Cast quantity to a number to prevent string concatenation if data from localStorage is malformed.
+                // This prevents `b - a` in `.sort()` from being an operation on strings.
+                productCounts[p.nombre] = (productCounts[p.nombre] || 0) + Number(p.cantidad || 0);
             });
         });
 
@@ -256,7 +259,7 @@ const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
                                 fill="#8884d8"
                                 dataKey="value"
                                 nameKey="name"
-                                label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
+                                label={({ name, percent }) => `${((percent || 0) * 100).toFixed(0)}%`}
                                 stroke="var(--tw-bg-surface, #FFFFFF)"
                                 className="dark:stroke-slate-800"
                             >

@@ -79,17 +79,23 @@ const SalesHistoryModal: React.FC<{
                     <h2 className="text-xl font-heading font-bold text-text-primary dark:text-slate-100">Historial de Ventas del Turno</h2>
                 </header>
 
-                <main className="p-6 flex-grow overflow-y-auto min-h-0">
+                <main className="p-6 flex-1 overflow-y-auto min-h-0">
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
-                        {Object.entries(summaryByPaymentMethod).map(([method, data]) => (
-                            <div key={method} className="bg-background dark:bg-slate-900/50 p-3 rounded-lg border border-text-primary/5 dark:border-slate-700 flex items-center gap-3">
-                                {paymentMethodIcons[method as MetodoPago]}
-                                <div>
-                                    <span className="text-xs font-semibold capitalize text-text-secondary dark:text-slate-400">{method.replace('yape/plin', 'Yape/Plin')} ({data.count})</span>
-                                    <p className="font-bold text-lg text-text-primary dark:text-slate-200">S/.{data.total.toFixed(2)}</p>
+                        {Object.entries(summaryByPaymentMethod).map(([method, data]) => {
+                            // Robustly cast data to its expected shape to prevent runtime errors.
+                            const summaryData = data as { count: number, total: number };
+                            const count = Number(summaryData?.count) || 0;
+                            const total = Number(summaryData?.total) || 0;
+                            return (
+                                <div key={method} className="bg-background dark:bg-slate-900/50 p-3 rounded-lg border border-text-primary/5 dark:border-slate-700 flex items-center gap-3">
+                                    {paymentMethodIcons[method as MetodoPago]}
+                                    <div>
+                                        <span className="text-xs font-semibold capitalize text-text-secondary dark:text-slate-400">{method.replace('yape/plin', 'Yape/Plin')} ({count})</span>
+                                        <p className="font-bold text-lg text-text-primary dark:text-slate-200">S/.{total.toFixed(2)}</p>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
 
                     {safeOrders.length === 0 ? (
