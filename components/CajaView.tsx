@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import type { Pedido, TipoPedido } from '../types';
+import type { Pedido, EstadoPedido } from '../types';
 import { CheckCircleIcon, HomeIcon, TruckIcon, ShoppingBagIcon, CashIcon } from './icons';
 
 interface CajaViewProps {
@@ -10,6 +10,21 @@ interface CajaViewProps {
 }
 
 type CajaTab = 'porCobrar' | 'local' | 'delivery' | 'retiro';
+
+const getStatusAppearance = (status: Pedido['estado']) => {
+    switch (status) {
+        case 'nuevo': return { color: 'bg-gray-500', label: 'Nuevo' };
+        case 'confirmado': return { color: 'bg-primary', label: 'Confirmado' };
+        case 'en preparación': return { color: 'bg-amber-500', label: 'En Preparación' };
+        case 'en armado': return { color: 'bg-yellow-400', label: 'En Armado' };
+        case 'listo': return { color: 'bg-green-500', label: 'Listo' };
+        case 'entregado': return { color: 'bg-emerald-600', label: 'En Mesa' };
+        case 'en camino': return { color: 'bg-teal-500', label: 'En Camino' };
+        case 'cuenta solicitada': return { color: 'bg-blue-500', label: 'Pidiendo Cuenta' };
+        default: return null;
+    }
+};
+
 
 const TabButton: React.FC<{
     isActive: boolean;
@@ -112,7 +127,17 @@ const CajaView: React.FC<CajaViewProps> = ({ orders, onInitiatePayment, onGenera
                                     <p className={`font-semibold ${selectedOrder?.id !== order.id && 'dark:text-slate-200'}`}>{order.tipo === 'local' ? `Mesa ${order.cliente.mesa}` : `${order.cliente.nombre}`}</p>
                                     <p className="text-xs font-mono">{order.id}</p>
                                 </div>
-                                <p className="font-mono text-lg font-semibold">S/.{order.total.toFixed(2)}</p>
+                                <div className="text-right">
+                                    <p className="font-mono text-lg font-semibold">S/.{order.total.toFixed(2)}</p>
+                                     {(() => {
+                                        const statusInfo = getStatusAppearance(order.estado);
+                                        return statusInfo && selectedOrder?.id !== order.id ? (
+                                            <span className={`mt-1 text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full text-white ${statusInfo.color}`}>
+                                                {statusInfo.label}
+                                            </span>
+                                        ) : null;
+                                     })()}
+                                </div>
                             </div>
                         </button>
                     )) : (
@@ -126,8 +151,20 @@ const CajaView: React.FC<CajaViewProps> = ({ orders, onInitiatePayment, onGenera
             <div className="w-full lg:w-2/3 bg-surface dark:bg-slate-800 rounded-2xl shadow-lg p-8 flex flex-col border border-text-primary/5 dark:border-slate-700">
                 {selectedOrder ? (
                     <>
-                        <h2 className="text-3xl font-heading font-bold text-text-primary dark:text-slate-100 mb-1">Pedido {selectedOrder.id}</h2>
-                        <p className="text-text-secondary dark:text-slate-400 text-lg mb-4">{selectedOrder.tipo === 'local' ? `Mesa ${selectedOrder.cliente.mesa}` : selectedOrder.cliente.nombre}</p>
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <h2 className="text-3xl font-heading font-bold text-text-primary dark:text-slate-100 mb-1">Pedido {selectedOrder.id}</h2>
+                                <p className="text-text-secondary dark:text-slate-400 text-lg mb-4">{selectedOrder.tipo === 'local' ? `Mesa ${selectedOrder.cliente.mesa}` : selectedOrder.cliente.nombre}</p>
+                            </div>
+                            {(() => {
+                                const statusInfo = getStatusAppearance(selectedOrder.estado);
+                                return statusInfo ? (
+                                    <span className={`text-sm font-bold uppercase tracking-wider px-3 py-1.5 rounded-full text-white ${statusInfo.color}`}>
+                                        {statusInfo.label}
+                                    </span>
+                                ) : null;
+                            })()}
+                        </div>
                         
                         <div className="flex-grow border-t border-b border-text-primary/10 dark:border-slate-700 py-4 overflow-y-auto my-4">
                             <ul className="space-y-2">

@@ -1,5 +1,6 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
-import type { Pedido, Producto, ProductoPedido, Mesa, Salsa } from '../types';
+import type { Pedido, Producto, ProductoPedido, Mesa, Salsa, EstadoPedido, UserRole } from '../types';
 import { ChevronLeftIcon, TrashIcon, MinusIcon, PlusIcon, CheckCircleIcon } from './icons';
 import SauceModal from './SauceModal';
 
@@ -10,9 +11,23 @@ interface POSViewProps {
     onExit: () => void;
     onSaveOrder: (order: Pedido, mesaNumero: number) => void;
     onGeneratePreBill: (orderId: string) => void;
+    updateOrderStatus: (orderId: string, newStatus: EstadoPedido, user: UserRole) => void;
 }
 
-const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSaveOrder, onGeneratePreBill }) => {
+const getStatusAppearance = (status: Pedido['estado']) => {
+    switch (status) {
+        case 'nuevo': return { color: 'bg-gray-500', label: 'Nuevo' };
+        case 'confirmado': return { color: 'bg-primary', label: 'Confirmado' };
+        case 'en preparación': return { color: 'bg-amber-500', label: 'En Preparación' };
+        case 'en armado': return { color: 'bg-yellow-400', label: 'En Armado' };
+        case 'listo': return { color: 'bg-green-500', label: 'Listo para Servir' };
+        case 'entregado': return { color: 'bg-emerald-600', label: 'Servido en Mesa' };
+        case 'cuenta solicitada': return { color: 'bg-blue-500', label: 'Cuenta Solicitada' };
+        default: return { color: 'bg-slate-400', label: status };
+    }
+};
+
+const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSaveOrder, onGeneratePreBill, updateOrderStatus }) => {
     const [activeCategory, setActiveCategory] = useState('Hamburguesas');
     const [selectedItem, setSelectedItem] = useState<ProductoPedido | null>(null);
     const [currentOrder, setCurrentOrder] = useState<Pedido | null>(order);
@@ -24,14 +39,11 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
 
     useEffect(() => {
         setCurrentOrder(order);
-        // Cuando el componente recibe una nueva prop 'order' (después de guardar),
-        // reseteamos el estado 'isSubmitting' para volver a habilitar los botones.
         setIsSubmitting(false);
     }, [order]);
 
     const hasUnsavedChanges = useMemo(() => {
         if (!currentOrder) return false;
-        // Un cambio no guardado es cualquier producto que no ha sido enviado a cocina.
         return currentOrder.productos.some(p => !p.sentToKitchen);
     }, [currentOrder]);
     
@@ -170,9 +182,6 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
         }
     };
 
-
-    const isSentToKitchen = currentOrder?.id && currentOrder?.estado !== 'nuevo';
-
     return (
         <div className="fixed inset-0 bg-background dark:bg-slate-900 flex flex-col font-sans">
             {isSauceModalOpen && (
@@ -200,10 +209,19 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
                         <h1 className="text-2xl font-heading font-bold text-text-primary dark:text-slate-100">Mesa {mesa.numero}</h1>
                         {currentOrder?.id && <p className="text-sm font-mono text-text-secondary dark:text-slate-500">{currentOrder.id}</p>}
                     </div>
-                    <div className="w-48 text-right">
-                        {currentOrder && <span className={`text-sm font-bold uppercase tracking-wider px-3 py-1.5 rounded-full ${isSentToKitchen ? 'bg-success/10 text-success dark:text-green-400' : 'bg-warning/10 text-warning dark:text-yellow-400'}`}>
-                           {isSentToKitchen ? `Enviado (${currentOrder.estado})` : 'Tomando Pedido'}
-                        </span>}
+                     <div className="w-48 text-right">
+                        {currentOrder ? (() => {
+                            const statusInfo = getStatusAppearance(currentOrder.estado);
+                            return (
+                                <span className={`text-sm font-bold uppercase tracking-wider px-3 py-1.5 rounded-full text-white ${statusInfo.color}`}>
+                                    {statusInfo.label}
+                                </span>
+                            );
+                        })() : (
+                             <span className={`text-sm font-bold uppercase tracking-wider px-3 py-1.5 rounded-full bg-gray-400/10 text-gray-500`}>
+                                Tomando Pedido
+                            </span>
+                        )}
                     </div>
                 </div>
             </header>
@@ -250,8 +268,18 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
                             <span className="text-text-primary dark:text-slate-100">Total</span>
                             <span className="text-text-primary dark:text-slate-100 font-mono">S/.{currentOrder?.total.toFixed(2) || '0.00'}</span>
                         </div>
+                         {currentOrder?.estado === 'listo' && (
+                            <button
+                                onClick={() => updateOrderStatus(currentOrder!.id, 'entregado', 'admin')}
+                                className="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl text-base mb-3 transition-all duration-300 shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/40 hover:-translate-y-0.5 active:scale-95"
+                                aria-label="Marcar el pedido como servido en la mesa"
+                            >
+                                <CheckCircleIcon className="inline-block h-5 w-5 mr-2" />
+                                Marcar como Servido en Mesa
+                            </button>
+                        )}
                         <div className="space-y-3">
-                             {isSentToKitchen ? (
+                             {currentOrder?.id ? (
                                 <div className="grid grid-cols-2 gap-3">
                                     <button
                                         onClick={() => onGeneratePreBill(currentOrder!.id)}
@@ -278,7 +306,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
                                     {isSubmitting ? 'Enviando...' : 'Enviar a Cocina'}
                                 </button>
                              )}
-                              {hasUnsavedChanges && isSentToKitchen && (
+                              {hasUnsavedChanges && currentOrder?.id && (
                                 <p className="text-xs text-center text-warning dark:text-yellow-400 mt-2 animate-fade-in-up">
                                     Tienes cambios sin enviar. Haz clic en "Adicionar y Enviar".
                                 </p>

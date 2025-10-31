@@ -88,4 +88,5 @@ export interface Mesa {
     numero: number;
     ocupada: boolean;
     pedidoId: string | null;
+    estadoPedido?: EstadoPedido;
 }

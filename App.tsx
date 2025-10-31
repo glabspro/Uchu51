@@ -58,6 +58,7 @@ const App: React.FC = () => {
                 numero: n,
                 ocupada: !!activeOrder,
                 pedidoId: activeOrder ? activeOrder.id : null,
+                estadoPedido: activeOrder ? activeOrder.estado : undefined,
             };
         });
         setMesas(updatedMesas);
@@ -100,7 +101,9 @@ const App: React.FC = () => {
                     ? `Notificación enviada a ${cliente.nombre}: "¡Tu pedido ${id} está listo para que lo recojas!"`
                     : `Notificación para ${cliente.nombre} (Mesa ${cliente.mesa}): "¡Tu pedido ${id} está listo!"`,
             'en camino': `Notificación enviada a ${cliente.nombre}: "¡Tu pedido ${id} va en camino!"`,
-            'entregado': `Notificación enviada a ${cliente.nombre}: "¡Tu pedido ${id} ha sido entregado! ¡Buen provecho!"`,
+            'entregado': tipo === 'local' 
+                ? `Pedido ${id} servido en Mesa ${cliente.mesa}.`
+                : `Notificación enviada a ${cliente.nombre}: "¡Tu pedido ${id} ha sido entregado! ¡Buen provecho!"`,
             'recogido': `Notificación enviada a ${cliente.nombre}: "¡Tu pedido ${id} ha sido recogido! Gracias."`,
             'cuenta solicitada': tipo === 'local' ? `La Mesa ${cliente.mesa} solicita la cuenta. Pedido ${id} listo para cobro en Caja.` : `Pedido ${id} listo para cobro.`,
             'pagado': tipo === 'local' ? `Mesa ${cliente.mesa} pagada y liberada.` : `Pedido ${id} pagado.`,
@@ -310,6 +313,7 @@ const App: React.FC = () => {
                     products={initialProducts}
                     onSaveOrder={handleSavePOSOrder}
                     onGeneratePreBill={handleGeneratePreBill}
+                    updateOrderStatus={updateOrderStatus}
                  />
                  <div className="fixed top-20 right-4 z-[100] space-y-2 w-full max-w-sm">
                     {toasts.map(toast => (
