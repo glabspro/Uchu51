@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'uchu51-cache-v2';
+const CACHE_NAME = 'uchu51-cache-v3';
 // This list should include all the essential files for your app to work offline.
 const URLS_TO_CACHE = [
   '/',
@@ -42,6 +42,7 @@ self.addEventListener('install', event => {
         console.log('Opened cache');
         return cache.addAll(URLS_TO_CACHE);
       })
+      .then(() => self.skipWaiting()) // Force the waiting service worker to become the active service worker.
   );
 });
 
@@ -58,7 +59,7 @@ self.addEventListener('activate', event => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim()) // Take control of all open clients
   );
 });
 
