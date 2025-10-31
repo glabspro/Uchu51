@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import type { Pedido, MetodoPago } from '../types';
-import { ChevronDownIcon, ChevronUpIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon, DocumentMagnifyingGlassIcon } from './icons';
+import type { Pedido } from '../types';
+import { ChevronDownIcon, ChevronUpIcon, CashIcon, DevicePhoneMobileIcon, DocumentMagnifyingGlassIcon } from './icons';
 
 // This is a type guard to check if an object is a valid order for history display.
 const isValidHistoryOrder = (order: any): order is Pedido => {
@@ -23,59 +23,71 @@ const SalesHistoryModal: React.FC<{
     paidOrders: Pedido[];
 }> = ({ isOpen, onClose, paidOrders }) => {
     const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
-    const [activeFilter, setActiveFilter] = useState<'all' | MetodoPago>('all');
+    const [activeFilter, setActiveFilter] = useState<'all' | 'Efectivo' | 'Online'>('all');
 
-    const { safeOrders, totalRevenue, summaryByPaymentMethod } = useMemo(() => {
+    const { safeOrders, totalRevenue, summaryByGroup } = useMemo(() => {
+        // Guard against non-array input
         if (!Array.isArray(paidOrders)) {
-            return { safeOrders: [], totalRevenue: 0, summaryByPaymentMethod: {} };
+            return {
+                safeOrders: [],
+                totalRevenue: 0,
+                summaryByGroup: { Efectivo: { count: 0, total: 0 }, Online: { count: 0, total: 0 } }
+            };
         }
 
         const validOrders = paidOrders.filter(isValidHistoryOrder);
-        
         const revenue = validOrders.reduce((sum, order) => sum + (Number(order.total) || 0), 0);
 
-        const summary: Record<string, { count: number; total: number }> = {};
+        const summary: {
+            Efectivo: { count: number; total: number };
+            Online: { count: number; total: number };
+        } = {
+            Efectivo: { count: 0, total: 0 },
+            Online: { count: 0, total: 0 },
+        };
+
         for (const order of validOrders) {
             const method = order.pagoRegistrado!.metodo;
-            if (!summary[method]) {
-                summary[method] = { count: 0, total: 0 };
+            const total = Number(order.total) || 0;
+
+            if (method === 'efectivo') {
+                summary.Efectivo.count += 1;
+                summary.Efectivo.total += total;
+            } else { // 'tarjeta', 'yape/plin', 'online'
+                summary.Online.count += 1;
+                summary.Online.total += total;
             }
-            summary[method].count += 1;
-            summary[method].total += (Number(order.total) || 0);
         }
 
-        return { safeOrders: validOrders, totalRevenue: revenue, summaryByPaymentMethod: summary };
+        return { safeOrders: validOrders, totalRevenue: revenue, summaryByGroup: summary };
     }, [paidOrders]);
 
     const filteredOrders = useMemo(() => {
-        if (activeFilter === 'all') {
-            return safeOrders;
+        switch (activeFilter) {
+            case 'Efectivo':
+                return safeOrders.filter(order => order.pagoRegistrado?.metodo === 'efectivo');
+            case 'Online':
+                return safeOrders.filter(order => order.pagoRegistrado?.metodo !== 'efectivo');
+            case 'all':
+            default:
+                return safeOrders;
         }
-        return safeOrders.filter(order => order.pagoRegistrado?.metodo === activeFilter);
     }, [safeOrders, activeFilter]);
 
     if (!isOpen) return null;
 
-    const paymentMethodIcons: Record<string, React.ReactNode> = {
-        'efectivo': <CashIcon className="h-6 w-6 text-green-500" />,
-        'tarjeta': <CreditCardIcon className="h-6 w-6 text-blue-500" />,
-        'yape/plin': <DevicePhoneMobileIcon className="h-6 w-6 text-purple-500" />,
-        'online': <DevicePhoneMobileIcon className="h-6 w-6 text-indigo-500" />,
-    };
-    
     const FilterButton: React.FC<{
-        filterKey: 'all' | MetodoPago;
+        filterKey: 'all' | 'Efectivo' | 'Online';
         label: string;
-        count: number;
         total: number;
-        icon?: React.ReactNode;
-    }> = ({ filterKey, label, count, total, icon }) => {
+        icon: React.ReactNode;
+    }> = ({ filterKey, label, total, icon }) => {
         const isActive = activeFilter === filterKey;
         return (
             <button
                 onClick={() => {
                     setActiveFilter(filterKey);
-                    setExpandedOrderId(null); // Collapse all items on filter change
+                    setExpandedOrderId(null);
                 }}
                 className={`p-3 rounded-lg border-2 text-left flex items-center gap-3 w-full transition-all duration-200 ${
                     isActive
@@ -85,7 +97,7 @@ const SalesHistoryModal: React.FC<{
             >
                 {icon}
                 <div>
-                    <span className={`text-xs font-semibold capitalize ${isActive ? 'text-primary' : 'text-text-secondary dark:text-slate-400'}`}>{label} ({count})</span>
+                    <span className={`text-xs font-semibold capitalize ${isActive ? 'text-primary' : 'text-text-secondary dark:text-slate-400'}`}>{label}</span>
                     <p className={`font-bold text-lg ${isActive ? 'text-primary' : 'text-text-primary dark:text-slate-200'}`}>S/.{total.toFixed(2)}</p>
                 </div>
             </button>
@@ -97,7 +109,7 @@ const SalesHistoryModal: React.FC<{
         try {
             const date = new Date(dateString);
             if (isNaN(date.getTime())) return 'Hora Inválida';
-            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
         } catch {
             return 'Hora Inválida';
         }
@@ -111,32 +123,28 @@ const SalesHistoryModal: React.FC<{
                     <h2 className="text-xl font-heading font-bold text-text-primary dark:text-slate-100">Historial de Ventas del Turno</h2>
                 </header>
 
-                <main className="p-6 flex-1 overflow-y-auto min-h-0">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-                         <FilterButton
+                <main className="p-4 md:p-6 flex-1 overflow-y-auto min-h-0">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+                        <FilterButton
                             filterKey="all"
-                            label="Todas las Ventas"
-                            count={safeOrders.length}
+                            label={`Ventas (${safeOrders.length})`}
                             total={totalRevenue}
                             icon={<DocumentMagnifyingGlassIcon className={`h-6 w-6 ${activeFilter === 'all' ? 'text-primary' : 'text-text-secondary dark:text-slate-400'}`}/>}
                         />
-                        {Object.entries(summaryByPaymentMethod).map(([method, data]) => {
-                            const summaryData = data as { count: number, total: number };
-                            const count = Number(summaryData?.count) || 0;
-                            const total = Number(summaryData?.total) || 0;
-                            return (
-                                <FilterButton
-                                    key={method}
-                                    filterKey={method as MetodoPago}
-                                    label={method.replace('yape/plin', 'Yape/Plin')}
-                                    count={count}
-                                    total={total}
-                                    icon={paymentMethodIcons[method as MetodoPago]}
-                                />
-                            );
-                        })}
+                        <FilterButton
+                            filterKey="Efectivo"
+                            label={`Efectivo (${summaryByGroup.Efectivo.count})`}
+                            total={summaryByGroup.Efectivo.total}
+                            icon={<CashIcon className="h-6 w-6 text-green-500" />}
+                        />
+                        <FilterButton
+                            filterKey="Online"
+                            label={`Online (${summaryByGroup.Online.count})`}
+                            total={summaryByGroup.Online.total}
+                            icon={<DevicePhoneMobileIcon className="h-6 w-6 text-indigo-500" />}
+                        />
                     </div>
-
+                    
                     {filteredOrders.length === 0 ? (
                         <p className="text-center text-text-secondary dark:text-slate-400 mt-8">No hay ventas que coincidan con el filtro.</p>
                     ) : (
@@ -158,7 +166,7 @@ const SalesHistoryModal: React.FC<{
                                                 <div className="flex flex-col text-left">
                                                      <span className="font-bold text-text-primary dark:text-slate-200">{order.id}</span>
                                                      <span className="text-xs capitalize text-text-secondary dark:text-slate-500">
-                                                        {order.tipo} - {order.pagoRegistrado?.metodo.replace('yape/plin', 'Yape/Plin')}
+                                                        {order.tipo} - {(order.pagoRegistrado?.metodo || '').replace('yape/plin', 'Online')}
                                                      </span>
                                                 </div>
                                             </div>

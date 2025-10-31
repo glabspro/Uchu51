@@ -260,7 +260,8 @@ const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
                                 fill="#8884d8"
                                 dataKey="value"
                                 nameKey="name"
-                                label={({ name, percent }) => `${((percent || 0) * 100).toFixed(0)}%`}
+                                // FIX: The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type. Explicitly cast `percent` to a number to be safe.
+                                label={({ name, percent }) => `${((Number(percent) || 0) * 100).toFixed(0)}%`}
                                 stroke="var(--tw-bg-surface, #FFFFFF)"
                                 className="dark:stroke-slate-800"
                             >
