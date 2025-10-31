@@ -20,6 +20,7 @@ const getStatusAppearance = (status: Pedido['estado']) => {
         case 'en camino': return { color: 'bg-teal-500', text: 'text-teal-800 dark:text-teal-200', label: 'En Camino' };
         case 'entregado': return { color: 'bg-emerald-500', text: 'text-emerald-800 dark:text-emerald-200', label: 'Entregado' };
         case 'recogido': return { color: 'bg-cyan-500', text: 'text-cyan-800 dark:text-cyan-200', label: 'Recogido' };
+        case 'pagado': return { color: 'bg-blue-500', text: 'text-blue-800 dark:text-blue-200', label: 'Pagado' };
         case 'cancelado': return { color: 'bg-danger', text: 'text-red-800 dark:text-red-200', label: 'Cancelado' };
         default: return { color: 'bg-gray-300', text: 'text-gray-800 dark:text-gray-200', label: 'Estado' };
     }

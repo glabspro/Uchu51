@@ -2,13 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import type { Pedido, EstadoPedido, UserRole } from '../types';
 import OrderCard from './OrderCard';
-import { UserIcon, TruckIcon, CheckCircleIcon } from './icons';
+import { UserIcon, TruckIcon, CashIcon } from './icons';
 
 interface DeliveryBoardProps {
     orders: Pedido[];
     updateOrderStatus: (orderId: string, newStatus: EstadoPedido, user: UserRole) => void;
     assignDriver: (orderId: string, driverName: string) => void;
     deliveryDrivers: string[];
+    onInitiateDeliveryPayment: (order: Pedido) => void;
 }
 
 const DeliveryColumn: React.FC<{ title: string; children: React.ReactNode; count: number; }> = ({ title, children, count }) => (
@@ -23,7 +24,7 @@ const DeliveryColumn: React.FC<{ title: string; children: React.ReactNode; count
     </div>
 );
 
-const DeliveryBoard: React.FC<DeliveryBoardProps> = ({ orders, updateOrderStatus, assignDriver, deliveryDrivers }) => {
+const DeliveryBoard: React.FC<DeliveryBoardProps> = ({ orders, updateOrderStatus, assignDriver, deliveryDrivers, onInitiateDeliveryPayment }) => {
     const [announcedOrders, setAnnouncedOrders] = useState<Set<string>>(new Set());
 
     const speak = (text: string) => {
@@ -52,7 +53,7 @@ const DeliveryBoard: React.FC<DeliveryBoardProps> = ({ orders, updateOrderStatus
 
     const readyOrders = orders.filter(o => o.estado === 'listo');
     const onTheWayOrders = orders.filter(o => o.estado === 'en camino');
-    const deliveredOrders = orders.filter(o => o.estado === 'entregado');
+    const deliveredOrders = orders.filter(o => o.estado === 'entregado' || o.estado === 'pagado');
 
     return (
         <div className="flex flex-col md:flex-row gap-6">
@@ -87,19 +88,19 @@ const DeliveryBoard: React.FC<DeliveryBoardProps> = ({ orders, updateOrderStatus
                             Repartidor: {order.repartidorAsignado}
                         </div>
                         <button
-                            onClick={() => updateOrderStatus(order.id, 'entregado', 'repartidor')}
+                            onClick={() => onInitiateDeliveryPayment(order)}
                             className="w-full bg-success hover:brightness-105 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-success/30 hover:-translate-y-0.5 active:scale-95"
                         >
-                            <CheckCircleIcon className="h-5 w-5 mr-2" /> Marcar como Entregado
+                            <CashIcon className="h-5 w-5 mr-2" /> Registrar Pago
                         </button>
                     </OrderCard>
                 ))}
             </DeliveryColumn>
-            <DeliveryColumn title="Entregados" count={deliveredOrders.length}>
+            <DeliveryColumn title="Entregados y Pagados" count={deliveredOrders.length}>
                 {deliveredOrders.map((order, i) => (
                     <OrderCard key={order.id} order={order} style={{ '--delay': `${i * 50}ms` } as React.CSSProperties}>
                         <div className="text-center font-semibold text-success dark:text-green-400 p-3 bg-success/10 dark:bg-green-500/10 rounded-lg">
-                           Entregado por: {order.repartidorAsignado}
+                           {order.estado === 'pagado' ? 'PAGO REGISTRADO' : `Entregado por: ${order.repartidorAsignado}`}
                         </div>
                     </OrderCard>
                 ))}

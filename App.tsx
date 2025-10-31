@@ -17,6 +17,7 @@ import CajaView from './components/CajaView';
 import PaymentModal from './components/PaymentModal';
 import ReceiptModal from './components/ReceiptModal';
 import PreBillModal from './components/PreBillModal';
+import DeliveryPaymentModal from './components/DeliveryPaymentModal';
 
 type AppView = 'customer' | 'login' | 'admin';
 
@@ -48,6 +49,7 @@ const App: React.FC = () => {
     // State management for the payment and receipt flow
     const [orderForPreBill, setOrderForPreBill] = useState<Pedido | null>(null); // Order to display in the pre-bill modal
     const [orderToPay, setOrderToPay] = useState<Pedido | null>(null); // Order to process in the payment modal
+    const [orderForDeliveryPayment, setOrderForDeliveryPayment] = useState<Pedido | null>(null); // Order for delivery payment
     const [orderForReceipt, setOrderForReceipt] = useState<Pedido | null>(null); // Order to display in the final receipt modal
 
     useEffect(() => {
@@ -218,6 +220,8 @@ const App: React.FC = () => {
         }
     };
     const handleInitiatePayment = (order: Pedido) => setOrderToPay(order);
+    const handleInitiateDeliveryPayment = (order: Pedido) => setOrderForDeliveryPayment(order);
+
 
     const handleConfirmPayment = (orderId: string, details: { metodo: MetodoPago; montoPagado?: number }) => {
         const order = orders.find(o => o.id === orderId);
@@ -247,6 +251,33 @@ const App: React.FC = () => {
         setOrderForReceipt(updatedOrder);
     };
     
+    const handleConfirmDeliveryPayment = (orderId: string, details: { metodo: MetodoPago; montoPagado?: number }) => {
+        const order = orders.find(o => o.id === orderId);
+        if (!order) return;
+
+        let vuelto = 0;
+        if (details.metodo === 'efectivo' && details.montoPagado && details.montoPagado >= order.total) {
+            vuelto = details.montoPagado - order.total;
+        }
+
+        const updatedOrder: Pedido = {
+            ...order,
+            estado: 'pagado',
+            historial: [...order.historial, { estado: 'pagado', fecha: new Date().toISOString(), usuario: 'repartidor' }],
+            pagoRegistrado: {
+                metodo: details.metodo,
+                montoTotal: order.total,
+                montoPagado: details.montoPagado,
+                vuelto: vuelto,
+                fecha: new Date().toISOString(),
+            },
+        };
+
+        setOrders(prevOrders => prevOrders.map(o => (o.id === orderId ? updatedOrder : o)));
+        showToast(`Pedido ${orderId} entregado y pagado.`, 'success');
+        setOrderForDeliveryPayment(null);
+    };
+
     const handleCloseReceipt = () => setOrderForReceipt(null);
 
     const handleSelectMesa = (mesa: Mesa) => setPosMesaActiva(mesa);
@@ -277,7 +308,7 @@ const App: React.FC = () => {
             case 'cocina':
                 return <KitchenBoard orders={filteredOrders.filter(o => ['en preparación', 'en armado', 'listo para armado'].includes(o.estado))} updateOrderStatus={updateOrderStatus} assignCook={assignCook} cooks={cooks} />;
             case 'delivery':
-                return <DeliveryBoard orders={filteredOrders.filter(o => o.tipo === 'delivery' && ['listo', 'en camino', 'entregado'].includes(o.estado))} updateOrderStatus={updateOrderStatus} assignDriver={assignDriver} deliveryDrivers={deliveryDrivers} />;
+                return <DeliveryBoard orders={filteredOrders.filter(o => o.tipo === 'delivery' && ['listo', 'en camino', 'entregado', 'pagado'].includes(o.estado))} updateOrderStatus={updateOrderStatus} assignDriver={assignDriver} deliveryDrivers={deliveryDrivers} onInitiateDeliveryPayment={handleInitiateDeliveryPayment} />;
             case 'retiro':
                 return <RetiroBoard orders={filteredOrders.filter(o => o.tipo === 'retiro' && ['listo', 'recogido'].includes(o.estado))} updateOrderStatus={updateOrderStatus} />;
             case 'local':
@@ -333,6 +364,7 @@ const App: React.FC = () => {
         <div className="min-h-screen flex flex-col">
             {orderForPreBill && <PreBillModal order={orderForPreBill} onClose={() => setOrderForPreBill(null)} theme={theme} />}
             {orderToPay && <PaymentModal order={orderToPay} onClose={() => setOrderToPay(null)} onConfirmPayment={handleConfirmPayment} />}
+            {orderForDeliveryPayment && <DeliveryPaymentModal order={orderForDeliveryPayment} onClose={() => setOrderForDeliveryPayment(null)} onConfirmPayment={handleConfirmDeliveryPayment} />}
             {orderForReceipt && <ReceiptModal order={orderForReceipt} onClose={handleCloseReceipt} theme={theme} />}
             <Header
                 currentView={view}
