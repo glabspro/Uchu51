@@ -67,6 +67,9 @@ const App: React.FC = () => {
         return savedSession ? JSON.parse(savedSession) : { estado: 'cerrada', saldoInicial: 0, ventasPorMetodo: {}, totalVentas: 0, totalEfectivoEsperado: 0, fechaApertura: '', gananciaTotal: 0, movimientos: [] };
     });
 
+    // State for PWA installation prompt
+    const [installPrompt, setInstallPrompt] = useState<any>(null);
+
     // State management for the payment and receipt flow
     const [orderForPreBill, setOrderForPreBill] = useState<Pedido | null>(null); // Order to display in the pre-bill modal
     const [orderToPay, setOrderToPay] = useState<Pedido | null>(null); // Order to process in the payment modal
@@ -101,6 +104,26 @@ const App: React.FC = () => {
             localStorage.setItem('theme', 'light');
         }
     }, [theme]);
+
+    useEffect(() => {
+        const handleBeforeInstallPrompt = (e: Event) => {
+            e.preventDefault();
+            setInstallPrompt(e);
+        };
+        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        return () => {
+            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        };
+    }, []);
+
+    const handleInstallClick = () => {
+        if (installPrompt) {
+            installPrompt.prompt();
+            // The prompt can only be used once.
+            setInstallPrompt(null);
+        }
+    };
+
 
     const toggleTheme = useCallback(() => {
         setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
@@ -463,7 +486,7 @@ const App: React.FC = () => {
     };
 
     if (appView === 'customer') {
-        return <CustomerView products={initialProducts} onPlaceOrder={handleSaveOrder} onNavigateToAdmin={() => setAppView('login')} theme={theme} onToggleTheme={toggleTheme} />;
+        return <CustomerView products={initialProducts} onPlaceOrder={handleSaveOrder} onNavigateToAdmin={() => setAppView('login')} theme={theme} onToggleTheme={toggleTheme} installPrompt={installPrompt} onInstallClick={handleInstallClick} />;
     }
     
     if (appView === 'login') {

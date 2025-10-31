@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import type { Pedido, Producto, ProductoPedido, Cliente, Salsa, TipoPedido, MetodoPago, Theme } from '../types';
-import { ShoppingBagIcon, TrashIcon, CheckCircleIcon, TruckIcon, UserIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon, MapPinIcon, SearchIcon, AdjustmentsHorizontalIcon, MinusIcon, PlusIcon, StarIcon, SunIcon, MoonIcon, ChevronLeftIcon, WhatsAppIcon } from './icons';
+import { ShoppingBagIcon, TrashIcon, CheckCircleIcon, TruckIcon, UserIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon, MapPinIcon, SearchIcon, AdjustmentsHorizontalIcon, MinusIcon, PlusIcon, StarIcon, SunIcon, MoonIcon, ChevronLeftIcon, WhatsAppIcon, ArrowDownOnSquareIcon } from './icons';
 import SauceModal from './SauceModal';
 import { yapePlinInfo } from '../constants';
 import { Logo } from './Logo';
@@ -14,6 +14,8 @@ interface CustomerViewProps {
     onNavigateToAdmin: () => void;
     theme: Theme;
     onToggleTheme: () => void;
+    installPrompt: any;
+    onInstallClick: () => void;
 }
 
 type CartItem = ProductoPedido & { cartItemId: number };
@@ -26,7 +28,7 @@ type FormErrors = {
 };
 type PaymentChoice = 'payNow' | 'payLater';
 
-const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onNavigateToAdmin, theme, onToggleTheme }) => {
+const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onNavigateToAdmin, theme, onToggleTheme, installPrompt, onInstallClick }) => {
     const [cart, setCart] = useState<CartItem[]>([]);
     const [orderType, setOrderType] = useState<TipoPedido | null>(null);
     const [customerInfo, setCustomerInfo] = useState<Cliente>({ nombre: '', telefono: '' });
@@ -279,6 +281,15 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
                             <p className="text-sm text-text-secondary dark:text-slate-400">Te lo llevamos caliente a tu casa.</p>
                         </div>
                     </button>
+                    {installPrompt && (
+                        <button onClick={onInstallClick} className="group bg-text-primary dark:bg-slate-700 p-4 rounded-xl border border-text-primary/10 dark:border-slate-600 hover:shadow-xl hover:border-primary/50 dark:hover:border-primary hover:-translate-y-1 transition-all duration-300 w-full text-left flex items-center space-x-4 active:scale-95">
+                            <div className="bg-white/10 p-3 rounded-lg"><ArrowDownOnSquareIcon className="h-8 w-8 text-white"/></div>
+                            <div>
+                                <h3 className="text-lg font-heading font-bold text-white">Instalar App</h3>
+                                <p className="text-sm text-slate-300">Añade Uchu51 a tu pantalla de inicio.</p>
+                            </div>
+                        </button>
+                    )}
                 </div>
             </div>
 
