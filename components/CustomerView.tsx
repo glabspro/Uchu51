@@ -1,8 +1,6 @@
-
-
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import type { Pedido, Producto, ProductoPedido, Cliente, Salsa, TipoPedido, MetodoPago, Theme } from '../types';
-import { ShoppingBagIcon, TrashIcon, CheckCircleIcon, TruckIcon, UserIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon, MapPinIcon, SearchIcon, AdjustmentsHorizontalIcon, MinusIcon, PlusIcon, StarIcon, SunIcon, MoonIcon, ChevronLeftIcon, WhatsAppIcon, ArrowDownOnSquareIcon } from './icons';
+import { ShoppingBagIcon, TrashIcon, CheckCircleIcon, TruckIcon, UserIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon, MapPinIcon, SearchIcon, AdjustmentsHorizontalIcon, MinusIcon, PlusIcon, StarIcon, SunIcon, MoonIcon, ChevronLeftIcon, WhatsAppIcon, ArrowDownOnSquareIcon, ArrowUpOnSquareIcon, EllipsisVerticalIcon, XMarkIcon } from './icons';
 import SauceModal from './SauceModal';
 import { yapePlinInfo } from '../constants';
 import { Logo } from './Logo';
@@ -37,6 +35,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
     const [activeCategory, setActiveCategory] = useState('Hamburguesas');
     const [paymentMethod, setPaymentMethod] = useState<MetodoPago>('efectivo');
     const [paymentChoice, setPaymentChoice] = useState<PaymentChoice>('payNow');
+    const [showInstallInstructions, setShowInstallInstructions] = useState(false);
 
     const [formErrors, setFormErrors] = useState<FormErrors>({});
     const [cashPaymentAmount, setCashPaymentAmount] = useState('');
@@ -49,6 +48,17 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
     const [isLocating, setIsLocating] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [showGoBackConfirm, setShowGoBackConfirm] = useState(false);
+
+    const [isStandalone, setIsStandalone] = useState(false);
+    const [isIOS, setIsIOS] = useState(false);
+    const [isAndroid, setIsAndroid] = useState(false);
+
+    useEffect(() => {
+        setIsStandalone(window.matchMedia('(display-mode: standalone)').matches);
+        const userAgent = window.navigator.userAgent.toLowerCase();
+        setIsIOS(/iphone|ipad|ipod/.test(userAgent));
+        setIsAndroid(/android/.test(userAgent));
+    }, []);
 
     const groupedProducts = useMemo(() => {
         return products.reduce((acc, product) => {
@@ -253,6 +263,42 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
         setShowGoBackConfirm(false);
     };
 
+    const handleSmartInstallClick = () => {
+        if (installPrompt) {
+            onInstallClick();
+        } else {
+            setShowInstallInstructions(true);
+        }
+    };
+
+    const showInstallButton = (isIOS || isAndroid) && !isStandalone;
+
+    const renderInstallInstructions = () => (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[101] p-4 animate-fade-in-scale">
+             <div className="bg-surface dark:bg-slate-800 rounded-2xl shadow-xl p-6 max-w-sm w-full text-center relative">
+                 <button onClick={() => setShowInstallInstructions(false)} className="absolute top-2 right-2 p-2 rounded-full hover:bg-text-primary/10 dark:hover:bg-slate-700">
+                    <XMarkIcon className="h-6 w-6 text-text-secondary dark:text-slate-400" />
+                 </button>
+                 <h3 className="text-xl font-heading font-bold text-text-primary dark:text-white mb-4">Instalar Uchu51</h3>
+                 {isIOS && (
+                     <div className="space-y-3 text-left">
+                         <p>1. Presiona el botón de **Compartir** en tu navegador.</p>
+                         <div className="flex justify-center my-2"><ArrowUpOnSquareIcon className="h-10 w-10 text-primary" /></div>
+                         <p>2. Desliza hacia arriba y busca la opción **"Agregar a la pantalla de inicio"**.</p>
+                         <p>3. ¡Listo! La app aparecerá en tu teléfono.</p>
+                     </div>
+                 )}
+                 {isAndroid && (
+                     <div className="space-y-3 text-left">
+                         <p>1. Presiona el botón de **menú** (tres puntos) en tu navegador.</p>
+                         <div className="flex justify-center my-2"><EllipsisVerticalIcon className="h-10 w-10 text-primary" /></div>
+                         <p>2. Busca y presiona la opción **"Instalar aplicación"** (o similar).</p>
+                         <p>3. ¡Listo! La app aparecerá en tu teléfono.</p>
+                     </div>
+                 )}
+            </div>
+        </div>
+    );
 
     const renderSelectionScreen = () => (
         <div className="text-center w-full max-w-md mx-auto animate-fade-in-up flex flex-col justify-between h-full p-4">
@@ -281,8 +327,8 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
                             <p className="text-sm text-text-secondary dark:text-slate-400">Te lo llevamos caliente a tu casa.</p>
                         </div>
                     </button>
-                    {installPrompt && (
-                        <button onClick={onInstallClick} className="group bg-text-primary dark:bg-slate-700 p-4 rounded-xl border border-text-primary/10 dark:border-slate-600 hover:shadow-xl hover:border-primary/50 dark:hover:border-primary hover:-translate-y-1 transition-all duration-300 w-full text-left flex items-center space-x-4 active:scale-95">
+                    {showInstallButton && (
+                        <button onClick={handleSmartInstallClick} className="group bg-text-primary dark:bg-slate-700 p-4 rounded-xl border border-text-primary/10 dark:border-slate-600 hover:shadow-xl hover:border-primary/50 dark:hover:border-primary hover:-translate-y-1 transition-all duration-300 w-full text-left flex items-center space-x-4 active:scale-95">
                             <div className="bg-white/10 p-3 rounded-lg"><ArrowDownOnSquareIcon className="h-8 w-8 text-white"/></div>
                             <div>
                                 <h3 className="text-lg font-heading font-bold text-white">Instalar App</h3>
@@ -596,6 +642,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
     return (
         <div className="min-h-screen flex flex-col font-sans bg-background dark:bg-slate-900 text-text-primary dark:text-slate-200">
             {isSauceModalOpen && <SauceModal product={currentProduct} onClose={handleCloseSauceModal} onConfirm={handleConfirmSauces} />}
+            {showInstallInstructions && renderInstallInstructions()}
             {showGoBackConfirm && (
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[101] p-4">
                     <div className="bg-surface dark:bg-slate-800 rounded-2xl shadow-xl p-6 max-w-sm w-full text-center animate-fade-in-scale">
