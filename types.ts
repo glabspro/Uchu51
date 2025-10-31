@@ -90,3 +90,17 @@ export interface Mesa {
     pedidoId: string | null;
     estadoPedido?: EstadoPedido;
 }
+
+export interface CajaSession {
+    estado: 'abierta' | 'cerrada';
+    fechaApertura: string;
+    fechaCierre?: string;
+    saldoInicial: number;
+    ventasPorMetodo: {
+        [key in MetodoPago]?: number;
+    };
+    totalVentas: number;
+    totalEfectivoEsperado: number;
+    efectivoContadoAlCierre?: number;
+    diferencia?: number;
+}

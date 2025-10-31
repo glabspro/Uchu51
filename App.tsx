@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { initialOrders, initialProducts, deliveryDrivers, mesasDisponibles } from './constants';
-import type { Pedido, EstadoPedido, Turno, UserRole, View, Toast as ToastType, AreaPreparacion, Producto, ProductoPedido, Mesa, MetodoPago, Theme } from './types';
+import type { Pedido, EstadoPedido, Turno, UserRole, View, Toast as ToastType, AreaPreparacion, Producto, ProductoPedido, Mesa, MetodoPago, Theme, CajaSession } from './types';
 import Header from './components/Header';
 import WaitingBoard from './components/WaitingBoard';
 import KitchenBoard from './components/KitchenBoard';
@@ -28,13 +28,13 @@ const App: React.FC = () => {
         return savedOrders ? JSON.parse(savedOrders) : initialOrders;
     });
     const [mesas, setMesas] = useState<Mesa[]>([]);
-    const [view, setView] = useState<View>('local');
+    const [view, setView] = useState<View>('caja');
     const [turno, setTurno] = useState<Turno>('tarde');
     const [posMesaActiva, setPosMesaActiva] = useState<Mesa | null>(null);
 
-    const [appView, setAppView] = useState<AppView>('customer');
+    const [appView, setAppView] = useState<AppView>('admin');
     const [loginError, setLoginError] = useState<string | null>(null);
-    const [currentUserRole, setCurrentUserRole] = useState<UserRole>('cliente');
+    const [currentUserRole, setCurrentUserRole] = useState<UserRole>('admin');
     const [toasts, setToasts] = useState<ToastType[]>([]);
 
     const [theme, setTheme] = useState<Theme>(() => {
@@ -45,6 +45,11 @@ const App: React.FC = () => {
             return 'dark';
         }
         return 'light';
+    });
+
+    const [cajaSession, setCajaSession] = useState<CajaSession>(() => {
+        const savedSession = localStorage.getItem('cajaSession');
+        return savedSession ? JSON.parse(savedSession) : { estado: 'cerrada', saldoInicial: 0, ventasPorMetodo: {}, totalVentas: 0, totalEfectivoEsperado: 0, fechaApertura: '' };
     });
 
     // State management for the payment and receipt flow
@@ -66,6 +71,10 @@ const App: React.FC = () => {
         });
         setMesas(updatedMesas);
     }, [orders]);
+    
+    useEffect(() => {
+        localStorage.setItem('cajaSession', JSON.stringify(cajaSession));
+    }, [cajaSession]);
     
     useEffect(() => {
         const root = window.document.documentElement;
@@ -221,6 +230,54 @@ const App: React.FC = () => {
         }
     };
 
+    // --- Caja Session Handlers ---
+    const handleOpenCaja = (saldoInicial: number) => {
+        const newSession: CajaSession = {
+            estado: 'abierta',
+            fechaApertura: new Date().toISOString(),
+            saldoInicial: saldoInicial,
+            ventasPorMetodo: {},
+            totalVentas: 0,
+            totalEfectivoEsperado: saldoInicial,
+        };
+        setCajaSession(newSession);
+        showToast('Caja abierta con éxito.', 'success');
+    };
+
+    const handleCloseCaja = (efectivoContado: number) => {
+        if (cajaSession.estado !== 'abierta') return;
+        const diferencia = efectivoContado - cajaSession.totalEfectivoEsperado;
+        const closedSession: CajaSession = {
+            ...cajaSession,
+            estado: 'cerrada',
+            fechaCierre: new Date().toISOString(),
+            efectivoContadoAlCierre: efectivoContado,
+            diferencia: diferencia,
+        };
+        setCajaSession(closedSession);
+        showToast(`Caja cerrada. ${diferencia === 0 ? 'Cuadre perfecto.' : (diferencia > 0 ? `Sobrante: S/.${diferencia.toFixed(2)}` : `Faltante: S/.${Math.abs(diferencia).toFixed(2)}`)}`, 'info');
+    };
+
+    const registrarVentaEnCaja = useCallback((monto: number, metodo: MetodoPago) => {
+        if (cajaSession.estado !== 'abierta') return;
+
+        setCajaSession(prevSession => {
+            const newVentasPorMetodo = { ...prevSession.ventasPorMetodo };
+            newVentasPorMetodo[metodo] = (newVentasPorMetodo[metodo] || 0) + monto;
+
+            const newTotalVentas = prevSession.totalVentas + monto;
+            const newTotalEfectivo = prevSession.saldoInicial + (newVentasPorMetodo.efectivo || 0);
+
+            return {
+                ...prevSession,
+                ventasPorMetodo: newVentasPorMetodo,
+                totalVentas: newTotalVentas,
+                totalEfectivoEsperado: newTotalEfectivo
+            };
+        });
+    }, [cajaSession.estado, cajaSession.saldoInicial]);
+
+
     // --- Payment Flow Handlers ---
     const handleGeneratePreBill = (orderId: string) => {
         const orderToBill = orders.find(o => o.id === orderId);
@@ -236,6 +293,8 @@ const App: React.FC = () => {
     const handleConfirmPayment = (orderId: string, details: { metodo: MetodoPago; montoPagado?: number }) => {
         const order = orders.find(o => o.id === orderId);
         if (!order) return;
+        
+        registrarVentaEnCaja(order.total, details.metodo);
 
         let vuelto = 0;
         if (details.metodo === 'efectivo' && details.montoPagado && details.montoPagado >= order.total) {
@@ -264,6 +323,8 @@ const App: React.FC = () => {
     const handleConfirmDeliveryPayment = (orderId: string, details: { metodo: MetodoPago; montoPagado?: number }) => {
         const order = orders.find(o => o.id === orderId);
         if (!order) return;
+
+        registrarVentaEnCaja(order.total, details.metodo);
 
         let vuelto = 0;
         if (details.metodo === 'efectivo' && details.montoPagado && details.montoPagado >= order.total) {
@@ -324,7 +385,7 @@ const App: React.FC = () => {
             case 'local':
                 return <LocalBoard mesas={mesas} onSelectMesa={handleSelectMesa} />;
             case 'caja':
-                return <CajaView orders={openOrders} onInitiatePayment={handleInitiatePayment} onGeneratePreBill={handleGeneratePreBill} />;
+                return <CajaView orders={openOrders} onInitiatePayment={handleInitiatePayment} onGeneratePreBill={handleGeneratePreBill} cajaSession={cajaSession} onOpenCaja={handleOpenCaja} onCloseCaja={handleCloseCaja} />;
             case 'dashboard':
                 return <Dashboard orders={orders} />;
             default:
