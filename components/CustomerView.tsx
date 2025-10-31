@@ -33,7 +33,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
     const [stage, setStage] = useState<Stage>('selection');
     const [newOrderId, setNewOrderId] = useState('');
     const [activeCategory, setActiveCategory] = useState('Hamburguesas');
-    const [paymentMethod, setPaymentMethod] = useState<MetodoPago>('yape/plin');
+    const [paymentMethod, setPaymentMethod] = useState<MetodoPago>('efectivo');
     const [paymentChoice, setPaymentChoice] = useState<PaymentChoice>('payNow');
 
     const [formErrors, setFormErrors] = useState<FormErrors>({});
@@ -179,7 +179,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
         
         const finalCart: ProductoPedido[] = cart.map(({ cartItemId, ...rest }) => rest);
         
-        const effectivePaymentMethod = paymentChoice === 'payNow' ? 'yape/plin' : paymentMethod;
+        const effectivePaymentMethod = paymentChoice === 'payNow' ? 'yape' : paymentMethod;
 
         const newOrder: Omit<Pedido, 'id' | 'fecha' | 'turno' | 'historial' | 'areaPreparacion' | 'estado'> = {
             tipo: orderType,

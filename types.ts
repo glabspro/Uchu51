@@ -5,7 +5,7 @@ export type TipoPedido = 'delivery' | 'local' | 'retiro';
 export type Turno = 'mañana' | 'tarde' | 'noche';
 export type View = 'espera' | 'cocina' | 'delivery' | 'local' | 'retiro' | 'dashboard' | 'caja';
 export type UserRole = 'admin' | 'cocinero' | 'repartidor' | 'recepcionista' | 'cliente';
-export type MetodoPago = 'efectivo' | 'tarjeta' | 'yape/plin' | 'online';
+export type MetodoPago = 'efectivo' | 'tarjeta' | 'yape' | 'plin' | 'online';
 export type Theme = 'light' | 'dark';
 
 

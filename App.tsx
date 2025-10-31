@@ -185,7 +185,7 @@ const App: React.FC = () => {
     
     const handleSaveOrder = (orderData: Omit<Pedido, 'id' | 'fecha' | 'turno' | 'historial' | 'areaPreparacion' | 'estado'>) => {
         
-        const isPayNow = orderData.metodoPago === 'yape/plin';
+        const isPayNow = ['yape', 'plin'].includes(orderData.metodoPago);
         const isRiskyRetiro = orderData.tipo === 'retiro' && (orderData.metodoPago === 'efectivo' || orderData.metodoPago === 'tarjeta');
 
         let initialState: EstadoPedido;

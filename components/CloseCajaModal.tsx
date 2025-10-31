@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import type { CajaSession, MetodoPago, MovimientoCaja } from '../types';
 import { CheckCircleIcon, PrinterIcon, WhatsAppIcon, InformationCircleIcon } from './icons';
@@ -71,7 +72,7 @@ const CloseCajaModal: React.FC<CloseCajaModalProps> = ({ onClose, onCloseCaja, s
         window.open(whatsappUrl, '_blank');
     };
 
-    const metodos: MetodoPago[] = ['efectivo', 'tarjeta', 'yape/plin', 'online'];
+    const metodos: MetodoPago[] = ['efectivo', 'tarjeta', 'yape', 'plin', 'online'];
 
     if (step === 'result' && session.estado === 'cerrada') {
         const { diferencia = 0 } = session;
@@ -95,9 +96,9 @@ const CloseCajaModal: React.FC<CloseCajaModalProps> = ({ onClose, onCloseCaja, s
                         <div className="flex justify-between"><span>Ganancia Estimada:</span><span className="font-bold">S/.{(session.gananciaTotal || 0).toFixed(2)}</span></div>
                         <hr className="my-2 border-dashed border-text-primary/10 dark:border-slate-600"/>
                         <p className="font-semibold">Desglose de Pagos:</p>
-                        {metodos.map(metodo => (
+                        {metodos.map(metodo => ( session.ventasPorMetodo[metodo] > 0 &&
                             <div key={metodo} className="flex justify-between text-text-secondary dark:text-slate-400 pl-2">
-                                <span className="capitalize">{metodo.replace('yape/plin', 'Yape/Plin')}:</span>
+                                <span className="capitalize">{metodo}:</span>
                                 <span>S/.{(session.ventasPorMetodo[metodo] || 0).toFixed(2)}</span>
                             </div>
                         ))}

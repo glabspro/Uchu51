@@ -220,7 +220,8 @@ const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
     }, [reportData]);
 
 
-    const paymentMethods: MetodoPago[] = ['efectivo', 'tarjeta', 'yape/plin', 'online'];
+    // FIX: Changed 'yape/plin' to 'yape', 'plin' to match the MetodoPago type.
+    const paymentMethods: MetodoPago[] = ['efectivo', 'tarjeta', 'yape', 'plin', 'online'];
 
     return (
         <div className="space-y-8">
@@ -308,7 +309,8 @@ const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
                                 {paymentMethods.map(method => (
                                 <label key={method} className="flex items-center space-x-2">
                                     <input type="checkbox" name="paymentMethods" value={method} checked={filters.paymentMethods.includes(method)} onChange={handleFilterChange} className="h-4 w-4 rounded border-text-primary/20 dark:border-slate-500 text-primary focus:ring-primary bg-transparent dark:bg-slate-800" />
-                                    <span className="capitalize">{method.replace('yape/plin', 'Yape/Plin')}</span>
+                                    {/* FIX: Removed redundant .replace() call as 'yape' and 'plin' are now separate. */}
+                                    <span className="capitalize">{method}</span>
                                 </label>
                                 ))}
                             </div>
@@ -342,7 +344,8 @@ const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
                                         <td className="p-2">{new Date(order.pagoRegistrado!.fecha).toLocaleDateString()}</td>
                                         <td className="p-2 font-mono">{order.id}</td>
                                         <td className="p-2">{order.cliente.mesa}</td>
-                                        <td className="p-2 capitalize">{order.pagoRegistrado!.metodo.replace('yape/plin', 'Yape/Plin')}</td>
+                                        {/* FIX: Removed redundant .replace() call as 'yape' and 'plin' are now separate. */}
+                                        <td className="p-2 capitalize">{order.pagoRegistrado!.metodo}</td>
                                         <td className="p-2 text-right font-mono">S/.{order.total.toFixed(2)}</td>
                                     </tr>
                                 ))}

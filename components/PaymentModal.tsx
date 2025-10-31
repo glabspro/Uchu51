@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo } from 'react';
 import type { Pedido, MetodoPago } from '../types';
 import { CashIcon, CreditCardIcon, DevicePhoneMobileIcon } from './icons';
@@ -69,10 +70,11 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ order, onClose, onConfirmPa
 
                     <div className="mb-6">
                         <h3 className="text-lg font-semibold text-text-secondary dark:text-slate-300 mb-3">Método de Pago</h3>
-                        <div className="grid grid-cols-3 gap-3">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                             <PaymentMethodButton method="efectivo" label="Efectivo" icon={<CashIcon className="h-5 w-5"/>} currentMethod={selectedMethod} setMethod={setSelectedMethod} />
                             <PaymentMethodButton method="tarjeta" label="Tarjeta" icon={<CreditCardIcon className="h-5 w-5"/>} currentMethod={selectedMethod} setMethod={setSelectedMethod} />
-                            <PaymentMethodButton method="yape/plin" label="Yape/Plin" icon={<DevicePhoneMobileIcon className="h-5 w-5"/>} currentMethod={selectedMethod} setMethod={setSelectedMethod} />
+                            <PaymentMethodButton method="yape" label="Yape" icon={<DevicePhoneMobileIcon className="h-5 w-5"/>} currentMethod={selectedMethod} setMethod={setSelectedMethod} />
+                             <PaymentMethodButton method="plin" label="Plin" icon={<DevicePhoneMobileIcon className="h-5 w-5"/>} currentMethod={selectedMethod} setMethod={setSelectedMethod} />
                         </div>
                     </div>
 
