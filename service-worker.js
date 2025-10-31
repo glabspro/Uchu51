@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'uchu51-cache-v1';
+const CACHE_NAME = 'uchu51-cache-v2';
 // This list should include all the essential files for your app to work offline.
 const URLS_TO_CACHE = [
   '/',
