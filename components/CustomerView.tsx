@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import type { Pedido, Producto, ProductoPedido, Cliente, Salsa, TipoPedido, MetodoPago, Theme } from '../types';
-import { ShoppingBagIcon, TrashIcon, CheckCircleIcon, TruckIcon, UserIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon, MapPinIcon, SearchIcon, AdjustmentsHorizontalIcon, MinusIcon, PlusIcon, StarIcon, SunIcon, MoonIcon, ChevronLeftIcon } from './icons';
+import { ShoppingBagIcon, TrashIcon, CheckCircleIcon, TruckIcon, UserIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon, MapPinIcon, SearchIcon, AdjustmentsHorizontalIcon, MinusIcon, PlusIcon, StarIcon, SunIcon, MoonIcon, ChevronLeftIcon, WhatsAppIcon } from './icons';
 import SauceModal from './SauceModal';
 import { yapePlinInfo } from '../constants';
 import { Logo } from './Logo';
@@ -526,9 +526,18 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
         const isPayNow = paymentChoice === 'payNow';
         const isRiskyRetiro = orderType === 'retiro' && paymentChoice === 'payLater';
 
+        let whatsappUrl = '';
+
         if (isPayNow) {
-            titleMessage = '¡Pedido Recibido!';
-            confirmationMessage = `Recibimos tu pedido. Por favor, envía la captura de tu pago a nuestro WhatsApp para que podamos confirmarlo y empezar a prepararlo.`;
+            titleMessage = '¡Casi Listo! Confirma tu Pago';
+            confirmationMessage = `Recibimos tu pedido. Para finalizar, haz clic abajo para enviarnos la captura de tu pago por WhatsApp.`;
+            
+            const phoneNumber = yapePlinInfo.telefono.replace(/\s/g, '');
+            const fullPhoneNumber = `51${phoneNumber}`; // Peru country code
+            const message = `Hola Uchu51, acabo de realizar el pedido *${newOrderId}*. En breve comparto la captura del pago. ¡Gracias!`;
+            const encodedMessage = encodeURIComponent(message);
+            whatsappUrl = `https://wa.me/${fullPhoneNumber}?text=${encodedMessage}`;
+
         } else if (isRiskyRetiro) {
             titleMessage = '¡Pedido en Espera!';
             confirmationMessage = `Estaremos validando tu pedido en breve. Recibirás una notificación cuando sea confirmado y comience a prepararse.`;
@@ -550,7 +559,23 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
                 <h2 className="text-4xl font-heading font-bold text-text-primary dark:text-white mb-3">{titleMessage}</h2>
                 <p className="text-text-secondary dark:text-slate-300 text-lg mb-6">Gracias por tu compra. Tu número de referencia es <span className="font-bold text-primary">{newOrderId}</span>.</p>
                 <p className="text-text-secondary dark:text-slate-400">{confirmationMessage}</p>
-                <button onClick={() => setStage('selection')} className="mt-8 bg-primary hover:bg-primary-dark text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg shadow-primary/20 hover:shadow-primary/40 active:scale-95">Hacer otro Pedido</button>
+                
+                {isPayNow ? (
+                    <div className='mt-8 flex flex-col items-center'>
+                        <a
+                          href={whatsappUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center gap-3 bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 rounded-xl transition-all shadow-lg shadow-green-500/20 hover:shadow-green-500/40 active:scale-95 text-lg"
+                        >
+                            <WhatsAppIcon className="h-6 w-6" />
+                            Confirmar por WhatsApp
+                        </a>
+                        <button onClick={() => setStage('selection')} className="mt-4 bg-transparent text-text-secondary dark:text-slate-400 font-bold py-3 px-8 rounded-xl transition-all hover:bg-text-primary/10 dark:hover:bg-slate-700 active:scale-95">Hacer otro Pedido</button>
+                    </div>
+                ) : (
+                    <button onClick={() => setStage('selection')} className="mt-8 bg-primary hover:bg-primary-dark text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg shadow-primary/20 hover:shadow-primary/40 active:scale-95">Hacer otro Pedido</button>
+                )}
             </div>
         );
     };
