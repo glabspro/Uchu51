@@ -9,7 +9,7 @@ interface POSViewProps {
     products: Producto[];
     onExit: () => void;
     onSaveOrder: (order: Pedido, mesaNumero: number) => void;
-    onGeneratePreBill: (order: Pedido) => void;
+    onGeneratePreBill: (orderId: string) => void;
 }
 
 const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSaveOrder, onGeneratePreBill }) => {
@@ -67,7 +67,6 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
                 total: newTotal,
                 metodoPago: 'efectivo',
                 tiempoEstimado: 15,
-                tiempoTranscurrido: 0,
                 historial: [],
                 areaPreparacion: 'salon',
              };
@@ -193,7 +192,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
             )}
             <header className="flex-shrink-0 bg-surface dark:bg-slate-800 shadow-md z-10">
                 <div className="flex items-center justify-between p-3 border-b border-text-primary/5 dark:border-slate-700">
-                    <button onClick={handleExitClick} disabled={hasUnsavedChanges} className="flex items-center font-semibold text-text-secondary dark:text-slate-400 hover:text-primary dark:hover:text-orange-400 transition-colors disabled:text-text-secondary/50 dark:disabled:text-slate-600 disabled:cursor-not-allowed">
+                    <button onClick={handleExitClick} className="flex items-center font-semibold text-text-secondary dark:text-slate-400 hover:text-primary dark:hover:text-orange-400 transition-colors">
                         <ChevronLeftIcon className="h-6 w-6 mr-1" />
                         VOLVER AL SALÓN
                     </button>
@@ -255,7 +254,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
                              {isSentToKitchen ? (
                                 <div className="grid grid-cols-2 gap-3">
                                     <button
-                                        onClick={() => onGeneratePreBill(currentOrder!)}
+                                        onClick={() => onGeneratePreBill(currentOrder!.id)}
                                         disabled={hasUnsavedChanges}
                                         className="w-full bg-text-primary/80 dark:bg-slate-600 text-white font-bold py-3 rounded-xl text-base hover:bg-text-primary/90 dark:hover:bg-slate-500 transition-all duration-300 shadow-lg hover:shadow-text-primary/20 hover:-translate-y-0.5 active:scale-95 disabled:bg-gray-400/50 dark:disabled:bg-slate-700 disabled:text-text-secondary dark:disabled:text-slate-400 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0"
                                         aria-label="Ver o imprimir la pre-cuenta del pedido"

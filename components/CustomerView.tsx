@@ -9,7 +9,7 @@ import { Logo } from './Logo';
 
 interface CustomerViewProps {
     products: Producto[];
-    onPlaceOrder: (order: Omit<Pedido, 'id' | 'fecha' | 'turno' | 'historial' | 'tiempoTranscurrido' | 'areaPreparacion' | 'estado'>) => void;
+    onPlaceOrder: (order: Omit<Pedido, 'id' | 'fecha' | 'turno' | 'historial' | 'areaPreparacion' | 'estado'>) => void;
     onNavigateToAdmin: () => void;
     theme: Theme;
     onToggleTheme: () => void;
@@ -175,7 +175,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
         if (!validateForm() || !orderType) return;
         
         const finalCart: ProductoPedido[] = cart.map(({ cartItemId, ...rest }) => rest);
-        const newOrder: Omit<Pedido, 'id' | 'fecha' | 'turno' | 'historial' | 'tiempoTranscurrido' | 'areaPreparacion' | 'estado'> = {
+        const newOrder: Omit<Pedido, 'id' | 'fecha' | 'turno' | 'historial' | 'areaPreparacion' | 'estado'> = {
             tipo: orderType,
             cliente: customerInfo,
             productos: finalCart,

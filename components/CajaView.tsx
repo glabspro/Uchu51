@@ -6,7 +6,7 @@ import { CheckCircleIcon, HomeIcon, TruckIcon, ShoppingBagIcon, CashIcon } from 
 interface CajaViewProps {
     orders: Pedido[];
     onInitiatePayment: (order: Pedido) => void;
-    onGeneratePreBill: (order: Pedido) => void;
+    onGeneratePreBill: (orderId: string) => void;
 }
 
 type CajaTab = 'porCobrar' | 'local' | 'delivery' | 'retiro';
@@ -159,7 +159,7 @@ const CajaView: React.FC<CajaViewProps> = ({ orders, onInitiatePayment, onGenera
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <button
-                                    onClick={() => onGeneratePreBill(selectedOrder)}
+                                    onClick={() => onGeneratePreBill(selectedOrder.id)}
                                     className="w-full bg-text-primary dark:bg-slate-600 text-white font-bold py-4 rounded-xl text-lg hover:bg-text-primary/90 dark:hover:bg-slate-500 transition-all duration-300 shadow-lg hover:shadow-text-primary/20 hover:-translate-y-0.5 active:scale-95"
                                     aria-label={`Generar pre-cuenta para el pedido ${selectedOrder.id}`}
                                 >

@@ -91,7 +91,6 @@ export const initialOrders: Pedido[] = [
         cocineroAsignado: null,
         repartidorAsignado: null,
         tiempoEstimado: 25,
-        tiempoTranscurrido: 120,
         notas: 'Tocar el intercomunicador 102',
         historial: [{ estado: 'nuevo', fecha: new Date(Date.now() - 2 * 60 * 1000).toISOString(), usuario: 'cliente' }],
         estacion: 'caliente',
@@ -117,7 +116,6 @@ export const initialOrders: Pedido[] = [
         cocineroAsignado: null,
         repartidorAsignado: null,
         tiempoEstimado: 20,
-        tiempoTranscurrido: 300,
         historial: [
             { estado: 'nuevo', fecha: new Date(Date.now() - 5 * 60 * 1000).toISOString(), usuario: 'recepcionista' },
             { estado: 'confirmado', fecha: new Date(Date.now() - 4 * 60 * 1000).toISOString(), usuario: 'recepcionista' }
@@ -144,7 +142,6 @@ export const initialOrders: Pedido[] = [
         cocineroAsignado: 'Chef Mario',
         repartidorAsignado: null,
         tiempoEstimado: 40,
-        tiempoTranscurrido: 720,
         historial: [
             { estado: 'nuevo', fecha: new Date(Date.now() - 12 * 60 * 1000).toISOString(), usuario: 'cliente' },
             { estado: 'confirmado', fecha: new Date(Date.now() - 11 * 60 * 1000).toISOString(), usuario: 'admin' },
@@ -171,7 +168,6 @@ export const initialOrders: Pedido[] = [
         cocineroAsignado: 'Chef Luisa',
         repartidorAsignado: null,
         tiempoEstimado: 20,
-        tiempoTranscurrido: 960,
         historial: [],
         estacion: 'caliente',
         areaPreparacion: 'retiro',
@@ -196,7 +192,6 @@ export const initialOrders: Pedido[] = [
         cocineroAsignado: 'Chef Carlos',
         repartidorAsignado: 'Pedro',
         tiempoEstimado: 35,
-        tiempoTranscurrido: 1500,
         historial: [],
         estacion: 'caliente',
         areaPreparacion: 'delivery',

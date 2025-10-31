@@ -78,18 +78,6 @@ const App: React.FC = () => {
         setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
     }, []);
 
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setOrders(prevOrders => 
-                prevOrders.map(order => ({
-                    ...order,
-                    tiempoTranscurrido: Math.floor((new Date().getTime() - new Date(order.fecha).getTime()) / 1000)
-                }))
-            );
-        }, 1000);
-        return () => clearInterval(interval);
-    }, []);
-
     const showToast = useCallback((message: string, type: 'success' | 'info' = 'info') => {
         const id = Date.now();
         setToasts(prevToasts => [...prevToasts, { id, message, type }]);
@@ -173,7 +161,7 @@ const App: React.FC = () => {
         }
     };
     
-    const handleSaveOrder = (orderData: Omit<Pedido, 'id' | 'fecha' | 'turno' | 'historial' | 'tiempoTranscurrido' | 'areaPreparacion' | 'estado'>) => {
+    const handleSaveOrder = (orderData: Omit<Pedido, 'id' | 'fecha' | 'turno' | 'historial' | 'areaPreparacion' | 'estado'>) => {
         
         const isRiskyRetiro = orderData.tipo === 'retiro' && (orderData.metodoPago === 'efectivo' || orderData.metodoPago === 'tarjeta');
         const initialState: EstadoPedido = isRiskyRetiro ? 'pendiente de confirmación' : 'nuevo';
@@ -185,7 +173,6 @@ const App: React.FC = () => {
             estado: initialState,
             turno: turno,
             historial: [{ estado: initialState, fecha: new Date().toISOString(), usuario: currentUserRole }],
-            tiempoTranscurrido: 0,
             areaPreparacion: getAreaPreparacion(orderData.tipo),
         };
         setOrders(prevOrders => [newOrder, ...prevOrders]);
@@ -204,7 +191,6 @@ const App: React.FC = () => {
                 fecha: new Date().toISOString(),
                 turno: turno,
                 historial: [{ estado: orderData.estado, fecha: new Date().toISOString(), usuario: 'admin' }],
-                tiempoTranscurrido: 0,
             };
             setOrders(currentOrders => [newOrder, ...currentOrders]);
             
@@ -221,9 +207,12 @@ const App: React.FC = () => {
     };
 
     // --- Payment Flow Handlers ---
-    const handleGeneratePreBill = (order: Pedido) => {
-        updateOrderStatus(order.id, 'cuenta solicitada', 'admin');
-        setOrderForPreBill(order);
+    const handleGeneratePreBill = (orderId: string) => {
+        const orderToBill = orders.find(o => o.id === orderId);
+        if (orderToBill) {
+            updateOrderStatus(orderToBill.id, 'cuenta solicitada', 'admin');
+            setOrderForPreBill(orderToBill);
+        }
     };
     const handleInitiatePayment = (order: Pedido) => setOrderToPay(order);
 
@@ -293,7 +282,7 @@ const App: React.FC = () => {
             case 'caja':
                 return <CajaView orders={openOrders} onInitiatePayment={handleInitiatePayment} onGeneratePreBill={handleGeneratePreBill} />;
             case 'dashboard':
-                return <Dashboard orders={filteredOrders} />;
+                return <Dashboard orders={orders} />;
             default:
                 return <WaitingBoard orders={filteredOrders} updateOrderStatus={updateOrderStatus} />;
         }

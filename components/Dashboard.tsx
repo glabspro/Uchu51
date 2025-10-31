@@ -25,8 +25,16 @@ const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
         const pedidosEnProceso = orders.filter(o => !['entregado', 'recogido', 'cancelado', 'nuevo', 'pagado'].includes(o.estado)).length;
         
         const preparationTimes = orders
-            .filter(o => ['entregado', 'listo', 'recogido', 'pagado'].includes(o.estado))
-            .map(o => o.tiempoTranscurrido);
+            .map(o => {
+                const creationEvent = o.historial.find(h => ['nuevo', 'confirmado'].includes(h.estado));
+                const completionEvent = o.historial.find(h => ['listo', 'recogido'].includes(h.estado));
+
+                if (creationEvent && completionEvent) {
+                    return (new Date(completionEvent.fecha).getTime() - new Date(creationEvent.fecha).getTime()) / 1000;
+                }
+                return null;
+            })
+            .filter((t): t is number => t !== null && t > 0);
         
         const tiempoPromedio = preparationTimes.length > 0
             ? Math.floor(preparationTimes.reduce((a, b) => a + b, 0) / preparationTimes.length)

@@ -65,7 +65,6 @@ export interface Pedido {
     cocineroAsignado?: string | null;
     repartidorAsignado?: string | null;
     tiempoEstimado: number;
-    tiempoTranscurrido: number;
     notas?: string;
     historial: HistorialEstado[];
     estacion?: 'caliente' | 'fria';

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import type { Pedido } from '../types';
 import { ClockIcon, UserIcon, PhoneIcon, MapPinIcon } from './icons';
 
@@ -26,21 +26,31 @@ const getStatusAppearance = (status: Pedido['estado']) => {
 };
 
 const OrderCard: React.FC<OrderCardProps> = ({ order, children, style }) => {
-    
+    const [currentTime, setCurrentTime] = useState(() => new Date().getTime());
+
+    useEffect(() => {
+        const timerId = setInterval(() => {
+            setCurrentTime(new Date().getTime());
+        }, 1000);
+        return () => clearInterval(timerId);
+    }, []);
+
+    const tiempoTranscurrido = Math.floor((currentTime - new Date(order.fecha).getTime()) / 1000);
+
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
         return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
     };
 
-    const getTimerColor = (timeInMinutes: number, timeEstimated: number) => {
-        const percentage = (timeInMinutes * 60) / (timeEstimated * 60);
+    const getTimerColor = (timeInSeconds: number, timeEstimatedInMinutes: number) => {
+        const percentage = timeInSeconds / (timeEstimatedInMinutes * 60);
         if (percentage < 0.75) return 'text-success dark:text-green-400';
         if (percentage <= 1) return 'text-warning dark:text-yellow-400';
         return 'text-danger dark:text-red-400';
     };
 
-    const timerColor = getTimerColor(order.tiempoTranscurrido / 60, order.tiempoEstimado);
+    const timerColor = getTimerColor(tiempoTranscurrido, order.tiempoEstimado);
     const { color: statusColor, text: statusTextColor, label: statusLabel } = getStatusAppearance(order.estado);
 
     let mapsLink = '';
@@ -66,7 +76,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, children, style }) => {
                         </p>
                     </div>
                      <div className={`text-2xl font-bold ${timerColor} flex items-center bg-background dark:bg-slate-700/50 px-3 py-1 rounded-lg font-mono`}>
-                       <ClockIcon className="h-5 w-5 mr-2"/> {formatTime(order.tiempoTranscurrido)}
+                       <ClockIcon className="h-5 w-5 mr-2"/> {formatTime(tiempoTranscurrido)}
                     </div>
                 </div>
                  <div className="flex items-center space-x-2 mb-4">
