@@ -25,7 +25,22 @@ type AppView = 'customer' | 'login' | 'admin';
 const App: React.FC = () => {
     const [orders, setOrders] = useState<Pedido[]>(() => {
         const savedOrders = localStorage.getItem('orders');
-        return savedOrders ? JSON.parse(savedOrders) : initialOrders;
+        if (!savedOrders) return initialOrders;
+
+        try {
+            const parsed = JSON.parse(savedOrders);
+            // After parsing, ensure it's an array. If not, fallback.
+            if (Array.isArray(parsed)) {
+                // Filter out any potential null/undefined/non-object values in the array
+                return parsed.filter(o => o && typeof o === 'object');
+            }
+            
+            console.warn('Saved orders data is not an array. Falling back to initial data.');
+            return initialOrders;
+        } catch (e) {
+            console.error("Failed to parse orders from localStorage. Falling back to initial data.", e);
+            return initialOrders;
+        }
     });
     const [mesas, setMesas] = useState<Mesa[]>([]);
     const [view, setView] = useState<View>('caja');
@@ -416,8 +431,12 @@ const App: React.FC = () => {
     const paidOrdersInSession = useMemo(() => {
         if (cajaSession.estado !== 'abierta') return [];
         return orders.filter(o => 
+            o && // Ensure order object exists
             o.estado === 'pagado' &&
             o.pagoRegistrado &&
+            typeof o.pagoRegistrado.fecha === 'string' &&
+            !isNaN(new Date(o.pagoRegistrado.fecha).getTime()) &&
+            !isNaN(new Date(cajaSession.fechaApertura).getTime()) &&
             new Date(o.pagoRegistrado.fecha) >= new Date(cajaSession.fechaApertura)
         );
     }, [orders, cajaSession.estado, cajaSession.fechaApertura]);

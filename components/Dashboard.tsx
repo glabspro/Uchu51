@@ -26,7 +26,8 @@ interface ReportFilters {
 }
 
 const ReportPrintView: React.FC<{ data: Pedido[], filters: ReportFilters }> = ({ data, filters }) => {
-    const total = data.reduce((sum, order) => sum + order.total, 0);
+    // FIX: Ensure order.total is a number before adding it to the sum.
+    const total = data.reduce((sum, order) => sum + Number(order.total || 0), 0);
     const product = initialProducts.find(p => p.id === filters.productId);
 
     return (
@@ -210,7 +211,8 @@ const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
 
     const reportTotal = useMemo(() => {
         if (!reportData) return 0;
-        return reportData.reduce((sum, order) => sum + order.total, 0);
+        // FIX: Ensure order.total is a number before adding it to the sum to prevent type errors.
+        return reportData.reduce((sum, order) => sum + Number(order.total || 0), 0);
     }, [reportData]);
 
 
