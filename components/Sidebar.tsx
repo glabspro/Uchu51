@@ -1,6 +1,6 @@
 import React from 'react';
 import type { View, Theme } from '../types';
-import { ChartBarIcon, FireIcon, HomeIcon, TruckIcon, LogoutIcon, ShoppingBagIcon, CreditCardIcon, ChevronDoubleLeftIcon, ChevronDoubleRightIcon, AdjustmentsHorizontalIcon } from './icons';
+import { ChartBarIcon, FireIcon, HomeIcon, TruckIcon, LogoutIcon, ShoppingBagIcon, CreditCardIcon, ChevronDoubleLeftIcon, ChevronDoubleRightIcon, AdjustmentsHorizontalIcon, StarIcon } from './icons';
 import { Logo } from './Logo';
 import { LogoIcon } from './LogoIcon';
 

@@ -1,17 +1,20 @@
 import React, { useState } from 'react';
-import type { Producto, ClienteLeal } from '../types';
+import type { Producto, ClienteLeal, LoyaltyProgram } from '../types';
 import ProductManager from './ProductManager';
 import InventoryManager from './InventoryManager';
 import CustomerManager from './CustomerManager';
-import { ShoppingBagIcon, ArchiveBoxIcon, SparklesIcon, UserGroupIcon } from './icons';
+import LoyaltyProgramManager from './LoyaltyProgramManager';
+import { ShoppingBagIcon, ArchiveBoxIcon, SparklesIcon, UserGroupIcon, StarIcon } from './icons';
 
 interface GestionViewProps {
     products: Producto[];
     setProducts: React.Dispatch<React.SetStateAction<Producto[]>>;
     customers: ClienteLeal[];
+    programs: LoyaltyProgram[];
+    setPrograms: React.Dispatch<React.SetStateAction<LoyaltyProgram[]>>;
 }
 
-type GestionTab = 'productos' | 'inventario' | 'promociones' | 'clientes';
+type GestionTab = 'productos' | 'inventario' | 'promociones' | 'clientes' | 'lealtad';
 
 const TabButton: React.FC<{
     isActive: boolean;
@@ -40,7 +43,7 @@ const PromotionsManager: React.FC = () => (
 );
 
 
-const GestionView: React.FC<GestionViewProps> = ({ products, setProducts, customers }) => {
+const GestionView: React.FC<GestionViewProps> = ({ products, setProducts, customers, programs, setPrograms }) => {
     const [activeTab, setActiveTab] = useState<GestionTab>('productos');
 
     const renderContent = () => {
@@ -53,6 +56,8 @@ const GestionView: React.FC<GestionViewProps> = ({ products, setProducts, custom
                 return <PromotionsManager />;
             case 'clientes':
                 return <CustomerManager customers={customers} />;
+            case 'lealtad':
+                return <LoyaltyProgramManager programs={programs} setPrograms={setPrograms} />;
             default:
                 return null;
         }
@@ -65,8 +70,9 @@ const GestionView: React.FC<GestionViewProps> = ({ products, setProducts, custom
                 <div className="flex space-x-1 border-b border-text-primary/5 dark:border-slate-700">
                     <TabButton isActive={activeTab === 'productos'} onClick={() => setActiveTab('productos')} icon={<ShoppingBagIcon className="h-6 w-6" />} label="Productos" />
                     <TabButton isActive={activeTab === 'inventario'} onClick={() => setActiveTab('inventario')} icon={<ArchiveBoxIcon className="h-6 w-6" />} label="Inventario" />
-                    <TabButton isActive={activeTab === 'promociones'} onClick={() => setActiveTab('promociones')} icon={<SparklesIcon className="h-6 w-6" />} label="Promociones" />
+                    <TabButton isActive={activeTab === 'lealtad'} onClick={() => setActiveTab('lealtad')} icon={<StarIcon className="h-6 w-6" />} label="Lealtad" />
                     <TabButton isActive={activeTab === 'clientes'} onClick={() => setActiveTab('clientes')} icon={<UserGroupIcon className="h-6 w-6" />} label="Clientes" />
+                    <TabButton isActive={activeTab === 'promociones'} onClick={() => setActiveTab('promociones')} icon={<SparklesIcon className="h-6 w-6" />} label="Promociones" />
                 </div>
             </div>
             <div className="flex-grow bg-surface dark:bg-slate-800 p-6 rounded-b-lg shadow-sm">

@@ -1,5 +1,3 @@
-
-
 export type EstadoPedido = 'pendiente confirmar pago' | 'pendiente de confirmación' | 'nuevo' | 'confirmado' | 'en preparación' | 'en armado' | 'listo para armado' | 'listo' | 'en camino' | 'entregado' | 'cancelado' | 'recogido' | 'pagado' | 'cuenta solicitada';
 export type TipoPedido = 'delivery' | 'local' | 'retiro';
 export type Turno = 'mañana' | 'tarde' | 'noche';
@@ -121,4 +119,26 @@ export interface ClienteLeal {
     nombre: string;
     puntos: number;
     historialPedidos: Pedido[];
+}
+
+export interface Recompensa {
+    id: string;
+    nombre: string;
+    puntosRequeridos: number;
+}
+
+export interface LoyaltyConfig {
+    pointEarningMethod: 'monto' | 'compra';
+    pointsPerMonto: number;
+    montoForPoints: number;
+    pointsPerCompra: number;
+}
+
+export interface LoyaltyProgram {
+    id: string;
+    name: string;
+    description?: string;
+    isActive: boolean;
+    config: LoyaltyConfig;
+    rewards: Recompensa[];
 }

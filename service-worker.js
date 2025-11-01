@@ -1,5 +1,3 @@
-
-
 const CACHE_NAME = 'uchu51-cache-v3';
 // This list should include all the essential files for your app to work offline.
 const URLS_TO_CACHE = [
@@ -36,6 +34,9 @@ const URLS_TO_CACHE = [
   'components/InventoryManager.tsx',
   'components/ProductModal.tsx',
   'components/CustomerManager.tsx',
+  'components/LoyaltyProgramManager.tsx',
+  'components/LoyaltyProgramModal.tsx',
+  'components/RewardModal.tsx',
   'icon-192x192.png',
   'icon-512x512.png'
 ];
@@ -46,7 +47,10 @@ self.addEventListener('install', event => {
     caches.open(CACHE_NAME)
       .then(cache => {
         console.log('Opened cache');
-        return cache.addAll(URLS_TO_CACHE);
+        // Use addAll with a new Request object that has cache set to 'reload'
+        // This ensures that we get the most recent version of the files from the network.
+        const requests = URLS_TO_CACHE.map(url => new Request(url, { cache: 'reload' }));
+        return cache.addAll(requests);
       })
       .then(() => self.skipWaiting()) // Force the waiting service worker to become the active service worker.
   );
@@ -71,6 +75,11 @@ self.addEventListener('activate', event => {
 
 // Fetch event: serve cached content when offline (cache-first strategy)
 self.addEventListener('fetch', event => {
+    // We only want to handle GET requests.
+    if (event.request.method !== 'GET') {
+        return;
+    }
+
   event.respondWith(
     caches.match(event.request)
       .then(response => {
@@ -83,8 +92,13 @@ self.addEventListener('fetch', event => {
         return fetch(event.request).then(
           response => {
             // Check if we received a valid response. We don't cache non-200 responses or opaque responses for third-party assets.
-            if (!response || response.status !== 200 || response.type === 'opaque') {
+            if (!response || response.status !== 200) {
               return response;
+            }
+            
+            // Do not cache third-party scripts loaded via import maps from a CDN
+            if (event.request.url.startsWith('https://aistudiocdn.com')) {
+                return response;
             }
 
             // IMPORTANT: Clone the response. A response is a stream

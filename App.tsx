@@ -1,8 +1,6 @@
-
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { initialOrders, initialProducts, deliveryDrivers, mesasDisponibles } from './constants';
-import type { Pedido, EstadoPedido, Turno, UserRole, View, Toast as ToastType, AreaPreparacion, Producto, ProductoPedido, Mesa, MetodoPago, Theme, CajaSession, MovimientoCaja, ClienteLeal } from './types';
+import type { Pedido, EstadoPedido, Turno, UserRole, View, Toast as ToastType, AreaPreparacion, Producto, ProductoPedido, Mesa, MetodoPago, Theme, CajaSession, MovimientoCaja, ClienteLeal, LoyaltyProgram } from './types';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import KitchenBoard from './components/KitchenBoard';
@@ -60,6 +58,33 @@ const App: React.FC = () => {
         return [];
     });
     
+    const [loyaltyPrograms, setLoyaltyPrograms] = useState<LoyaltyProgram[]>(() => {
+        const saved = localStorage.getItem('loyaltyPrograms');
+        if (saved) {
+            try { return JSON.parse(saved); } catch (e) { console.error("Failed to parse loyaltyPrograms", e); }
+        }
+        return [
+            {
+                id: 'prog-1',
+                name: 'Programa Estándar',
+                description: 'Programa de lealtad por defecto para todos los clientes.',
+                isActive: true,
+                config: {
+                    pointEarningMethod: 'monto',
+                    pointsPerMonto: 5,
+                    montoForPoints: 10,
+                    pointsPerCompra: 5,
+                },
+                rewards: [
+                    { id: 'rec-1', nombre: 'Gaseosa Personal Gratis', puntosRequeridos: 50 },
+                    { id: 'rec-2', nombre: 'Papas Fritas Personales Gratis', puntosRequeridos: 80 },
+                    { id: 'rec-3', nombre: 'S/.10 de Descuento', puntosRequeridos: 100 },
+                ]
+            }
+        ];
+    });
+
+
     useEffect(() => {
         localStorage.setItem('products', JSON.stringify(products));
     }, [products]);
@@ -67,6 +92,11 @@ const App: React.FC = () => {
     useEffect(() => {
         localStorage.setItem('customers', JSON.stringify(customers));
     }, [customers]);
+    
+    useEffect(() => {
+        localStorage.setItem('loyaltyPrograms', JSON.stringify(loyaltyPrograms));
+    }, [loyaltyPrograms]);
+
 
     const [mesas, setMesas] = useState<Mesa[]>([]);
     const [view, setView] = useState<View>('dashboard');
@@ -244,10 +274,20 @@ const App: React.FC = () => {
         
         // Add/update customer loyalty points
         const customerPhone = order.cliente.telefono;
-        if (customerPhone && /^\d{9}$/.test(customerPhone)) {
+        const activeProgram = loyaltyPrograms.find(p => p.isActive);
+
+        if (customerPhone && /^\d{9}$/.test(customerPhone) && activeProgram) {
             setCustomers(prevCustomers => {
                 const existingCustomerIndex = prevCustomers.findIndex(c => c.telefono === customerPhone);
-                const pointsToAdd = Math.floor(order.total);
+                
+                const { config } = activeProgram;
+                let pointsToAdd = 0;
+                if (config.pointEarningMethod === 'monto') {
+                    const safeMontoForPoints = config.montoForPoints > 0 ? config.montoForPoints : 1;
+                    pointsToAdd = Math.floor(order.total / safeMontoForPoints) * (config.pointsPerMonto || 0);
+                } else {
+                    pointsToAdd = config.pointsPerCompra || 0;
+                }
 
                 if (existingCustomerIndex > -1) {
                     const updatedCustomers = [...prevCustomers];
@@ -268,7 +308,7 @@ const App: React.FC = () => {
             });
         }
 
-    }, [cajaSession.estado, cajaSession.saldoInicial, cajaSession.movimientos, products]);
+    }, [cajaSession.estado, cajaSession.saldoInicial, cajaSession.movimientos, products, loyaltyPrograms]);
 
     const handleGeneratePreBill = (orderId: string) => {
         const orderToBill = orders.find(o => o.id === orderId);
@@ -325,7 +365,7 @@ const App: React.FC = () => {
             case 'delivery': return <DeliveryBoard orders={filteredOrders.filter(o => o.tipo === 'delivery' && ['listo', 'en camino', 'entregado', 'pagado'].includes(o.estado))} updateOrderStatus={updateOrderStatus} assignDriver={assignDriver} deliveryDrivers={deliveryDrivers} onInitiateDeliveryPayment={handleInitiateDeliveryPayment} />;
             case 'retiro': return <RetiroBoard orders={filteredOrders.filter(o => o.tipo === 'retiro' && ['pendiente confirmar pago', 'pendiente de confirmación', 'listo', 'recogido', 'pagado'].includes(o.estado))} updateOrderStatus={updateOrderStatus} />;
             case 'local': return <LocalBoard mesas={mesas} onSelectMesa={handleSelectMesa} />;
-            case 'gestion': return <GestionView products={products} setProducts={setProducts} customers={customers} />;
+            case 'gestion': return <GestionView products={products} setProducts={setProducts} customers={customers} programs={loyaltyPrograms} setPrograms={setLoyaltyPrograms} />;
             case 'caja': return <CajaView orders={openOrders.filter(o => o.estado === 'cuenta solicitada')} retiroOrdersToPay={retiroOrdersToPay} paidOrders={paidOrdersInSession} onInitiatePayment={handleInitiatePayment} cajaSession={cajaSession} onOpenCaja={handleOpenCaja} onCloseCaja={handleCloseCaja} onAddMovimiento={handleMovimientoCaja} />;
             case 'dashboard': return <Dashboard orders={orders} products={products} />;
             default: return <Dashboard orders={orders} products={products} />;
