@@ -18,6 +18,7 @@ interface POSViewProps {
     customers: ClienteLeal[];
     loyaltyPrograms: LoyaltyProgram[];
     redeemReward: (customerId: string, reward: Recompensa) => void;
+    onAddNewCustomer: (telefono: string, nombre: string) => void;
 }
 
 const getStatusAppearance = (status: Pedido['estado']) => {
@@ -33,7 +34,7 @@ const getStatusAppearance = (status: Pedido['estado']) => {
     }
 };
 
-const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, onExit, onSaveOrder, onGeneratePreBill, updateOrderStatus, customers, loyaltyPrograms, redeemReward }) => {
+const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, onExit, onSaveOrder, onGeneratePreBill, updateOrderStatus, customers, loyaltyPrograms, redeemReward, onAddNewCustomer }) => {
     const [activeCategory, setActiveCategory] = useState('Hamburguesas');
     const [selectedItem, setSelectedItem] = useState<ProductoPedido | null>(null);
     const [currentOrder, setCurrentOrder] = useState<Pedido | null>(order);
@@ -332,7 +333,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
     return (
         <div className="fixed inset-0 bg-background dark:bg-slate-900 flex flex-col font-sans">
             {isSauceModalOpen && <SauceModal product={productForSauces} onClose={() => setIsSauceModalOpen(false)} onConfirm={handleAddToCartWithSauces} />}
-            {isAssignCustomerModalOpen && <AssignCustomerModal customers={customers} onAssign={handleAssignCustomer} onClose={() => setIsAssignCustomerModalOpen(false)} />}
+            {isAssignCustomerModalOpen && <AssignCustomerModal customers={customers} onAssign={handleAssignCustomer} onClose={() => setIsAssignCustomerModalOpen(false)} onAddNewCustomer={onAddNewCustomer} />}
             {isRedeemRewardModalOpen && assignedCustomer && activeProgram && <RedeemRewardModal customer={assignedCustomer} rewards={activeProgram.rewards} onRedeem={handleRedeemReward} onClose={() => setIsRedeemRewardModalOpen(false)} />}
             {isApplyPromotionModalOpen && <ApplyPromotionModal order={currentOrder} promotions={promotions} products={products} onApply={handleApplyPromotion} onClose={() => setIsApplyPromotionModalOpen(false)} />}
 
@@ -378,9 +379,9 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
             <main className="flex-grow flex flex-col lg:flex-row overflow-hidden">
                 {/* Left Panel - Order */}
                 <div className="w-full lg:w-5/12 bg-surface dark:bg-slate-800 flex flex-col p-4 border-r border-text-primary/5 dark:border-slate-700">
-                    <div className="flex-shrink-0 mb-4 p-3 bg-background dark:bg-slate-900/50 rounded-lg">
+                    <div className="flex-shrink-0 mb-4">
                         {assignedCustomer ? (
-                            <div className="flex justify-between items-center">
+                            <div className="p-3 bg-background dark:bg-slate-900/50 rounded-lg flex justify-between items-center">
                                 <div>
                                     <p className="font-bold text-text-primary dark:text-slate-200">{assignedCustomer.nombre}</p>
                                     <p className="text-sm text-text-secondary dark:text-slate-400">{assignedCustomer.telefono}</p>
@@ -389,9 +390,13 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                                 <button onClick={() => setAssignedCustomer(null)} className="text-xs font-semibold text-danger hover:underline">Quitar</button>
                             </div>
                         ) : (
-                            <button onClick={() => setIsAssignCustomerModalOpen(true)} className="w-full flex items-center justify-center gap-2 bg-text-primary/10 dark:bg-slate-700 hover:bg-text-primary/20 dark:hover:bg-slate-600 text-text-primary dark:text-slate-200 font-bold py-2.5 rounded-lg transition-colors">
-                                <UserIcon className="h-5 w-5" /> Asignar Cliente Leal
-                            </button>
+                            <div className="p-4 bg-primary/10 dark:bg-orange-500/20 rounded-lg border-2 border-dashed border-primary/30 dark:border-orange-500/40 text-center">
+                                <h3 className="font-bold text-lg text-primary dark:text-orange-300 mb-2">Programa de Lealtad</h3>
+                                <p className="text-sm text-text-secondary dark:text-slate-400 mb-3">Busca o registra al cliente para acumular puntos y acceder a promociones.</p>
+                                <button onClick={() => setIsAssignCustomerModalOpen(true)} className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold py-2.5 rounded-lg transition-all shadow-md shadow-primary/20 hover:shadow-primary/30">
+                                    <UserIcon className="h-5 w-5" /> Buscar / Registrar Cliente
+                                </button>
+                            </div>
                         )}
                     </div>
                     <div className="flex-grow overflow-y-auto pr-2">

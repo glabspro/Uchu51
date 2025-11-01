@@ -396,6 +396,21 @@ const App: React.FC = () => {
 
     const handleLogout = () => { setAppView('customer'); setCurrentUserRole('cliente'); };
 
+    const handleAddNewCustomer = (telefono: string, nombre: string) => {
+        if (customers.find(c => c.telefono === telefono)) {
+            showToast(`El cliente con teléfono ${telefono} ya existe.`, 'danger');
+            return;
+        }
+        const newCustomer: ClienteLeal = {
+            telefono,
+            nombre,
+            puntos: 0,
+            historialPedidos: [],
+        };
+        setCustomers(prev => [...prev, newCustomer]);
+        showToast(`Nuevo cliente '${nombre}' registrado con éxito.`, 'success');
+    };
+
     const filteredOrders = useMemo(() => orders.filter(order => order.turno === turno), [orders, turno]);
     const openOrders = useMemo(() => orders.filter(o => !['pagado', 'cancelado'].includes(o.estado)), [orders]);
     const retiroOrdersToPay = useMemo(() => openOrders.filter(o => o.tipo === 'retiro' && o.estado === 'listo' && ['efectivo', 'tarjeta'].includes(o.metodoPago)), [openOrders]);
@@ -436,6 +451,7 @@ const App: React.FC = () => {
                     loyaltyPrograms={loyaltyPrograms}
                     redeemReward={redeemReward}
                     promotions={promotions}
+                    onAddNewCustomer={handleAddNewCustomer}
                 />
                 <div className="fixed top-4 right-4 z-[100] space-y-2 w-full max-w-sm">{toasts.map(t => <Toast key={t.id} message={t.message} type={t.type} onClose={() => removeToast(t.id)} />)}</div>
             </>
