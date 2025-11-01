@@ -73,6 +73,7 @@ export const initialPromotions: Promocion[] = [
         id: 'promo-1',
         nombre: 'Combo Clásico',
         descripcion: 'Una Clásica Norteña con papas y gaseosa a un súper precio.',
+        imagenUrl: 'https://images.unsplash.com/photo-1550547660-d9450f859349?q=80&w=600&h=400&auto=format&fit=crop',
         tipo: 'combo_fijo',
         isActive: true,
         condiciones: {
@@ -88,6 +89,7 @@ export const initialPromotions: Promocion[] = [
         id: 'promo-2',
         nombre: '2x1 en Alitas Picantes',
         descripcion: 'Pide 6 alitas picantes y llévate 6 más. ¡Pura candela!',
+        imagenUrl: 'https://images.unsplash.com/photo-1543339308-43e59d6b70a6?q=80&w=600&h=400&auto=format&fit=crop',
         tipo: 'dos_por_uno',
         isActive: true,
         condiciones: {

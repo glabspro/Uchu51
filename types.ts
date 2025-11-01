@@ -166,6 +166,7 @@ export interface Promocion {
     id: string;
     nombre: string;
     descripcion?: string;
+    imagenUrl?: string;
     tipo: TipoPromocion;
     isActive: boolean;
     condiciones: CondicionesPromocion;

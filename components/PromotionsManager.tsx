@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { Promocion, Producto } from '../types';
-import { PlusIcon, TrashIcon, AdjustmentsHorizontalIcon as PencilIcon, CheckCircleIcon } from './icons';
+import { PlusIcon, TrashIcon, AdjustmentsHorizontalIcon as PencilIcon, SparklesIcon } from './icons';
 import PromotionModal from './PromotionModal';
 
 interface PromotionsManagerProps {
@@ -68,7 +68,14 @@ const PromotionsManager: React.FC<PromotionsManagerProps> = ({ promotions, setPr
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 max-h-[calc(100vh-22rem)] overflow-y-auto pr-3">
                 {promotions.map(promo => (
-                    <div key={promo.id} className={`bg-background dark:bg-slate-900/50 rounded-xl shadow-sm border ${promo.isActive ? 'border-primary' : 'border-text-primary/5 dark:border-slate-700'} flex flex-col`}>
+                    <div key={promo.id} className={`bg-background dark:bg-slate-900/50 rounded-xl shadow-sm border ${promo.isActive ? 'border-primary' : 'border-text-primary/5 dark:border-slate-700'} flex flex-col overflow-hidden`}>
+                        <div className="h-40 w-full bg-background dark:bg-slate-800 flex items-center justify-center text-text-secondary/20 dark:text-slate-700">
+                            {promo.imagenUrl ? (
+                                <img src={promo.imagenUrl} alt={promo.nombre} className="w-full h-full object-cover"/>
+                            ) : (
+                                <SparklesIcon className="h-16 w-16" />
+                            )}
+                        </div>
                         <div className="p-4 flex-grow flex flex-col">
                             <div className="flex justify-between items-start">
                                 <h3 className="font-bold text-lg text-text-primary dark:text-slate-100 pr-4">{promo.nombre}</h3>

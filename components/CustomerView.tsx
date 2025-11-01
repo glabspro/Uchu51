@@ -434,44 +434,46 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
                 <div className="overflow-hidden relative rounded-2xl shadow-2xl">
                     <div className="flex transition-transform ease-out duration-500" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
                         {activePromotions.map((promo) => (
-                            <div key={promo.id} className="w-full flex-shrink-0 bg-gradient-to-br from-primary to-orange-400 dark:from-primary-dark dark:to-orange-600 p-8 text-white min-h-[400px] flex flex-col justify-center">
-                                <SparklesIcon className="h-12 w-12 mx-auto text-white/80 mb-4" />
-                                <h3 className="text-2xl font-heading font-bold mb-2">{promo.nombre}</h3>
-                                <p className="text-sm opacity-90 mb-6 flex-grow">{promo.descripcion}</p>
-                                {promo.tipo === 'combo_fijo' && promo.condiciones.precioFijo &&
-                                    <p className="text-4xl font-heading font-extrabold mb-6">S/.{promo.condiciones.precioFijo.toFixed(2)}</p>
-                                }
-                                <button 
-                                   onClick={() => { 
-                                       handleAddPromotionToCart(promo); 
-                                       setShowPromosModal(false);
-                                       if (stage === 'selection') {
-                                           setOrderType('retiro');
-                                       }
-                                       setStage('checkout');
-                                   }} 
-                                   className="bg-white/20 hover:bg-white/30 text-white font-bold py-3 px-8 rounded-lg transition-all backdrop-blur-sm mt-auto"
-                               >
-                                    ¡Lo quiero!
-                                </button>
+                            <div key={promo.id} className="w-full flex-shrink-0 min-h-[400px] flex flex-col justify-between relative text-white p-6">
+                                {promo.imagenUrl && <img src={promo.imagenUrl} alt={promo.nombre} className="absolute inset-0 w-full h-full object-cover z-0" />}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10"></div>
+                                <div className="relative z-20 flex flex-col h-full justify-end text-left">
+                                    <SparklesIcon className="h-8 w-8 text-white/80 mb-2" />
+                                    <h3 className="text-2xl font-heading font-bold mb-1">{promo.nombre}</h3>
+                                    <p className="text-sm opacity-90 mb-4 flex-grow">{promo.descripcion}</p>
+                                    {promo.tipo === 'combo_fijo' && promo.condiciones.precioFijo &&
+                                        <p className="text-3xl font-heading font-extrabold mb-4">S/.{promo.condiciones.precioFijo.toFixed(2)}</p>
+                                    }
+                                    <button 
+                                       onClick={() => { 
+                                           handleAddPromotionToCart(promo); 
+                                           setShowPromosModal(false);
+                                           if (stage === 'selection') {
+                                               setOrderType('retiro');
+                                           }
+                                           setStage('checkout');
+                                       }} 
+                                       className="bg-white/20 hover:bg-white/30 text-white font-bold py-3 px-8 rounded-lg transition-all backdrop-blur-sm mt-auto w-full"
+                                   >
+                                        ¡Lo quiero!
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>
                     
-                    {/* Navigation Buttons */}
                     {activePromotions.length > 1 && (
                         <>
-                            <button onClick={prevSlide} className="absolute top-1/2 left-2 -translate-y-1/2 p-2 bg-black/30 hover:bg-black/50 transition-colors rounded-full z-10">
+                            <button onClick={prevSlide} className="absolute top-1/2 left-2 -translate-y-1/2 p-2 bg-black/30 hover:bg-black/50 transition-colors rounded-full z-30">
                                 <ChevronLeftIcon className="h-6 w-6 text-white" />
                             </button>
-                            <button onClick={nextSlide} className="absolute top-1/2 right-2 -translate-y-1/2 p-2 bg-black/30 hover:bg-black/50 transition-colors rounded-full z-10">
+                            <button onClick={nextSlide} className="absolute top-1/2 right-2 -translate-y-1/2 p-2 bg-black/30 hover:bg-black/50 transition-colors rounded-full z-30">
                                 <ChevronRightIcon className="h-6 w-6 text-white" />
                             </button>
                         </>
                     )}
                 </div>
 
-                {/* Dots */}
                 {activePromotions.length > 1 && (
                     <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex gap-2">
                         {activePromotions.map((_, i) => (
@@ -568,9 +570,9 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
                  {activeCategory === 'Promociones' && !searchTerm ? (
                     activePromotions.map((promo, i) => (
                         <button key={promo.id} onClick={() => { handleAddPromotionToCart(promo); setStage('checkout'); }} className={`product-card bg-surface dark:bg-slate-800 rounded-2xl border border-primary/20 dark:border-orange-500/30 overflow-hidden flex group p-4 animate-fade-in-up w-full text-left`} style={{'--delay': `${i * 30}ms`} as React.CSSProperties}>
-                             <div className="flex-grow">
+                             <div className="flex-grow flex flex-col">
                                  <h3 className="text-lg font-heading font-bold text-primary dark:text-orange-400 leading-tight flex items-center gap-2"><SparklesIcon className="h-5 w-5"/>{promo.nombre}</h3>
-                                 <p className="text-sm text-text-secondary dark:text-slate-400 mt-1 line-clamp-2 mb-2">{promo.descripcion}</p>
+                                 <p className="text-sm text-text-secondary dark:text-slate-400 mt-1 line-clamp-2 mb-2 flex-grow">{promo.descripcion}</p>
                                  <div className="flex justify-between items-center mt-2">
                                      <p className="text-xl font-heading font-extrabold text-text-primary dark:text-white">{promo.tipo === 'combo_fijo' ? `S/.${promo.condiciones.precioFijo?.toFixed(2)}` : '¡Ofertón!'}</p>
                                      <div className="flex items-center gap-2 bg-primary rounded-lg text-white font-semibold px-4 py-2 group-hover:bg-primary-dark transition-all duration-300 shadow-lg group-hover:shadow-primary/30 transform group-hover:scale-105 active:scale-95">
@@ -578,6 +580,11 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
                                      </div>
                                  </div>
                              </div>
+                             {promo.imagenUrl && (
+                                <div className="h-28 w-28 overflow-hidden rounded-xl ml-4 flex-shrink-0 relative">
+                                    <img className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" src={promo.imagenUrl} alt={promo.nombre} />
+                                </div>
+                             )}
                         </button>
                     ))
                 ) : filteredProducts.length > 0 ? filteredProducts.map((product, i) => (

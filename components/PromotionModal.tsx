@@ -13,6 +13,7 @@ const PromotionModal: React.FC<PromotionModalProps> = ({ promotion, onSave, onCl
     const [formData, setFormData] = useState<Omit<Promocion, 'id'>>({
         nombre: promotion?.nombre || '',
         descripcion: promotion?.descripcion || '',
+        imagenUrl: promotion?.imagenUrl || '',
         tipo: promotion?.tipo || 'combo_fijo',
         isActive: promotion?.isActive || false,
         condiciones: promotion?.condiciones || {},
@@ -103,6 +104,14 @@ const PromotionModal: React.FC<PromotionModalProps> = ({ promotion, onSave, onCl
                     <div>
                         <label className="block text-sm font-medium text-text-secondary dark:text-slate-400 mb-1">Nombre</label>
                         <input type="text" value={formData.nombre} onChange={e => setFormData(p => ({...p, nombre: e.target.value}))} className="w-full bg-background dark:bg-slate-700 border border-text-primary/10 dark:border-slate-600 rounded-md p-2" required />
+                    </div>
+                     <div>
+                        <label className="block text-sm font-medium text-text-secondary dark:text-slate-400 mb-1">Descripción</label>
+                        <input type="text" value={formData.descripcion} onChange={e => setFormData(p => ({...p, descripcion: e.target.value}))} className="w-full bg-background dark:bg-slate-700 border border-text-primary/10 dark:border-slate-600 rounded-md p-2" />
+                    </div>
+                     <div>
+                        <label className="block text-sm font-medium text-text-secondary dark:text-slate-400 mb-1">URL de la Imagen</label>
+                        <input type="text" value={formData.imagenUrl} onChange={e => setFormData(p => ({...p, imagenUrl: e.target.value}))} className="w-full bg-background dark:bg-slate-700 border border-text-primary/10 dark:border-slate-600 rounded-md p-2" />
                     </div>
                      <div>
                         <label className="block text-sm font-medium text-text-secondary dark:text-slate-400 mb-1">Tipo de Promoción</label>
