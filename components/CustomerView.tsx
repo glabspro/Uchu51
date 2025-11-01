@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import type { Pedido, Producto, ProductoPedido, Cliente, Salsa, TipoPedido, MetodoPago, Theme, ClienteLeal, LoyaltyProgram } from '../types';
-import { ShoppingBagIcon, TrashIcon, CheckCircleIcon, TruckIcon, UserIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon, MapPinIcon, SearchIcon, AdjustmentsHorizontalIcon, MinusIcon, PlusIcon, StarIcon, SunIcon, MoonIcon, ChevronLeftIcon, WhatsAppIcon, ArrowDownOnSquareIcon, ArrowUpOnSquareIcon, EllipsisVerticalIcon, XMarkIcon } from './icons';
+import type { Pedido, Producto, ProductoPedido, Cliente, Salsa, TipoPedido, MetodoPago, Theme, ClienteLeal, LoyaltyProgram, Promocion } from '../types';
+import { ShoppingBagIcon, TrashIcon, CheckCircleIcon, TruckIcon, UserIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon, MapPinIcon, SearchIcon, AdjustmentsHorizontalIcon, MinusIcon, PlusIcon, StarIcon, SunIcon, MoonIcon, ChevronLeftIcon, WhatsAppIcon, ArrowDownOnSquareIcon, ArrowUpOnSquareIcon, EllipsisVerticalIcon, XMarkIcon, SparklesIcon } from './icons';
 import SauceModal from './SauceModal';
 import { yapePlinInfo } from '../constants';
 import { Logo } from './Logo';
@@ -10,6 +10,7 @@ interface CustomerViewProps {
     products: Producto[];
     customers: ClienteLeal[];
     loyaltyPrograms: LoyaltyProgram[];
+    promotions: Promocion[];
     onPlaceOrder: (order: Omit<Pedido, 'id' | 'fecha' | 'turno' | 'historial' | 'areaPreparacion' | 'estado'>) => void;
     onNavigateToAdmin: () => void;
     theme: Theme;
@@ -28,7 +29,7 @@ type FormErrors = {
 };
 type PaymentChoice = 'payNow' | 'payLater';
 
-const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyaltyPrograms, onPlaceOrder, onNavigateToAdmin, theme, onToggleTheme, installPrompt, onInstallClick }) => {
+const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyaltyPrograms, promotions, onPlaceOrder, onNavigateToAdmin, theme, onToggleTheme, installPrompt, onInstallClick }) => {
     const [cart, setCart] = useState<CartItem[]>([]);
     const [orderType, setOrderType] = useState<TipoPedido | null>(null);
     const [customerInfo, setCustomerInfo] = useState<Cliente>({ nombre: '', telefono: '' });
@@ -38,6 +39,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
     const [paymentMethod, setPaymentMethod] = useState<MetodoPago>('efectivo');
     const [paymentChoice, setPaymentChoice] = useState<PaymentChoice>('payNow');
     const [showInstallInstructions, setShowInstallInstructions] = useState(false);
+    const [showPromosModal, setShowPromosModal] = useState(false);
 
     const [formErrors, setFormErrors] = useState<FormErrors>({});
     const [cashPaymentAmount, setCashPaymentAmount] = useState('');
@@ -58,6 +60,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
     const [loyalCustomer, setLoyalCustomer] = useState<ClienteLeal | null>(null);
 
     const activeProgram = useMemo(() => loyaltyPrograms.find(p => p.isActive), [loyaltyPrograms]);
+    const activePromotions = useMemo(() => promotions.filter(p => p.isActive), [promotions]);
 
     useEffect(() => {
         setIsStandalone(window.matchMedia('(display-mode: standalone)').matches);
@@ -82,6 +85,14 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
         }
     }, [customerInfo.telefono, customers]);
 
+    useEffect(() => {
+        const hasSeenPromos = sessionStorage.getItem('hasSeenPromos');
+        if (!hasSeenPromos && activePromotions.length > 0) {
+            setShowPromosModal(true);
+            sessionStorage.setItem('hasSeenPromos', 'true');
+        }
+    }, [activePromotions]);
+
 
     const groupedProducts = useMemo(() => {
         return products.reduce((acc, product) => {
@@ -101,7 +112,15 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
         return products.filter(p => p.nombre.toLowerCase().includes(searchTerm.toLowerCase()));
     }, [products, searchTerm, activeCategory, groupedProducts]);
 
-    const categories = useMemo(() => Object.keys(groupedProducts), [groupedProducts]);
+    const categories = useMemo(() => {
+        const productCategories = Object.keys(groupedProducts);
+        return activePromotions.length > 0 ? ['Promociones', ...productCategories] : productCategories;
+    }, [groupedProducts, activePromotions]);
+    
+    useEffect(() => {
+        setActiveCategory(activePromotions.length > 0 ? 'Promociones' : 'Hamburguesas');
+    }, [activePromotions]);
+
 
     const total = useMemo(() =>
         cart.reduce((sum, item) => {
@@ -187,6 +206,70 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
             handleOpenSauceModal(product);
         }
     };
+    
+    const handleAddPromotionToCart = (promo: Promocion) => {
+        let itemsToAdd: CartItem[] = [];
+        const promoId = promo.id;
+
+        if (promo.tipo === 'combo_fijo' && promo.condiciones.productos) {
+            const totalOriginalPrice = promo.condiciones.productos.reduce((sum, comboProd) => {
+                const productInfo = products.find(p => p.id === comboProd.productoId);
+                return sum + (productInfo ? productInfo.precio * comboProd.cantidad : 0);
+            }, 0);
+
+            const discountRatio = (promo.condiciones.precioFijo ?? totalOriginalPrice) / (totalOriginalPrice || 1);
+
+            promo.condiciones.productos.forEach(comboProd => {
+                const productInfo = products.find(p => p.id === comboProd.productoId);
+                if (productInfo) {
+                    for (let i = 0; i < comboProd.cantidad; i++) {
+                        itemsToAdd.push({
+                            id: productInfo.id,
+                            cartItemId: Date.now() + Math.random(),
+                            nombre: productInfo.nombre,
+                            cantidad: 1,
+                            precio: productInfo.precio * discountRatio,
+                            precioOriginal: productInfo.precio,
+                            imagenUrl: productInfo.imagenUrl,
+                            salsas: [],
+                            promocionId: promoId
+                        });
+                    }
+                }
+            });
+        } else if (promo.tipo === 'dos_por_uno' && promo.condiciones.productoId_2x1) {
+            const productInfo = products.find(p => p.id === promo.condiciones.productoId_2x1);
+            if (productInfo) {
+                itemsToAdd.push({
+                    id: productInfo.id,
+                    cartItemId: Date.now() + Math.random(),
+                    nombre: productInfo.nombre,
+                    cantidad: 1,
+                    precio: productInfo.precio,
+                    precioOriginal: productInfo.precio,
+                    imagenUrl: productInfo.imagenUrl,
+                    salsas: [],
+                    promocionId: promoId
+                });
+                itemsToAdd.push({
+                    id: productInfo.id,
+                    cartItemId: Date.now() + Math.random(),
+                    nombre: productInfo.nombre,
+                    cantidad: 1,
+                    precio: 0,
+                    precioOriginal: productInfo.precio,
+                    imagenUrl: productInfo.imagenUrl,
+                    salsas: [],
+                    promocionId: promoId
+                });
+            }
+        }
+        
+        if (itemsToAdd.length > 0) {
+            setCart(currentCart => [...currentCart, ...itemsToAdd]);
+        }
+    };
+
 
     const validateForm = (): boolean => {
         const errors: FormErrors = {};
@@ -324,6 +407,27 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
             </div>
         </div>
     );
+    
+    const renderPromosModal = () => (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[101] p-4 animate-fade-in-scale">
+             <div className="bg-surface dark:bg-slate-800 rounded-2xl shadow-xl p-6 max-w-sm w-full text-center relative">
+                 <button onClick={() => setShowPromosModal(false)} className="absolute top-2 right-2 p-2 rounded-full hover:bg-text-primary/10 dark:hover:bg-slate-700">
+                    <XMarkIcon className="h-6 w-6 text-text-secondary dark:text-slate-400" />
+                 </button>
+                 <SparklesIcon className="h-12 w-12 mx-auto text-primary mb-4" />
+                 <h3 className="text-2xl font-heading font-bold text-text-primary dark:text-white mb-4">¡Nuestras Promos de Hoy!</h3>
+                 <div className="space-y-3 text-left max-h-64 overflow-y-auto">
+                    {activePromotions.map(promo => (
+                        <div key={promo.id} className="bg-primary/10 text-primary dark:bg-orange-500/10 dark:text-orange-300 p-3 rounded-lg text-sm">
+                            <p className="font-bold">{promo.nombre}</p>
+                            <p className="text-xs">{promo.descripcion}</p>
+                        </div>
+                    ))}
+                 </div>
+                 <button onClick={() => setShowPromosModal(false)} className="mt-6 w-full bg-primary hover:bg-primary-dark text-white font-bold py-3 px-4 rounded-lg">Ver Menú</button>
+            </div>
+        </div>
+    );
 
     const renderSelectionScreen = () => (
         <div className="text-center w-full max-w-md mx-auto animate-fade-in-up flex flex-col justify-between h-full p-4">
@@ -337,6 +441,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
             <div className="flex-grow flex flex-col items-center justify-center">
                 <h1 className="font-heading text-4xl font-extrabold text-text-primary dark:text-white mb-3">El sabor que te mueve</h1>
                 <p className="text-base text-text-secondary dark:text-slate-400 mb-8 max-w-sm">Pide tu comida favorita, preparada al momento con los mejores ingredientes. Rápido, fresco y delicioso.</p>
+                
                 <div className="space-y-4 w-full">
                     <button onClick={() => handleSelectOrderType('retiro')} className="group bg-surface dark:bg-slate-800 p-6 rounded-xl border border-text-primary/10 dark:border-slate-700 hover:shadow-xl hover:border-primary/50 dark:hover:border-primary hover:-translate-y-1 transition-all duration-300 w-full text-left flex items-center space-x-4 active:scale-95">
                         <div className="bg-primary/10 p-3 rounded-lg"><ShoppingBagIcon className="h-8 w-8 text-primary"/></div>
@@ -377,7 +482,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
                         <input type="search" placeholder="Buscar comida..." value={searchTerm} onChange={(e) => {
                             setSearchTerm(e.target.value);
                             if(e.target.value) setActiveCategory('');
-                            else setActiveCategory('Hamburguesas');
+                            else setActiveCategory('Promociones');
                         }} className="w-full bg-surface dark:bg-slate-800 border border-text-primary/10 dark:border-slate-700 rounded-xl py-3 pl-12 pr-4 focus:ring-2 focus:ring-primary focus:border-primary transition dark:text-white dark:placeholder-slate-400" />
                     </div>
                      <button className="md:flex-shrink-0 bg-surface dark:bg-slate-800 border border-text-primary/10 dark:border-slate-700 rounded-xl p-3 flex items-center justify-center transition-transform active:scale-95">
@@ -406,7 +511,22 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
                 </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4 mt-4">
-                {filteredProducts.length > 0 ? filteredProducts.map((product, i) => (
+                 {activeCategory === 'Promociones' && !searchTerm ? (
+                    activePromotions.map((promo, i) => (
+                        <div key={promo.id} className={`bg-surface dark:bg-slate-800 rounded-2xl border border-primary/20 dark:border-orange-500/30 overflow-hidden flex group p-4 hover:shadow-xl dark:hover:shadow-slate-950/50 transition-shadow duration-300 animate-fade-in-up`} style={{'--delay': `${i * 30}ms`} as React.CSSProperties}>
+                             <div className="flex-grow">
+                                 <h3 className="text-lg font-heading font-bold text-primary dark:text-orange-400 leading-tight flex items-center gap-2"><SparklesIcon className="h-5 w-5"/>{promo.nombre}</h3>
+                                 <p className="text-sm text-text-secondary dark:text-slate-400 mt-1 line-clamp-2 mb-2">{promo.descripcion}</p>
+                                 <div className="flex justify-between items-center mt-2">
+                                     <p className="text-xl font-heading font-extrabold text-text-primary dark:text-white">{promo.tipo === 'combo_fijo' ? `S/.${promo.condiciones.precioFijo?.toFixed(2)}` : '¡Ofertón!'}</p>
+                                     <button onClick={() => handleAddPromotionToCart(promo)} className="flex items-center gap-2 bg-primary rounded-lg text-white font-semibold px-4 py-2 hover:bg-primary-dark transition-all duration-300 shadow-lg hover:shadow-primary/30 transform hover:scale-105 active:scale-95">
+                                         <PlusIcon className="h-5 w-5" /> Añadir
+                                     </button>
+                                 </div>
+                             </div>
+                        </div>
+                    ))
+                ) : filteredProducts.length > 0 ? filteredProducts.map((product, i) => (
                    <div key={product.id} className={`bg-surface dark:bg-slate-800 rounded-2xl border border-text-primary/5 dark:border-slate-700 overflow-hidden flex group p-4 hover:shadow-xl dark:hover:shadow-slate-950/50 transition-shadow duration-300 animate-fade-in-up ${product.stock <= 0 ? 'opacity-60' : ''}`} style={{'--delay': `${i * 30}ms`} as React.CSSProperties}>
                         <div className="flex-grow">
                             <div className="flex justify-between items-start mb-1">
@@ -468,8 +588,8 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
                     <h3 className="text-2xl font-heading font-bold text-text-primary dark:text-white mb-4">Resumen del Pedido</h3>
                     <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
                         {cart.length > 0 ? cart.map(item => {
-                            const unitPriceWithSauces = item.precio + (item.salsas || []).reduce((sum, s) => sum + s.precio, 0);
-                            const itemTotal = unitPriceWithSauces * item.cantidad;
+                            const unitPriceWithSauces = (item.precioOriginal ?? item.precio) + (item.salsas || []).reduce((sum, s) => sum + s.precio, 0);
+                            const itemTotal = item.precio * item.cantidad;
                             return (
                                 <div key={item.cartItemId} className="flex items-start">
                                     <img src={item.imagenUrl} alt={item.nombre} className="w-16 h-16 md:w-20 md:h-20 rounded-lg object-cover mr-4"/>
@@ -489,7 +609,12 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
                                             <button onClick={() => updateQuantity(item.cartItemId, item.cantidad + 1)} className="bg-text-primary/10 dark:bg-slate-700 rounded-full h-7 w-7 flex items-center justify-center font-bold text-text-primary dark:text-slate-200 hover:bg-text-primary/20 dark:hover:bg-slate-600 transition-transform active:scale-90"><PlusIcon className="h-4 w-4"/></button>
                                         </div>
                                     </div>
-                                    <p className="font-bold w-24 text-right text-text-primary dark:text-slate-100 text-lg">S/.{itemTotal.toFixed(2)}</p>
+                                    <div className="w-24 text-right">
+                                        <p className="font-bold text-text-primary dark:text-slate-100 text-lg">S/.{itemTotal.toFixed(2)}</p>
+                                        {item.precioOriginal != null && item.precio < item.precioOriginal && (
+                                            <p className="text-xs text-danger line-through">S/.{(item.precioOriginal * item.cantidad).toFixed(2)}</p>
+                                        )}
+                                    </div>
                                 </div>
                             )
                         }) : <p className="text-text-secondary dark:text-slate-400">Tu carrito está vacío.</p>}
@@ -563,7 +688,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
                                         aria-label="Usar ubicación actual"
                                     >
                                         {isLocating ? (
-                                            <svg className="animate-spin h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <svg className="animate-spin h-5 w-5 text-primary" xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                             </svg>
@@ -700,6 +825,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
         <div className="min-h-screen flex flex-col font-sans bg-background dark:bg-slate-900 text-text-primary dark:text-slate-200">
             {isSauceModalOpen && <SauceModal product={currentProduct} onClose={handleCloseSauceModal} onConfirm={handleConfirmSauces} />}
             {showInstallInstructions && renderInstallInstructions()}
+            {showPromosModal && renderPromosModal()}
             {showGoBackConfirm && (
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[101] p-4">
                     <div className="bg-surface dark:bg-slate-800 rounded-2xl shadow-xl p-6 max-w-sm w-full text-center animate-fade-in-scale">

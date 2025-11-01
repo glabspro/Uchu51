@@ -29,6 +29,8 @@ export interface ProductoPedido {
     salsas?: Salsa[];
     sentToKitchen?: boolean;
     isReward?: boolean;
+    promocionId?: string;
+    precioOriginal?: number;
 }
 
 export interface Producto {
@@ -143,4 +145,30 @@ export interface LoyaltyProgram {
     isActive: boolean;
     config: LoyaltyConfig;
     rewards: Recompensa[];
+}
+
+export type TipoPromocion = 'combo_fijo' | 'descuento_porcentaje' | 'dos_por_uno';
+
+export interface CondicionesPromocion {
+    // Para combo_fijo
+    productos?: { productoId: string; cantidad: number }[];
+    precioFijo?: number;
+
+    // Para descuento_porcentaje
+    productoIds?: string[]; // IDs de productos a los que aplica. Vacío para toda la orden.
+    porcentaje?: number;
+
+    // Para dos_por_uno
+    productoId_2x1?: string;
+}
+
+export interface Promocion {
+    id: string;
+    nombre: string;
+    descripcion?: string;
+    tipo: TipoPromocion;
+    isActive: boolean;
+    condiciones: CondicionesPromocion;
+    diasActivos?: ('lunes' | 'martes' | 'miercoles' | 'jueves' | 'viernes' | 'sabado' | 'domingo')[];
+    horarioActivo?: { desde: string; hasta: string };
 }

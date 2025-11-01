@@ -1,4 +1,4 @@
-import type { Pedido, Producto, Salsa } from './types';
+import type { Pedido, Producto, Salsa, Promocion } from './types';
 
 export const cooks: string[] = ['Chef Mario', 'Chef Luisa', 'Chef Carlos'];
 export const deliveryDrivers: string[] = ['Juan', 'Maria', 'Pedro', 'Ana'];
@@ -66,6 +66,35 @@ export const initialProducts: Producto[] = [
 
 export const mesasDisponibles: number[] = [
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
+];
+
+export const initialPromotions: Promocion[] = [
+    {
+        id: 'promo-1',
+        nombre: 'Combo Clásico',
+        descripcion: 'Una Clásica Norteña con papas y gaseosa a un súper precio.',
+        tipo: 'combo_fijo',
+        isActive: true,
+        condiciones: {
+            productos: [
+                { productoId: 'prod-101', cantidad: 1 },
+                { productoId: 'prod-502', cantidad: 1 },
+                { productoId: 'prod-601', cantidad: 1 }
+            ],
+            precioFijo: 16.00
+        }
+    },
+    {
+        id: 'promo-2',
+        nombre: '2x1 en Alitas Picantes',
+        descripcion: 'Pide 6 alitas picantes y llévate 6 más. ¡Pura candela!',
+        tipo: 'dos_por_uno',
+        isActive: true,
+        condiciones: {
+            productoId_2x1: 'prod-302'
+        },
+        diasActivos: ['martes', 'jueves']
+    }
 ];
 
 export const initialOrders: Pedido[] = [

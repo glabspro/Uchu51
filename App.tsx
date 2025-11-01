@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { initialOrders, initialProducts, deliveryDrivers, mesasDisponibles } from './constants';
-import type { Pedido, EstadoPedido, Turno, UserRole, View, Toast as ToastType, AreaPreparacion, Producto, ProductoPedido, Mesa, MetodoPago, Theme, CajaSession, MovimientoCaja, ClienteLeal, LoyaltyProgram, Recompensa } from './types';
+import { initialOrders, initialProducts, deliveryDrivers, mesasDisponibles, initialPromotions } from './constants';
+import type { Pedido, EstadoPedido, Turno, UserRole, View, Toast as ToastType, AreaPreparacion, Producto, ProductoPedido, Mesa, MetodoPago, Theme, CajaSession, MovimientoCaja, ClienteLeal, LoyaltyProgram, Recompensa, Promocion } from './types';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import KitchenBoard from './components/KitchenBoard';
@@ -45,6 +45,14 @@ const App: React.FC = () => {
         }
         return initialProducts;
     });
+    
+    const [promotions, setPromotions] = useState<Promocion[]>(() => {
+        const saved = localStorage.getItem('promotions');
+        if (saved) {
+            try { return JSON.parse(saved); } catch (e) { console.error("Failed to parse promotions", e); }
+        }
+        return initialPromotions;
+    });
 
     const [customers, setCustomers] = useState<ClienteLeal[]>(() => {
         const saved = localStorage.getItem('customers');
@@ -88,6 +96,10 @@ const App: React.FC = () => {
     useEffect(() => {
         localStorage.setItem('products', JSON.stringify(products));
     }, [products]);
+    
+     useEffect(() => {
+        localStorage.setItem('promotions', JSON.stringify(promotions));
+    }, [promotions]);
     
     useEffect(() => {
         localStorage.setItem('customers', JSON.stringify(customers));
@@ -395,14 +407,14 @@ const App: React.FC = () => {
             case 'delivery': return <DeliveryBoard orders={filteredOrders.filter(o => o.tipo === 'delivery' && ['listo', 'en camino', 'entregado', 'pagado'].includes(o.estado))} updateOrderStatus={updateOrderStatus} assignDriver={assignDriver} deliveryDrivers={deliveryDrivers} onInitiateDeliveryPayment={handleInitiateDeliveryPayment} />;
             case 'retiro': return <RetiroBoard orders={filteredOrders.filter(o => o.tipo === 'retiro' && ['pendiente confirmar pago', 'pendiente de confirmación', 'listo', 'recogido', 'pagado'].includes(o.estado))} updateOrderStatus={updateOrderStatus} />;
             case 'local': return <LocalBoard mesas={mesas} onSelectMesa={handleSelectMesa} />;
-            case 'gestion': return <GestionView products={products} setProducts={setProducts} customers={customers} programs={loyaltyPrograms} setPrograms={setLoyaltyPrograms} />;
+            case 'gestion': return <GestionView products={products} setProducts={setProducts} customers={customers} programs={loyaltyPrograms} setPrograms={setLoyaltyPrograms} promotions={promotions} setPromotions={setPromotions} />;
             case 'caja': return <CajaView orders={openOrders.filter(o => o.estado === 'cuenta solicitada')} retiroOrdersToPay={retiroOrdersToPay} paidOrders={paidOrdersInSession} onInitiatePayment={handleInitiatePayment} cajaSession={cajaSession} onOpenCaja={handleOpenCaja} onCloseCaja={handleCloseCaja} onAddMovimiento={handleMovimientoCaja} />;
             case 'dashboard': return <Dashboard orders={orders} products={products} />;
             default: return <Dashboard orders={orders} products={products} />;
         }
     };
 
-    if (appView === 'customer') return <CustomerView products={products} onPlaceOrder={handleSaveOrder} onNavigateToAdmin={() => setAppView('login')} theme={theme} onToggleTheme={toggleTheme} installPrompt={installPrompt} onInstallClick={handleInstallClick} customers={customers} loyaltyPrograms={loyaltyPrograms} />;
+    if (appView === 'customer') return <CustomerView products={products} onPlaceOrder={handleSaveOrder} onNavigateToAdmin={() => setAppView('login')} theme={theme} onToggleTheme={toggleTheme} installPrompt={installPrompt} onInstallClick={handleInstallClick} customers={customers} loyaltyPrograms={loyaltyPrograms} promotions={promotions} />;
     if (appView === 'login') return <Login onLogin={handleLogin} error={loginError} onNavigateToCustomerView={() => setAppView('customer')} theme={theme} />;
     
     if (posMesaActiva !== null) {
@@ -423,6 +435,7 @@ const App: React.FC = () => {
                     customers={customers}
                     loyaltyPrograms={loyaltyPrograms}
                     redeemReward={redeemReward}
+                    promotions={promotions}
                 />
                 <div className="fixed top-4 right-4 z-[100] space-y-2 w-full max-w-sm">{toasts.map(t => <Toast key={t.id} message={t.message} type={t.type} onClose={() => removeToast(t.id)} />)}</div>
             </>

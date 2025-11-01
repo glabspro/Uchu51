@@ -1,14 +1,16 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import type { Pedido, Producto, ProductoPedido, Mesa, Salsa, EstadoPedido, UserRole, ClienteLeal, Recompensa, LoyaltyProgram } from '../types';
-import { ChevronLeftIcon, TrashIcon, MinusIcon, PlusIcon, CheckCircleIcon, UserIcon, StarIcon } from './icons';
+import type { Pedido, Producto, ProductoPedido, Mesa, Salsa, EstadoPedido, UserRole, ClienteLeal, Recompensa, LoyaltyProgram, Promocion } from '../types';
+import { ChevronLeftIcon, TrashIcon, MinusIcon, PlusIcon, CheckCircleIcon, UserIcon, StarIcon, SparklesIcon } from './icons';
 import SauceModal from './SauceModal';
 import AssignCustomerModal from './AssignCustomerModal';
 import RedeemRewardModal from './RedeemRewardModal';
+import ApplyPromotionModal from './ApplyPromotionModal';
 
 interface POSViewProps {
     mesa: Mesa;
     order: Pedido | null;
     products: Producto[];
+    promotions: Promocion[];
     onExit: () => void;
     onSaveOrder: (order: Pedido, mesaNumero: number) => void;
     onGeneratePreBill: (orderId: string) => void;
@@ -31,7 +33,7 @@ const getStatusAppearance = (status: Pedido['estado']) => {
     }
 };
 
-const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSaveOrder, onGeneratePreBill, updateOrderStatus, customers, loyaltyPrograms, redeemReward }) => {
+const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, onExit, onSaveOrder, onGeneratePreBill, updateOrderStatus, customers, loyaltyPrograms, redeemReward }) => {
     const [activeCategory, setActiveCategory] = useState('Hamburguesas');
     const [selectedItem, setSelectedItem] = useState<ProductoPedido | null>(null);
     const [currentOrder, setCurrentOrder] = useState<Pedido | null>(order);
@@ -42,6 +44,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
 
     const [isAssignCustomerModalOpen, setIsAssignCustomerModalOpen] = useState(false);
     const [isRedeemRewardModalOpen, setIsRedeemRewardModalOpen] = useState(false);
+    const [isApplyPromotionModalOpen, setIsApplyPromotionModalOpen] = useState(false);
     const [assignedCustomer, setAssignedCustomer] = useState<ClienteLeal | null>(null);
     
     useEffect(() => {
@@ -71,13 +74,17 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
 
     const categories = useMemo(() => Object.keys(groupedProducts), [groupedProducts]);
     const activeProgram = useMemo(() => loyaltyPrograms.find(p => p.isActive), [loyaltyPrograms]);
+    
+    const calculateTotal = (productos: ProductoPedido[]): number => {
+        return productos.reduce((sum, p) => {
+            const itemPrice = p.precio;
+            const saucesTotal = (p.salsas || []).reduce((sauceSum, sauce) => sauceSum + sauce.precio, 0);
+            return sum + (itemPrice + saucesTotal) * p.cantidad;
+        }, 0);
+    };
 
     const updateCurrentOrder = (updatedProductos: ProductoPedido[]) => {
-        const newTotal = updatedProductos.reduce((sum, p) => {
-            const itemTotal = p.precio * p.cantidad;
-            const saucesTotal = (p.salsas || []).reduce((sauceSum, sauce) => sauceSum + sauce.precio, 0) * p.cantidad;
-            return sum + itemTotal + saucesTotal;
-        }, 0);
+        const newTotal = calculateTotal(updatedProductos);
 
         if (currentOrder) {
             setCurrentOrder({ ...currentOrder, productos: updatedProductos, total: newTotal });
@@ -201,7 +208,6 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
             const baseOrder = order || {
                 id: '', fecha: new Date().toISOString(), tipo: 'local', estado: 'nuevo', turno: 'tarde',
                 productos: [], total: 0, metodoPago: 'efectivo', tiempoEstimado: 15, historial: [], areaPreparacion: 'salon',
-                // FIX: Added missing 'cliente' property to the base order object created when `order` is null, resolving a TypeScript error where the property was accessed on an object that might not have it.
                 cliente: { nombre: `Mesa ${mesa.numero}`, telefono: '', mesa: mesa.numero }
             };
             return { ...baseOrder, cliente: { ...baseOrder.cliente, nombre: customer.nombre, telefono: customer.telefono, mesa: mesa.numero } };
@@ -242,6 +248,78 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
         updateCurrentOrder([...currentOrder.productos, redeemedProduct]);
         setIsRedeemRewardModalOpen(false);
     };
+
+    const handleApplyPromotion = (promotion: Promocion) => {
+        if (!currentOrder) return;
+        let updatedProductos = [...currentOrder.productos];
+    
+        switch (promotion.tipo) {
+            case 'dos_por_uno': {
+                const productId = promotion.condiciones.productoId_2x1;
+                if (!productId) break;
+    
+                const productIndices = updatedProductos
+                    .map((p, index) => ({ p, index }))
+                    .filter(({ p }) => p.id === productId && !p.promocionId)
+                    .map(({ index }) => index);
+    
+                if (productIndices.length >= 2) {
+                    const originalProduct = products.find(p => p.id === productId);
+                    if(!originalProduct) break;
+
+                    const freeItemIndex = productIndices[1];
+                    updatedProductos[freeItemIndex] = {
+                        ...updatedProductos[freeItemIndex],
+                        precio: 0,
+                        precioOriginal: originalProduct.precio,
+                        promocionId: promotion.id,
+                        sentToKitchen: false,
+                    };
+                     const firstItemIndex = productIndices[0];
+                     updatedProductos[firstItemIndex] = {
+                        ...updatedProductos[firstItemIndex],
+                        promocionId: promotion.id,
+                        sentToKitchen: false,
+                    };
+                }
+                break;
+            }
+            case 'combo_fijo': {
+                const { productos: comboProducts = [], precioFijo = 0 } = promotion.condiciones;
+                const totalOriginalPrice = comboProducts.reduce((sum, comboProd) => {
+                    const productInfo = products.find(p => p.id === comboProd.productoId);
+                    return sum + (productInfo ? productInfo.precio * comboProd.cantidad : 0);
+                }, 0);
+                
+                const discountRatio = precioFijo / totalOriginalPrice;
+    
+                comboProducts.forEach(comboProd => {
+                    let remainingQty = comboProd.cantidad;
+                    updatedProductos = updatedProductos.map(orderProd => {
+                        if (remainingQty > 0 && orderProd.id === comboProd.productoId && !orderProd.promocionId) {
+                            const originalProduct = products.find(p => p.id === comboProd.productoId);
+                            if(originalProduct){
+                                remainingQty -= orderProd.cantidad; // simplistic; assumes whole item gets promo
+                                return {
+                                    ...orderProd,
+                                    precio: originalProduct.precio * discountRatio,
+                                    precioOriginal: originalProduct.precio,
+                                    promocionId: promotion.id,
+                                    sentToKitchen: false,
+                                };
+                            }
+                        }
+                        return orderProd;
+                    });
+                });
+                break;
+            }
+            // Add other promotion types here
+        }
+        
+        updateCurrentOrder(updatedProductos);
+        setIsApplyPromotionModalOpen(false);
+    };
     
     const handleExitClick = () => {
         if (hasUnsavedChanges) {
@@ -256,6 +334,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
             {isSauceModalOpen && <SauceModal product={productForSauces} onClose={() => setIsSauceModalOpen(false)} onConfirm={handleAddToCartWithSauces} />}
             {isAssignCustomerModalOpen && <AssignCustomerModal customers={customers} onAssign={handleAssignCustomer} onClose={() => setIsAssignCustomerModalOpen(false)} />}
             {isRedeemRewardModalOpen && assignedCustomer && activeProgram && <RedeemRewardModal customer={assignedCustomer} rewards={activeProgram.rewards} onRedeem={handleRedeemReward} onClose={() => setIsRedeemRewardModalOpen(false)} />}
+            {isApplyPromotionModalOpen && <ApplyPromotionModal order={currentOrder} promotions={promotions} products={products} onApply={handleApplyPromotion} onClose={() => setIsApplyPromotionModalOpen(false)} />}
 
             {showExitConfirm && (
                  <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[101] p-4">
@@ -325,15 +404,19 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
                                                 <p className="font-semibold text-text-primary dark:text-slate-200 pr-2">{item.nombre}</p>
                                                 {item.sentToKitchen && <span className="text-xs font-bold bg-success/20 text-success dark:bg-green-500/20 dark:text-green-300 rounded-full px-2 py-0.5 mr-2">Enviado</span>}
                                                 {item.isReward && <span className="text-xs font-bold bg-primary/20 text-primary dark:bg-orange-500/20 dark:text-orange-300 rounded-full px-2 py-0.5">Canje</span>}
+                                                {item.promocionId && <span className="text-xs font-bold bg-teal-500/20 text-teal-600 dark:bg-teal-500/20 dark:text-teal-300 rounded-full px-2 py-0.5">Promo</span>}
                                             </div>
                                              {item.salsas && item.salsas.length > 0 && (
                                                 <p className="text-xs text-sky-600 dark:text-sky-400 italic mt-1">
                                                     + {item.salsas.map(s => s.nombre).join(', ')}
                                                 </p>
                                             )}
-                                            <p className="text-sm text-text-secondary dark:text-slate-400">{item.cantidad} x S/.{(item.precio + (item.salsas || []).reduce((sum,s) => sum + s.precio, 0)).toFixed(2)}</p>
+                                            <p className="text-sm text-text-secondary dark:text-slate-400">{item.cantidad} x S/.{(item.precioOriginal ?? item.precio).toFixed(2)}</p>
                                         </div>
-                                        <p className="font-bold text-text-primary dark:text-slate-100 text-lg">S/.{((item.precio + (item.salsas || []).reduce((sum,s) => sum + s.precio, 0)) * item.cantidad).toFixed(2)}</p>
+                                        <div className="text-right">
+                                            <p className="font-bold text-text-primary dark:text-slate-100 text-lg">S/.{((item.precio + (item.salsas || []).reduce((sum,s) => sum + s.precio, 0)) * item.cantidad).toFixed(2)}</p>
+                                            {item.precioOriginal && <p className="text-xs text-danger dark:text-red-400 line-through">S/.{(item.precioOriginal * item.cantidad).toFixed(2)}</p>}
+                                        </div>
                                     </div>
                                     <div className="absolute right-3 bottom-3 flex items-center gap-2 mt-1">
                                         <button onClick={(e) => { e.stopPropagation(); handleQuantityChange(item, -1); }} className="bg-text-primary/10 dark:bg-slate-700 rounded-full h-8 w-8 flex items-center justify-center font-bold text-text-primary dark:text-slate-200 hover:bg-text-primary/20 dark:hover:bg-slate-600 transition-transform active:scale-90">
@@ -351,14 +434,22 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
                         )}
                     </div>
                     <div className="flex-shrink-0 pt-4 border-t border-text-primary/10 dark:border-slate-700">
-                         {assignedCustomer && activeProgram && (
+                        <div className="grid grid-cols-2 gap-3 mb-3">
+                            {assignedCustomer && activeProgram && (
+                                <button
+                                    onClick={() => setIsRedeemRewardModalOpen(true)}
+                                    className="w-full flex items-center justify-center gap-2 bg-primary/10 text-primary dark:bg-orange-500/20 dark:text-orange-300 font-bold py-3 rounded-xl text-base hover:bg-primary/20 transition-colors"
+                                >
+                                    <StarIcon className="h-5 w-5" /> Canjear Recompensa
+                                </button>
+                            )}
                             <button
-                                onClick={() => setIsRedeemRewardModalOpen(true)}
-                                className="w-full flex items-center justify-center gap-2 bg-primary/10 text-primary dark:bg-orange-500/20 dark:text-orange-300 font-bold py-3 rounded-xl text-base mb-3 hover:bg-primary/20 transition-colors"
+                                onClick={() => setIsApplyPromotionModalOpen(true)}
+                                className={`w-full flex items-center justify-center gap-2 bg-teal-500/10 text-teal-600 dark:bg-teal-500/20 dark:text-teal-300 font-bold py-3 rounded-xl text-base hover:bg-teal-500/20 transition-colors ${!assignedCustomer ? 'col-span-2' : ''}`}
                             >
-                                <StarIcon className="h-5 w-5" /> Canjear Recompensa
+                                <SparklesIcon className="h-5 w-5" /> Aplicar Promoción
                             </button>
-                        )}
+                        </div>
                         <div className="flex justify-between items-center text-3xl font-heading font-extrabold mb-4">
                             <span className="text-text-primary dark:text-slate-100">Total</span>
                             <span className="text-text-primary dark:text-slate-100 font-mono">S/.{currentOrder?.total.toFixed(2) || '0.00'}</span>
