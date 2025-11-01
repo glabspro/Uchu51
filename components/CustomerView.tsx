@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import type { Pedido, Producto, ProductoPedido, Cliente, Salsa, TipoPedido, MetodoPago, Theme, ClienteLeal, LoyaltyProgram, Promocion } from '../types';
 import { ShoppingBagIcon, TrashIcon, CheckCircleIcon, TruckIcon, UserIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon, MapPinIcon, SearchIcon, AdjustmentsHorizontalIcon, MinusIcon, PlusIcon, StarIcon, SunIcon, MoonIcon, ChevronLeftIcon, ChevronRightIcon, WhatsAppIcon, ArrowDownOnSquareIcon, ArrowUpOnSquareIcon, EllipsisVerticalIcon, XMarkIcon, SparklesIcon } from './icons';
 import SauceModal from './SauceModal';
+import ProductDetailModal from './ProductDetailModal';
 import { yapePlinInfo } from '../constants';
 import { Logo } from './Logo';
 
@@ -48,6 +49,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
     const [orderNotes, setOrderNotes] = useState('');
     
     const [editingCartItemForSauces, setEditingCartItemForSauces] = useState<CartItem | null>(null);
+    const [selectedProduct, setSelectedProduct] = useState<Producto | null>(null);
 
     const [isLocating, setIsLocating] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -160,19 +162,6 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
         } else {
             setCart(prev => [...prev, { ...itemToAdd, cartItemId: Date.now() }]);
         }
-    };
-    
-    const handleProductClick = (product: Producto) => {
-        if (product.stock <= 0) return;
-
-        handleAddToCart({
-            id: product.id,
-            nombre: product.nombre,
-            cantidad: 1,
-            precio: product.precio,
-            imagenUrl: product.imagenUrl,
-            salsas: [],
-        });
     };
     
     const handleAddPromotionToCart = (promo: Promocion) => {
@@ -409,8 +398,8 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
                                        setShowPromosModal(false);
                                        if (stage === 'selection') {
                                            setOrderType('retiro');
-                                           setStage('catalog');
                                        }
+                                       setStage('checkout');
                                    }} 
                                    className="bg-white/20 hover:bg-white/30 text-white font-bold py-3 px-8 rounded-lg transition-all backdrop-blur-sm mt-auto"
                                >
@@ -529,7 +518,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4 mt-4">
                  {activeCategory === 'Promociones' && !searchTerm ? (
                     activePromotions.map((promo, i) => (
-                        <button key={promo.id} onClick={() => handleAddPromotionToCart(promo)} className={`bg-surface dark:bg-slate-800 rounded-2xl border border-primary/20 dark:border-orange-500/30 overflow-hidden flex group p-4 hover:shadow-xl dark:hover:shadow-slate-950/50 transition-shadow duration-300 animate-fade-in-up w-full text-left`} style={{'--delay': `${i * 30}ms`} as React.CSSProperties}>
+                        <button key={promo.id} onClick={() => { handleAddPromotionToCart(promo); setStage('checkout'); }} className={`bg-surface dark:bg-slate-800 rounded-2xl border border-primary/20 dark:border-orange-500/30 overflow-hidden flex group p-4 hover:shadow-xl dark:hover:shadow-slate-950/50 transition-shadow duration-300 animate-fade-in-up w-full text-left`} style={{'--delay': `${i * 30}ms`} as React.CSSProperties}>
                              <div className="flex-grow">
                                  <h3 className="text-lg font-heading font-bold text-primary dark:text-orange-400 leading-tight flex items-center gap-2"><SparklesIcon className="h-5 w-5"/>{promo.nombre}</h3>
                                  <p className="text-sm text-text-secondary dark:text-slate-400 mt-1 line-clamp-2 mb-2">{promo.descripcion}</p>
@@ -543,7 +532,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
                         </button>
                     ))
                 ) : filteredProducts.length > 0 ? filteredProducts.map((product, i) => (
-                   <button key={product.id} onClick={() => handleProductClick(product)} disabled={product.stock <= 0} className={`bg-surface dark:bg-slate-800 rounded-2xl border border-text-primary/5 dark:border-slate-700 overflow-hidden flex group p-4 hover:shadow-xl dark:hover:shadow-slate-950/50 transition-shadow duration-300 animate-fade-in-up w-full text-left ${product.stock <= 0 ? 'opacity-60' : ''}`} style={{'--delay': `${i * 30}ms`} as React.CSSProperties}>
+                   <button key={product.id} onClick={() => setSelectedProduct(product)} disabled={product.stock <= 0} className={`bg-surface dark:bg-slate-800 rounded-2xl border border-text-primary/5 dark:border-slate-700 overflow-hidden flex group p-4 hover:shadow-xl dark:hover:shadow-slate-950/50 transition-shadow duration-300 animate-fade-in-up w-full text-left ${product.stock <= 0 ? 'opacity-60' : ''}`} style={{'--delay': `${i * 30}ms`} as React.CSSProperties}>
                         <div className="flex-grow">
                             <div className="flex justify-between items-start mb-1">
                                 <h3 className="text-lg font-heading font-bold text-text-primary dark:text-slate-100 leading-tight">{product.nombre}</h3>
@@ -620,7 +609,8 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
                                             </p>
                                         )}
                                         {canHaveSauces && (
-                                             <button onClick={() => setEditingCartItemForSauces(item)} className="mt-2 text-sm font-bold bg-transparent border-2 border-primary/30 text-primary dark:text-orange-300 py-1.5 px-3 rounded-lg hover:bg-primary/10 transition-colors shadow-sm">
+                                             <button onClick={() => setEditingCartItemForSauces(item)} className="mt-2 text-sm font-bold flex items-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary dark:bg-orange-500/20 dark:hover:bg-orange-500/30 dark:text-orange-300 py-1.5 px-3 rounded-lg transition-colors shadow-sm">
+                                                <SparklesIcon className="h-4 w-4" />
                                                 {item.salsas && item.salsas.length > 0 ? 'Editar Cremas' : 'Añadir Cremas'}
                                              </button>
                                         )}
@@ -847,6 +837,13 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
 
     return (
         <div className="min-h-screen flex flex-col font-sans bg-background dark:bg-slate-900 text-text-primary dark:text-slate-200">
+            {selectedProduct && (
+                <ProductDetailModal
+                    product={selectedProduct}
+                    onClose={() => setSelectedProduct(null)}
+                    onAddToCart={handleAddToCart}
+                />
+            )}
             {editingCartItemForSauces && (
                 <SauceModal
                     product={products.find(p => p.id === editingCartItemForSauces.id) || null}
