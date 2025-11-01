@@ -1,6 +1,6 @@
 import React from 'react';
 import type { View, Theme } from '../types';
-import { ChartBarIcon, ClockIcon, DocumentTextIcon, HomeIcon, TruckIcon, LogoutIcon, ShoppingBagIcon, CreditCardIcon, ChevronDoubleLeftIcon, ChevronDoubleRightIcon } from './icons';
+import { ChartBarIcon, FireIcon, HomeIcon, TruckIcon, LogoutIcon, ShoppingBagIcon, CreditCardIcon, ChevronDoubleLeftIcon, ChevronDoubleRightIcon } from './icons';
 import { Logo } from './Logo';
 import { LogoIcon } from './LogoIcon';
 
@@ -42,12 +42,12 @@ const Sidebar: React.FC<SidebarProps> = ({
     onToggle,
 }) => {
     const navItems = [
-        { id: 'cocina' as View, label: 'Cocina', icon: <HomeIcon className="h-6 w-6" /> },
-        { id: 'delivery' as View, label: 'Delivery', icon: <TruckIcon className="h-6 w-6" /> },
-        { id: 'retiro' as View, label: 'Retiro', icon: <ShoppingBagIcon className="h-6 w-6" /> },
-        { id: 'local' as View, label: 'Salón', icon: <DocumentTextIcon className="h-6 w-6" /> },
-        { id: 'caja' as View, label: 'Caja', icon: <CreditCardIcon className="h-6 w-6" /> },
         { id: 'dashboard' as View, label: 'Dashboard', icon: <ChartBarIcon className="h-6 w-6" /> },
+        { id: 'local' as View, label: 'Salón', icon: <HomeIcon className="h-6 w-6" /> },
+        { id: 'cocina' as View, label: 'Cocina', icon: <FireIcon className="h-6 w-6" /> },
+        { id: 'retiro' as View, label: 'Retiro', icon: <ShoppingBagIcon className="h-6 w-6" /> },
+        { id: 'delivery' as View, label: 'Delivery', icon: <TruckIcon className="h-6 w-6" /> },
+        { id: 'caja' as View, label: 'Caja', icon: <CreditCardIcon className="h-6 w-6" /> },
     ];
     
     return (

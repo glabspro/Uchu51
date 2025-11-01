@@ -3,7 +3,7 @@
 export type EstadoPedido = 'pendiente confirmar pago' | 'pendiente de confirmación' | 'nuevo' | 'confirmado' | 'en preparación' | 'en armado' | 'listo para armado' | 'listo' | 'en camino' | 'entregado' | 'cancelado' | 'recogido' | 'pagado' | 'cuenta solicitada';
 export type TipoPedido = 'delivery' | 'local' | 'retiro';
 export type Turno = 'mañana' | 'tarde' | 'noche';
-export type View = 'espera' | 'cocina' | 'delivery' | 'local' | 'retiro' | 'dashboard' | 'caja';
+export type View = 'dashboard' | 'local' | 'cocina' | 'retiro' | 'delivery' | 'caja';
 export type UserRole = 'admin' | 'cocinero' | 'repartidor' | 'recepcionista' | 'cliente';
 export type MetodoPago = 'efectivo' | 'tarjeta' | 'yape' | 'plin' | 'online';
 export type Theme = 'light' | 'dark';

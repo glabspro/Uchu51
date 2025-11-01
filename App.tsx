@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { initialOrders, initialProducts, deliveryDrivers, mesasDisponibles } from './constants';
 import type { Pedido, EstadoPedido, Turno, UserRole, View, Toast as ToastType, AreaPreparacion, Producto, ProductoPedido, Mesa, MetodoPago, Theme, CajaSession, MovimientoCaja } from './types';
@@ -42,7 +43,7 @@ const App: React.FC = () => {
         }
     });
     const [mesas, setMesas] = useState<Mesa[]>([]);
-    const [view, setView] = useState<View>('cocina');
+    const [view, setView] = useState<View>('dashboard');
     const [turno, setTurno] = useState<Turno>('tarde');
     const [posMesaActiva, setPosMesaActiva] = useState<Mesa | null>(null);
 
@@ -484,7 +485,7 @@ const App: React.FC = () => {
             case 'dashboard':
                 return <Dashboard orders={orders} />;
             default:
-                return <KitchenBoard orders={filteredOrders.filter(o => ['en preparación', 'en armado', 'listo para armado'].includes(o.estado))} updateOrderStatus={updateOrderStatus} />;
+                return <Dashboard orders={orders} />;
         }
     };
 
