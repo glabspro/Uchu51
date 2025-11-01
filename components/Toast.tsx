@@ -4,7 +4,8 @@ import { CheckCircleIcon, InformationCircleIcon } from './icons';
 
 interface ToastProps {
     message: string;
-    type: 'success' | 'info';
+    // FIX: Added 'danger' to the list of allowed types to support error messages. This resolves a type mismatch from App.tsx.
+    type: 'success' | 'info' | 'danger';
     onClose: () => void;
 }
 
@@ -24,6 +25,8 @@ const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
     const typeStyles = {
         success: "bg-success",
         info: "bg-text-primary dark:bg-slate-700",
+        // FIX: Added style for the 'danger' toast type to visually represent error messages.
+        danger: "bg-danger",
     };
     
     const Icon = type === 'success' ? CheckCircleIcon : InformationCircleIcon;

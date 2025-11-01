@@ -60,6 +60,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
     const [isAndroid, setIsAndroid] = useState(false);
 
     const [loyalCustomer, setLoyalCustomer] = useState<ClienteLeal | null>(null);
+    const [isCartAnimating, setIsCartAnimating] = useState(false);
 
     const activeProgram = useMemo(() => loyaltyPrograms.find(p => p.isActive), [loyaltyPrograms]);
     const activePromotions = useMemo(() => promotions.filter(p => p.isActive), [promotions]);
@@ -164,6 +165,54 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
         }
     };
     
+    const handleAddToCartWithAnimation = (item: Omit<ProductoPedido, 'cartItemId' | 'sentToKitchen'>, imageElement: HTMLImageElement | null) => {
+        const ANIMATION_DURATION = 600;
+
+        const cartButton = document.getElementById('cart-button');
+
+        if (imageElement && cartButton) {
+            const rect = imageElement.getBoundingClientRect();
+            const cartRect = cartButton.getBoundingClientRect();
+            
+            const flyingImage = document.createElement('img');
+            flyingImage.src = imageElement.src;
+            flyingImage.style.position = 'fixed';
+            flyingImage.style.left = `${rect.left}px`;
+            flyingImage.style.top = `${rect.top}px`;
+            flyingImage.style.width = `${rect.width}px`;
+            flyingImage.style.height = `${rect.height}px`;
+            flyingImage.style.borderRadius = '0.75rem';
+            flyingImage.style.zIndex = '110';
+            flyingImage.style.transition = `left ${ANIMATION_DURATION}ms ease-in-out, top ${ANIMATION_DURATION}ms ease-in-out, transform ${ANIMATION_DURATION}ms ease-in-out, opacity ${ANIMATION_DURATION}ms ease-in-out`;
+            flyingImage.style.objectFit = 'cover';
+
+            document.body.appendChild(flyingImage);
+
+            requestAnimationFrame(() => {
+                flyingImage.style.left = `${cartRect.left + cartRect.width / 2 - 10}px`;
+                flyingImage.style.top = `${cartRect.top + cartRect.height / 2 - 10}px`;
+                flyingImage.style.transform = 'scale(0.1)';
+                flyingImage.style.opacity = '0';
+            });
+            
+            setTimeout(() => {
+                handleAddToCart(item);
+                setIsCartAnimating(true);
+                setSelectedProduct(null);
+                setTimeout(() => flyingImage.remove(), 100);
+            }, ANIMATION_DURATION - 100);
+
+            setTimeout(() => {
+                setIsCartAnimating(false);
+            }, ANIMATION_DURATION + 300);
+
+        } else {
+            handleAddToCart(item);
+            setSelectedProduct(null);
+        }
+    };
+
+
     const handleAddPromotionToCart = (promo: Promocion) => {
         let itemsToAdd: CartItem[] = [];
         const promoId = promo.id;
@@ -841,7 +890,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
                 <ProductDetailModal
                     product={selectedProduct}
                     onClose={() => setSelectedProduct(null)}
-                    onAddToCart={handleAddToCart}
+                    onAddToCart={handleAddToCartWithAnimation}
                 />
             )}
             {editingCartItemForSauces && (
@@ -899,7 +948,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
 
             {isCatalogStage && (
                  <div className={`fixed bottom-0 left-0 right-0 z-50 p-4 bg-transparent transition-transform ${cart.length === 0 && 'translate-y-full'}`}>
-                    <button onClick={() => cart.length > 0 ? setStage('checkout') : null} className="w-full max-w-md mx-auto bg-text-primary dark:bg-slate-700 text-white rounded-xl px-6 py-4 shadow-2xl transition-transform transform md:hover:scale-105 active:scale-95 flex items-center justify-between animate-fade-in-up">
+                    <button id="cart-button" onClick={() => cart.length > 0 ? setStage('checkout') : null} className={`w-full max-w-md mx-auto bg-text-primary dark:bg-slate-700 text-white rounded-xl px-6 py-4 shadow-2xl transition-transform transform md:hover:scale-105 active:scale-95 flex items-center justify-between animate-fade-in-up ${isCartAnimating ? 'animate-cart-jiggle' : ''}`}>
                         <div className="flex items-center space-x-3">
                             <div className="relative">
                                 <ShoppingBagIcon className="h-6 w-6" />

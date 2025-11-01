@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import type { Producto, Salsa, ProductoPedido } from '../types';
 import { MinusIcon, PlusIcon, XMarkIcon, SparklesIcon } from './icons';
 import SauceModal from './SauceModal';
@@ -6,13 +6,14 @@ import SauceModal from './SauceModal';
 interface ProductDetailModalProps {
     product: Producto;
     onClose: () => void;
-    onAddToCart: (item: Omit<ProductoPedido, 'cartItemId' | 'sentToKitchen'>) => void;
+    onAddToCart: (item: Omit<ProductoPedido, 'cartItemId' | 'sentToKitchen'>, imageElement: HTMLImageElement | null) => void;
 }
 
 const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClose, onAddToCart }) => {
     const [quantity, setQuantity] = useState(1);
     const [selectedSausas, setSelectedSausas] = useState<Salsa[]>([]);
     const [isSauceModalOpen, setIsSauceModalOpen] = useState(false);
+    const imageRef = useRef<HTMLImageElement>(null);
 
     const handleAddToCartClick = () => {
         onAddToCart({
@@ -22,8 +23,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClos
             precio: product.precio,
             imagenUrl: product.imagenUrl,
             salsas: selectedSausas,
-        });
-        onClose();
+        }, imageRef.current);
     };
     
     const handleConfirmSauces = (salsas: Salsa[]) => {
@@ -49,7 +49,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClos
                 onClick={e => e.stopPropagation()}
             >
                 <div className="h-48 sm:h-64 w-full relative">
-                    <img src={product.imagenUrl} alt={product.nombre} className="w-full h-full object-cover rounded-t-2xl sm:rounded-t-lg" />
+                    <img ref={imageRef} src={product.imagenUrl} alt={product.nombre} className="w-full h-full object-cover rounded-t-2xl sm:rounded-t-lg" />
                      <button onClick={onClose} className="absolute top-4 right-4 bg-black/40 p-2 rounded-full text-white hover:bg-black/60 transition-colors z-10">
                         <XMarkIcon className="h-6 w-6" />
                      </button>
