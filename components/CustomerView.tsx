@@ -567,7 +567,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4 mt-4">
                  {activeCategory === 'Promociones' && !searchTerm ? (
                     activePromotions.map((promo, i) => (
-                        <button key={promo.id} onClick={() => { handleAddPromotionToCart(promo); setStage('checkout'); }} className={`bg-surface dark:bg-slate-800 rounded-2xl border border-primary/20 dark:border-orange-500/30 overflow-hidden flex group p-4 hover:shadow-xl dark:hover:shadow-slate-950/50 transition-shadow duration-300 animate-fade-in-up w-full text-left`} style={{'--delay': `${i * 30}ms`} as React.CSSProperties}>
+                        <button key={promo.id} onClick={() => { handleAddPromotionToCart(promo); setStage('checkout'); }} className={`product-card bg-surface dark:bg-slate-800 rounded-2xl border border-primary/20 dark:border-orange-500/30 overflow-hidden flex group p-4 animate-fade-in-up w-full text-left`} style={{'--delay': `${i * 30}ms`} as React.CSSProperties}>
                              <div className="flex-grow">
                                  <h3 className="text-lg font-heading font-bold text-primary dark:text-orange-400 leading-tight flex items-center gap-2"><SparklesIcon className="h-5 w-5"/>{promo.nombre}</h3>
                                  <p className="text-sm text-text-secondary dark:text-slate-400 mt-1 line-clamp-2 mb-2">{promo.descripcion}</p>
@@ -581,7 +581,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
                         </button>
                     ))
                 ) : filteredProducts.length > 0 ? filteredProducts.map((product, i) => (
-                   <button key={product.id} onClick={() => setSelectedProduct(product)} disabled={product.stock <= 0} className={`bg-surface dark:bg-slate-800 rounded-2xl border border-text-primary/5 dark:border-slate-700 overflow-hidden flex group p-4 hover:shadow-xl dark:hover:shadow-slate-950/50 transition-shadow duration-300 animate-fade-in-up w-full text-left ${product.stock <= 0 ? 'opacity-60' : ''}`} style={{'--delay': `${i * 30}ms`} as React.CSSProperties}>
+                   <button key={product.id} onClick={() => setSelectedProduct(product)} disabled={product.stock <= 0} className={`product-card bg-surface dark:bg-slate-800 rounded-2xl border border-text-primary/5 dark:border-slate-700 overflow-hidden flex group p-4 animate-fade-in-up w-full text-left ${product.stock <= 0 ? 'opacity-60' : ''}`} style={{'--delay': `${i * 30}ms`} as React.CSSProperties}>
                         <div className="flex-grow">
                             <div className="flex justify-between items-start mb-1">
                                 <h3 className="text-lg font-heading font-bold text-text-primary dark:text-slate-100 leading-tight">{product.nombre}</h3>
