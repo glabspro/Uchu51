@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import type { Pedido, Producto, ProductoPedido, Cliente, Salsa, TipoPedido, MetodoPago, Theme, ClienteLeal } from '../types';
+import type { Pedido, Producto, ProductoPedido, Cliente, Salsa, TipoPedido, MetodoPago, Theme, ClienteLeal, LoyaltyProgram } from '../types';
 import { ShoppingBagIcon, TrashIcon, CheckCircleIcon, TruckIcon, UserIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon, MapPinIcon, SearchIcon, AdjustmentsHorizontalIcon, MinusIcon, PlusIcon, StarIcon, SunIcon, MoonIcon, ChevronLeftIcon, WhatsAppIcon, ArrowDownOnSquareIcon, ArrowUpOnSquareIcon, EllipsisVerticalIcon, XMarkIcon } from './icons';
 import SauceModal from './SauceModal';
 import { yapePlinInfo } from '../constants';
@@ -9,6 +9,7 @@ import { Logo } from './Logo';
 interface CustomerViewProps {
     products: Producto[];
     customers: ClienteLeal[];
+    loyaltyPrograms: LoyaltyProgram[];
     onPlaceOrder: (order: Omit<Pedido, 'id' | 'fecha' | 'turno' | 'historial' | 'areaPreparacion' | 'estado'>) => void;
     onNavigateToAdmin: () => void;
     theme: Theme;
@@ -27,7 +28,7 @@ type FormErrors = {
 };
 type PaymentChoice = 'payNow' | 'payLater';
 
-const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, onPlaceOrder, onNavigateToAdmin, theme, onToggleTheme, installPrompt, onInstallClick }) => {
+const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyaltyPrograms, onPlaceOrder, onNavigateToAdmin, theme, onToggleTheme, installPrompt, onInstallClick }) => {
     const [cart, setCart] = useState<CartItem[]>([]);
     const [orderType, setOrderType] = useState<TipoPedido | null>(null);
     const [customerInfo, setCustomerInfo] = useState<Cliente>({ nombre: '', telefono: '' });
@@ -55,6 +56,8 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, onPlac
     const [isAndroid, setIsAndroid] = useState(false);
 
     const [loyalCustomer, setLoyalCustomer] = useState<ClienteLeal | null>(null);
+
+    const activeProgram = useMemo(() => loyaltyPrograms.find(p => p.isActive), [loyaltyPrograms]);
 
     useEffect(() => {
         setIsStandalone(window.matchMedia('(display-mode: standalone)').matches);
@@ -511,10 +514,35 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, onPlac
                             <input type="tel" placeholder="Teléfono de Contacto (9 dígitos)" value={customerInfo.telefono} onChange={e => setCustomerInfo({...customerInfo, telefono: e.target.value})} className={`bg-surface dark:bg-slate-700 border ${formErrors.telefono ? 'border-danger' : 'border-text-primary/10 dark:border-slate-600'} rounded-lg p-3 w-full text-text-primary dark:text-slate-200 placeholder-text-secondary/70 dark:placeholder-slate-400 focus:ring-2 focus:ring-primary focus:border-primary transition`} />
                             {formErrors.telefono && <p className="text-danger text-xs mt-1">{formErrors.telefono}</p>}
                         </div>
-                        {loyalCustomer && (
-                            <div className="bg-success/10 text-success dark:text-green-300 p-3 rounded-lg text-sm font-semibold animate-fade-in-up">
-                                <p className="font-bold">¡Hola de nuevo, {loyalCustomer.nombre}!</p>
-                                <p>Tienes <span className="font-extrabold">{loyalCustomer.puntos}</span> puntos acumulados.</p>
+                        {loyalCustomer && activeProgram && (
+                            <div className="bg-primary/10 text-primary dark:text-orange-300 p-4 rounded-lg animate-fade-in-up space-y-3">
+                                <div className='flex justify-between items-center'>
+                                    <div>
+                                        <p className="font-bold">¡Hola de nuevo, {loyalCustomer.nombre}!</p>
+                                        <p>Tienes <span className="font-extrabold text-lg">{loyalCustomer.puntos}</span> Puntos</p>
+                                    </div>
+                                    <StarIcon className="h-8 w-8 text-primary"/>
+                                </div>
+                                <div className="border-t border-primary/20 pt-3">
+                                    <p className="font-bold text-sm mb-2">Mis Recompensas</p>
+                                    <div className="space-y-2">
+                                        {activeProgram.rewards.map(reward => {
+                                            const progress = Math.min((loyalCustomer.puntos / reward.puntosRequeridos) * 100, 100);
+                                            const canRedeem = progress >= 100;
+                                            return (
+                                                <div key={reward.id}>
+                                                    <div className="flex justify-between items-center text-xs font-semibold mb-1">
+                                                        <span>{reward.nombre}</span>
+                                                        <span className={canRedeem ? 'text-primary' : 'text-primary/70'}>{loyalCustomer.puntos}/{reward.puntosRequeridos} pts</span>
+                                                    </div>
+                                                    <div className="w-full bg-primary/20 rounded-full h-2">
+                                                        <div className={`bg-primary rounded-full h-2 ${canRedeem ? 'animate-pulse' : ''}`} style={{ width: `${progress}%` }}></div>
+                                                    </div>
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
                             </div>
                         )}
                         {orderType === 'delivery' && (

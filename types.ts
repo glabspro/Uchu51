@@ -28,6 +28,7 @@ export interface ProductoPedido {
     imagenUrl?: string;
     salsas?: Salsa[];
     sentToKitchen?: boolean;
+    isReward?: boolean;
 }
 
 export interface Producto {
@@ -81,7 +82,7 @@ export interface Pedido {
 export interface Toast {
     id: number;
     message: string;
-    type: 'success' | 'info';
+    type: 'success' | 'info' | 'danger';
 }
 
 export interface Mesa {
@@ -125,6 +126,7 @@ export interface Recompensa {
     id: string;
     nombre: string;
     puntosRequeridos: number;
+    productoId?: string;
 }
 
 export interface LoyaltyConfig {

@@ -57,7 +57,7 @@ const GestionView: React.FC<GestionViewProps> = ({ products, setProducts, custom
             case 'clientes':
                 return <CustomerManager customers={customers} />;
             case 'lealtad':
-                return <LoyaltyProgramManager programs={programs} setPrograms={setPrograms} />;
+                return <LoyaltyProgramManager programs={programs} setPrograms={setPrograms} products={products} />;
             default:
                 return null;
         }

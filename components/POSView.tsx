@@ -1,8 +1,9 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
-import type { Pedido, Producto, ProductoPedido, Mesa, Salsa, EstadoPedido, UserRole } from '../types';
-import { ChevronLeftIcon, TrashIcon, MinusIcon, PlusIcon, CheckCircleIcon } from './icons';
+import type { Pedido, Producto, ProductoPedido, Mesa, Salsa, EstadoPedido, UserRole, ClienteLeal, Recompensa, LoyaltyProgram } from '../types';
+import { ChevronLeftIcon, TrashIcon, MinusIcon, PlusIcon, CheckCircleIcon, UserIcon, StarIcon } from './icons';
 import SauceModal from './SauceModal';
+import AssignCustomerModal from './AssignCustomerModal';
+import RedeemRewardModal from './RedeemRewardModal';
 
 interface POSViewProps {
     mesa: Mesa;
@@ -12,6 +13,9 @@ interface POSViewProps {
     onSaveOrder: (order: Pedido, mesaNumero: number) => void;
     onGeneratePreBill: (orderId: string) => void;
     updateOrderStatus: (orderId: string, newStatus: EstadoPedido, user: UserRole) => void;
+    customers: ClienteLeal[];
+    loyaltyPrograms: LoyaltyProgram[];
+    redeemReward: (customerId: string, reward: Recompensa) => void;
 }
 
 const getStatusAppearance = (status: Pedido['estado']) => {
@@ -27,20 +31,29 @@ const getStatusAppearance = (status: Pedido['estado']) => {
     }
 };
 
-const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSaveOrder, onGeneratePreBill, updateOrderStatus }) => {
+const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSaveOrder, onGeneratePreBill, updateOrderStatus, customers, loyaltyPrograms, redeemReward }) => {
     const [activeCategory, setActiveCategory] = useState('Hamburguesas');
     const [selectedItem, setSelectedItem] = useState<ProductoPedido | null>(null);
     const [currentOrder, setCurrentOrder] = useState<Pedido | null>(order);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showExitConfirm, setShowExitConfirm] = useState(false);
-
     const [isSauceModalOpen, setIsSauceModalOpen] = useState(false);
     const [productForSauces, setProductForSauces] = useState<Producto | null>(null);
 
+    const [isAssignCustomerModalOpen, setIsAssignCustomerModalOpen] = useState(false);
+    const [isRedeemRewardModalOpen, setIsRedeemRewardModalOpen] = useState(false);
+    const [assignedCustomer, setAssignedCustomer] = useState<ClienteLeal | null>(null);
+    
     useEffect(() => {
         setCurrentOrder(order);
+        if (order?.cliente.telefono) {
+            const customer = customers.find(c => c.telefono === order.cliente.telefono);
+            if(customer) setAssignedCustomer(customer);
+        } else {
+            setAssignedCustomer(null);
+        }
         setIsSubmitting(false);
-    }, [order]);
+    }, [order, customers]);
 
     const hasUnsavedChanges = useMemo(() => {
         if (!currentOrder) return false;
@@ -57,6 +70,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
     }, [products]);
 
     const categories = useMemo(() => Object.keys(groupedProducts), [groupedProducts]);
+    const activeProgram = useMemo(() => loyaltyPrograms.find(p => p.isActive), [loyaltyPrograms]);
 
     const updateCurrentOrder = (updatedProductos: ProductoPedido[]) => {
         const newTotal = updatedProductos.reduce((sum, p) => {
@@ -74,7 +88,11 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
                 tipo: 'local',
                 estado: 'nuevo',
                 turno: 'tarde',
-                cliente: { nombre: `Mesa ${mesa.numero}`, telefono: '', mesa: mesa.numero },
+                cliente: {
+                    nombre: assignedCustomer?.nombre || `Mesa ${mesa.numero}`,
+                    telefono: assignedCustomer?.telefono || '',
+                    mesa: mesa.numero
+                },
                 productos: updatedProductos,
                 total: newTotal,
                 metodoPago: 'efectivo',
@@ -175,6 +193,55 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
         
         onSaveOrder(orderToSend, mesa.numero);
     };
+
+    const handleAssignCustomer = (customer: ClienteLeal) => {
+        setAssignedCustomer(customer);
+        setIsAssignCustomerModalOpen(false);
+        const updateOrderWithCustomer = (order: Pedido | null): Pedido => {
+            const baseOrder = order || {
+                id: '', fecha: new Date().toISOString(), tipo: 'local', estado: 'nuevo', turno: 'tarde',
+                productos: [], total: 0, metodoPago: 'efectivo', tiempoEstimado: 15, historial: [], areaPreparacion: 'salon',
+                // FIX: Added missing 'cliente' property to the base order object created when `order` is null, resolving a TypeScript error where the property was accessed on an object that might not have it.
+                cliente: { nombre: `Mesa ${mesa.numero}`, telefono: '', mesa: mesa.numero }
+            };
+            return { ...baseOrder, cliente: { ...baseOrder.cliente, nombre: customer.nombre, telefono: customer.telefono, mesa: mesa.numero } };
+        };
+        setCurrentOrder(updateOrderWithCustomer(currentOrder));
+    };
+
+    const handleRedeemReward = (reward: Recompensa) => {
+        if (!assignedCustomer || !currentOrder) return;
+    
+        redeemReward(assignedCustomer.telefono, reward);
+    
+        let redeemedProduct: ProductoPedido;
+        const productFromCatalog = reward.productoId ? products.find(p => p.id === reward.productoId) : null;
+    
+        if (productFromCatalog) {
+            redeemedProduct = {
+                id: productFromCatalog.id,
+                nombre: `${productFromCatalog.nombre} [CANJE]`,
+                cantidad: 1,
+                precio: 0,
+                isReward: true,
+                imagenUrl: productFromCatalog.imagenUrl,
+                salsas: [],
+                sentToKitchen: false,
+            };
+        } else {
+            redeemedProduct = {
+                id: `recompensa-${reward.id}`,
+                nombre: `${reward.nombre} [CANJE]`,
+                cantidad: 1,
+                precio: 0,
+                isReward: true,
+                sentToKitchen: false,
+            };
+        }
+    
+        updateCurrentOrder([...currentOrder.productos, redeemedProduct]);
+        setIsRedeemRewardModalOpen(false);
+    };
     
     const handleExitClick = () => {
         if (hasUnsavedChanges) {
@@ -186,9 +253,10 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
 
     return (
         <div className="fixed inset-0 bg-background dark:bg-slate-900 flex flex-col font-sans">
-            {isSauceModalOpen && (
-                <SauceModal product={productForSauces} onClose={() => setIsSauceModalOpen(false)} onConfirm={handleAddToCartWithSauces} />
-            )}
+            {isSauceModalOpen && <SauceModal product={productForSauces} onClose={() => setIsSauceModalOpen(false)} onConfirm={handleAddToCartWithSauces} />}
+            {isAssignCustomerModalOpen && <AssignCustomerModal customers={customers} onAssign={handleAssignCustomer} onClose={() => setIsAssignCustomerModalOpen(false)} />}
+            {isRedeemRewardModalOpen && assignedCustomer && activeProgram && <RedeemRewardModal customer={assignedCustomer} rewards={activeProgram.rewards} onRedeem={handleRedeemReward} onClose={() => setIsRedeemRewardModalOpen(false)} />}
+
             {showExitConfirm && (
                  <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[101] p-4">
                     <div className="bg-surface dark:bg-slate-800 rounded-2xl shadow-xl p-6 max-w-sm w-full text-center animate-fade-in-scale">
@@ -231,15 +299,32 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
             <main className="flex-grow flex flex-col lg:flex-row overflow-hidden">
                 {/* Left Panel - Order */}
                 <div className="w-full lg:w-5/12 bg-surface dark:bg-slate-800 flex flex-col p-4 border-r border-text-primary/5 dark:border-slate-700">
+                    <div className="flex-shrink-0 mb-4 p-3 bg-background dark:bg-slate-900/50 rounded-lg">
+                        {assignedCustomer ? (
+                            <div className="flex justify-between items-center">
+                                <div>
+                                    <p className="font-bold text-text-primary dark:text-slate-200">{assignedCustomer.nombre}</p>
+                                    <p className="text-sm text-text-secondary dark:text-slate-400">{assignedCustomer.telefono}</p>
+                                    <p className="text-sm font-bold text-primary dark:text-orange-400">{assignedCustomer.puntos} Puntos</p>
+                                </div>
+                                <button onClick={() => setAssignedCustomer(null)} className="text-xs font-semibold text-danger hover:underline">Quitar</button>
+                            </div>
+                        ) : (
+                            <button onClick={() => setIsAssignCustomerModalOpen(true)} className="w-full flex items-center justify-center gap-2 bg-text-primary/10 dark:bg-slate-700 hover:bg-text-primary/20 dark:hover:bg-slate-600 text-text-primary dark:text-slate-200 font-bold py-2.5 rounded-lg transition-colors">
+                                <UserIcon className="h-5 w-5" /> Asignar Cliente Leal
+                            </button>
+                        )}
+                    </div>
                     <div className="flex-grow overflow-y-auto pr-2">
                         {currentOrder && currentOrder.productos.length > 0 ? (
                             currentOrder.productos.map((item, index) => (
                                 <div key={index} onClick={() => setSelectedItem(item)} className={`p-3 rounded-lg cursor-pointer mb-2 relative ${selectedItem === item ? 'bg-primary/10' : 'hover:bg-background dark:hover:bg-slate-700/50'}`}>
                                     <div className="flex justify-between items-start">
                                         <div className="flex-grow">
-                                            <div className="flex items-center">
-                                                <p className="font-semibold text-text-primary dark:text-slate-200 pr-20">{item.nombre}</p>
-                                                {item.sentToKitchen && <span className="text-xs font-bold bg-success/20 text-success dark:bg-green-500/20 dark:text-green-300 rounded-full px-2 py-0.5">Enviado</span>}
+                                            <div className="flex items-center flex-wrap">
+                                                <p className="font-semibold text-text-primary dark:text-slate-200 pr-2">{item.nombre}</p>
+                                                {item.sentToKitchen && <span className="text-xs font-bold bg-success/20 text-success dark:bg-green-500/20 dark:text-green-300 rounded-full px-2 py-0.5 mr-2">Enviado</span>}
+                                                {item.isReward && <span className="text-xs font-bold bg-primary/20 text-primary dark:bg-orange-500/20 dark:text-orange-300 rounded-full px-2 py-0.5">Canje</span>}
                                             </div>
                                              {item.salsas && item.salsas.length > 0 && (
                                                 <p className="text-xs text-sky-600 dark:text-sky-400 italic mt-1">
@@ -266,6 +351,14 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
                         )}
                     </div>
                     <div className="flex-shrink-0 pt-4 border-t border-text-primary/10 dark:border-slate-700">
+                         {assignedCustomer && activeProgram && (
+                            <button
+                                onClick={() => setIsRedeemRewardModalOpen(true)}
+                                className="w-full flex items-center justify-center gap-2 bg-primary/10 text-primary dark:bg-orange-500/20 dark:text-orange-300 font-bold py-3 rounded-xl text-base mb-3 hover:bg-primary/20 transition-colors"
+                            >
+                                <StarIcon className="h-5 w-5" /> Canjear Recompensa
+                            </button>
+                        )}
                         <div className="flex justify-between items-center text-3xl font-heading font-extrabold mb-4">
                             <span className="text-text-primary dark:text-slate-100">Total</span>
                             <span className="text-text-primary dark:text-slate-100 font-mono">S/.{currentOrder?.total.toFixed(2) || '0.00'}</span>

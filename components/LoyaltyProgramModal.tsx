@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { LoyaltyProgram, Recompensa } from '../types';
+import type { LoyaltyProgram, Recompensa, Producto } from '../types';
 import RewardModal from './RewardModal';
 import { PlusIcon, TrashIcon, AdjustmentsHorizontalIcon as PencilIcon } from './icons';
 
@@ -7,9 +7,10 @@ interface LoyaltyProgramModalProps {
     program: LoyaltyProgram | null;
     onSave: (program: LoyaltyProgram) => void;
     onClose: () => void;
+    products: Producto[];
 }
 
-const LoyaltyProgramModal: React.FC<LoyaltyProgramModalProps> = ({ program, onSave, onClose }) => {
+const LoyaltyProgramModal: React.FC<LoyaltyProgramModalProps> = ({ program, onSave, onClose, products }) => {
     const [formData, setFormData] = useState<LoyaltyProgram>({
         id: program?.id || '',
         name: program?.name || '',
@@ -76,7 +77,7 @@ const LoyaltyProgramModal: React.FC<LoyaltyProgramModalProps> = ({ program, onSa
 
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[101] p-4" onClick={onClose}>
-             {isRewardModalOpen && <RewardModal reward={editingReward} onSave={handleSaveReward} onClose={() => setIsRewardModalOpen(false)} />}
+             {isRewardModalOpen && <RewardModal reward={editingReward} onSave={handleSaveReward} onClose={() => setIsRewardModalOpen(false)} products={products} />}
             <div className="bg-surface dark:bg-slate-800 rounded-2xl shadow-xl p-6 max-w-3xl w-full max-h-[90vh] flex flex-col animate-fade-in-scale" onClick={e => e.stopPropagation()}>
                 <h2 className="text-2xl font-heading font-bold text-text-primary dark:text-slate-100 mb-6">{program ? 'Editar Programa de Lealtad' : 'Crear Programa de Lealtad'}</h2>
                 <form onSubmit={handleSubmit} className="flex-grow overflow-y-auto pr-2 grid grid-cols-1 md:grid-cols-2 gap-6">

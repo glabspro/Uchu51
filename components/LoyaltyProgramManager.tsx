@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import type { LoyaltyProgram } from '../types';
+import type { LoyaltyProgram, Producto } from '../types';
 import { PlusIcon, TrashIcon, AdjustmentsHorizontalIcon as PencilIcon, CheckCircleIcon } from './icons';
 import LoyaltyProgramModal from './LoyaltyProgramModal';
 
 interface LoyaltyProgramManagerProps {
     programs: LoyaltyProgram[];
     setPrograms: React.Dispatch<React.SetStateAction<LoyaltyProgram[]>>;
+    products: Producto[];
 }
 
-const LoyaltyProgramManager: React.FC<LoyaltyProgramManagerProps> = ({ programs, setPrograms }) => {
+const LoyaltyProgramManager: React.FC<LoyaltyProgramManagerProps> = ({ programs, setPrograms, products }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProgram, setEditingProgram] = useState<LoyaltyProgram | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<LoyaltyProgram | null>(null);
@@ -53,7 +54,7 @@ const LoyaltyProgramManager: React.FC<LoyaltyProgramManagerProps> = ({ programs,
 
     return (
         <div>
-            {isModalOpen && <LoyaltyProgramModal program={editingProgram} onSave={handleSave} onClose={() => setIsModalOpen(false)} />}
+            {isModalOpen && <LoyaltyProgramModal program={editingProgram} onSave={handleSave} onClose={() => setIsModalOpen(false)} products={products} />}
             {showDeleteConfirm && (
                  <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[101] p-4">
                     <div className="bg-surface dark:bg-slate-800 rounded-2xl shadow-xl p-6 max-w-sm w-full text-center animate-fade-in-scale">

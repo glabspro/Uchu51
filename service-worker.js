@@ -37,6 +37,8 @@ const URLS_TO_CACHE = [
   'components/LoyaltyProgramManager.tsx',
   'components/LoyaltyProgramModal.tsx',
   'components/RewardModal.tsx',
+  'components/AssignCustomerModal.tsx',
+  'components/RedeemRewardModal.tsx',
   'icon-192x192.png',
   'icon-512x512.png'
 ];

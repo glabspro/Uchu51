@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { initialOrders, initialProducts, deliveryDrivers, mesasDisponibles } from './constants';
-import type { Pedido, EstadoPedido, Turno, UserRole, View, Toast as ToastType, AreaPreparacion, Producto, ProductoPedido, Mesa, MetodoPago, Theme, CajaSession, MovimientoCaja, ClienteLeal, LoyaltyProgram } from './types';
+import type { Pedido, EstadoPedido, Turno, UserRole, View, Toast as ToastType, AreaPreparacion, Producto, ProductoPedido, Mesa, MetodoPago, Theme, CajaSession, MovimientoCaja, ClienteLeal, LoyaltyProgram, Recompensa } from './types';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import KitchenBoard from './components/KitchenBoard';
@@ -76,8 +76,8 @@ const App: React.FC = () => {
                     pointsPerCompra: 5,
                 },
                 rewards: [
-                    { id: 'rec-1', nombre: 'Gaseosa Personal Gratis', puntosRequeridos: 50 },
-                    { id: 'rec-2', nombre: 'Papas Fritas Personales Gratis', puntosRequeridos: 80 },
+                    { id: 'rec-1', nombre: 'Gaseosa Personal Gratis', puntosRequeridos: 50, productoId: 'prod-601' },
+                    { id: 'rec-2', nombre: 'Papas Fritas Personales Gratis', puntosRequeridos: 80, productoId: 'prod-502' },
                     { id: 'rec-3', nombre: 'S/.10 de Descuento', puntosRequeridos: 100 },
                 ]
             }
@@ -163,7 +163,7 @@ const App: React.FC = () => {
     const toggleTheme = useCallback(() => setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light'), []);
     const toggleSidebar = useCallback(() => setIsSidebarCollapsed(prev => !prev), []);
 
-    const showToast = useCallback((message: string, type: 'success' | 'info' = 'info') => {
+    const showToast = useCallback((message: string, type: 'success' | 'info' | 'danger' = 'info') => {
         const id = Date.now();
         setToasts(prevToasts => [...prevToasts, { id, message, type }]);
     }, []);
@@ -266,8 +266,13 @@ const App: React.FC = () => {
         setProducts(prevProducts => {
             const updatedProducts = [...prevProducts];
             order.productos.forEach(p => {
-                const index = updatedProducts.findIndex(prod => prod.id === p.id);
-                if (index > -1) updatedProducts[index].stock = Math.max(0, updatedProducts[index].stock - p.cantidad);
+                 if (p.isReward && !p.id.startsWith('recompensa-')) { // Only decrement stock for product-based rewards
+                    const index = updatedProducts.findIndex(prod => prod.id === p.id);
+                    if (index > -1) updatedProducts[index].stock = Math.max(0, updatedProducts[index].stock - p.cantidad);
+                } else if (!p.isReward) { // Decrement for regular products
+                    const index = updatedProducts.findIndex(prod => prod.id === p.id);
+                    if (index > -1) updatedProducts[index].stock = Math.max(0, updatedProducts[index].stock - p.cantidad);
+                }
             });
             return updatedProducts;
         });
@@ -310,6 +315,30 @@ const App: React.FC = () => {
 
     }, [cajaSession.estado, cajaSession.saldoInicial, cajaSession.movimientos, products, loyaltyPrograms]);
 
+    const redeemReward = (customerId: string, reward: Recompensa) => {
+        setCustomers(prevCustomers => {
+            const customerIndex = prevCustomers.findIndex(c => c.telefono === customerId);
+            if (customerIndex === -1) {
+                showToast('Error: No se pudo encontrar al cliente para el canje.', 'danger');
+                return prevCustomers;
+            }
+    
+            const updatedCustomers = [...prevCustomers];
+            const customer = { ...updatedCustomers[customerIndex] };
+    
+            if (customer.puntos < reward.puntosRequeridos) {
+                showToast('Error: Puntos insuficientes para canjear.', 'danger');
+                return prevCustomers;
+            }
+    
+            customer.puntos -= reward.puntosRequeridos;
+            updatedCustomers[customerIndex] = customer;
+            
+            showToast(`'${reward.nombre}' canjeado. Puntos restantes: ${customer.puntos}.`, 'success');
+            return updatedCustomers;
+        });
+    };
+
     const handleGeneratePreBill = (orderId: string) => {
         const orderToBill = orders.find(o => o.id === orderId);
         if (orderToBill) {
@@ -341,6 +370,7 @@ const App: React.FC = () => {
         setOrders(prev => prev.map(o => (o.id === orderId ? updatedOrder : o)));
         showToast(`Pedido ${orderId} entregado y pagado.`, 'success');
         setOrderForDeliveryPayment(null);
+        setOrderForReceipt(updatedOrder);
     };
 
     const handleCloseReceipt = () => setOrderForReceipt(null);
@@ -372,7 +402,7 @@ const App: React.FC = () => {
         }
     };
 
-    if (appView === 'customer') return <CustomerView products={products} onPlaceOrder={handleSaveOrder} onNavigateToAdmin={() => setAppView('login')} theme={theme} onToggleTheme={toggleTheme} installPrompt={installPrompt} onInstallClick={handleInstallClick} customers={customers} />;
+    if (appView === 'customer') return <CustomerView products={products} onPlaceOrder={handleSaveOrder} onNavigateToAdmin={() => setAppView('login')} theme={theme} onToggleTheme={toggleTheme} installPrompt={installPrompt} onInstallClick={handleInstallClick} customers={customers} loyaltyPrograms={loyaltyPrograms} />;
     if (appView === 'login') return <Login onLogin={handleLogin} error={loginError} onNavigateToCustomerView={() => setAppView('customer')} theme={theme} />;
     
     if (posMesaActiva !== null) {
@@ -382,7 +412,18 @@ const App: React.FC = () => {
                 {orderForPreBill && <PreBillModal order={orderForPreBill} onClose={() => setOrderForPreBill(null)} theme={theme} />}
                 {orderToPay && <PaymentModal order={orderToPay} onClose={() => setOrderToPay(null)} onConfirmPayment={handleConfirmPayment} />}
                 {orderForReceipt && <ReceiptModal order={orderForReceipt} onClose={handleCloseReceipt} theme={theme} />}
-                <POSView mesa={posMesaActiva} onExit={handleExitPOS} order={activeOrder} products={products} onSaveOrder={handleSavePOSOrder} onGeneratePreBill={handleGeneratePreBill} updateOrderStatus={updateOrderStatus} />
+                <POSView
+                    mesa={posMesaActiva}
+                    onExit={handleExitPOS}
+                    order={activeOrder}
+                    products={products}
+                    onSaveOrder={handleSavePOSOrder}
+                    onGeneratePreBill={handleGeneratePreBill}
+                    updateOrderStatus={updateOrderStatus}
+                    customers={customers}
+                    loyaltyPrograms={loyaltyPrograms}
+                    redeemReward={redeemReward}
+                />
                 <div className="fixed top-4 right-4 z-[100] space-y-2 w-full max-w-sm">{toasts.map(t => <Toast key={t.id} message={t.message} type={t.type} onClose={() => removeToast(t.id)} />)}</div>
             </>
         );
