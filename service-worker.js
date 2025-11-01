@@ -11,7 +11,6 @@ const URLS_TO_CACHE = [
   'constants.ts',
   'components/Header.tsx',
   'components/OrderCard.tsx',
-  'components/WaitingBoard.tsx',
   'components/KitchenBoard.tsx',
   'components/DeliveryBoard.tsx',
   'components/LocalBoard.tsx',

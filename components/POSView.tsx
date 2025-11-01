@@ -159,7 +159,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
         setIsSubmitting(true);
 
         const productosEnviados = currentOrder.productos.map(p => ({...p, sentToKitchen: true}));
-        const newStatus = currentOrder.id ? 'en preparación' : 'nuevo';
+        const newStatus: EstadoPedido = 'en preparación';
         
         const orderToSend: Pedido = { 
             ...currentOrder, 

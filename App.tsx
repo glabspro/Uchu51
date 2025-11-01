@@ -1,13 +1,9 @@
 
-
-
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { initialOrders, initialProducts, deliveryDrivers, mesasDisponibles } from './constants';
 import type { Pedido, EstadoPedido, Turno, UserRole, View, Toast as ToastType, AreaPreparacion, Producto, ProductoPedido, Mesa, MetodoPago, Theme, CajaSession, MovimientoCaja } from './types';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
-import WaitingBoard from './components/WaitingBoard';
 import KitchenBoard from './components/KitchenBoard';
 import DeliveryBoard from './components/DeliveryBoard';
 import LocalBoard from './components/LocalBoard';
@@ -46,7 +42,7 @@ const App: React.FC = () => {
         }
     });
     const [mesas, setMesas] = useState<Mesa[]>([]);
-    const [view, setView] = useState<View>('caja');
+    const [view, setView] = useState<View>('cocina');
     const [turno, setTurno] = useState<Turno>('tarde');
     const [posMesaActiva, setPosMesaActiva] = useState<Mesa | null>(null);
 
@@ -225,7 +221,7 @@ const App: React.FC = () => {
         } else if (isRiskyRetiro) {
             initialState = 'pendiente de confirmación';
         } else {
-            initialState = 'nuevo';
+            initialState = 'en preparación'; // Directo a cocina
         }
 
         const newOrder: Pedido = {
@@ -240,7 +236,7 @@ const App: React.FC = () => {
 
         setOrders(prevOrders => [newOrder, ...prevOrders]);
 
-        let toastMessage = `Nuevo pedido ${newOrder.id} recibido.`;
+        let toastMessage = `Nuevo pedido ${newOrder.id} enviado a cocina.`;
         if (isPayNow) {
             toastMessage = `Pedido ${newOrder.id} recibido. Esperando confirmación de pago.`;
         } else if (isRiskyRetiro) {
@@ -458,6 +454,7 @@ const App: React.FC = () => {
 
     const filteredOrders = useMemo(() => orders.filter(order => order.turno === turno), [orders, turno]);
     const openOrders = useMemo(() => orders.filter(o => !['pagado', 'cancelado'].includes(o.estado)), [orders]);
+    const retiroOrdersToPay = useMemo(() => openOrders.filter(o => o.tipo === 'retiro' && o.estado === 'listo' && ['efectivo', 'tarjeta'].includes(o.metodoPago)), [openOrders]);
 
     const paidOrdersInSession = useMemo(() => {
         if (cajaSession.estado !== 'abierta') return [];
@@ -474,22 +471,20 @@ const App: React.FC = () => {
 
     const renderView = () => {
         switch (view) {
-            case 'espera':
-                return <WaitingBoard orders={filteredOrders} updateOrderStatus={updateOrderStatus} />;
             case 'cocina':
-                return <KitchenBoard orders={filteredOrders.filter(o => ['en preparación', 'en armado', 'listo para armado'].includes(o.estado))} updateOrderStatus={updateOrderStatus} />;
+                return <KitchenBoard orders={filteredOrders.filter(o => ['pendiente confirmar pago', 'en preparación', 'en armado', 'listo para armado'].includes(o.estado))} updateOrderStatus={updateOrderStatus} />;
             case 'delivery':
                 return <DeliveryBoard orders={filteredOrders.filter(o => o.tipo === 'delivery' && ['listo', 'en camino', 'entregado', 'pagado'].includes(o.estado))} updateOrderStatus={updateOrderStatus} assignDriver={assignDriver} deliveryDrivers={deliveryDrivers} onInitiateDeliveryPayment={handleInitiateDeliveryPayment} />;
             case 'retiro':
-                return <RetiroBoard orders={filteredOrders.filter(o => o.tipo === 'retiro' && ['listo', 'recogido'].includes(o.estado))} updateOrderStatus={updateOrderStatus} />;
+                return <RetiroBoard orders={filteredOrders.filter(o => o.tipo === 'retiro' && ['pendiente confirmar pago', 'pendiente de confirmación', 'listo', 'recogido', 'pagado'].includes(o.estado))} updateOrderStatus={updateOrderStatus} />;
             case 'local':
                 return <LocalBoard mesas={mesas} onSelectMesa={handleSelectMesa} />;
             case 'caja':
-                return <CajaView orders={openOrders.filter(o => o.estado === 'cuenta solicitada')} paidOrders={paidOrdersInSession} onInitiatePayment={handleInitiatePayment} cajaSession={cajaSession} onOpenCaja={handleOpenCaja} onCloseCaja={handleCloseCaja} onAddMovimiento={handleMovimientoCaja} />;
+                return <CajaView orders={openOrders.filter(o => o.estado === 'cuenta solicitada')} retiroOrdersToPay={retiroOrdersToPay} paidOrders={paidOrdersInSession} onInitiatePayment={handleInitiatePayment} cajaSession={cajaSession} onOpenCaja={handleOpenCaja} onCloseCaja={handleCloseCaja} onAddMovimiento={handleMovimientoCaja} />;
             case 'dashboard':
                 return <Dashboard orders={orders} />;
             default:
-                return <WaitingBoard orders={filteredOrders} updateOrderStatus={updateOrderStatus} />;
+                return <KitchenBoard orders={filteredOrders.filter(o => ['en preparación', 'en armado', 'listo para armado'].includes(o.estado))} updateOrderStatus={updateOrderStatus} />;
         }
     };
 

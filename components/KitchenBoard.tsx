@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Pedido, EstadoPedido, UserRole, AreaPreparacion } from '../types';
 import OrderCard from './OrderCard';
-import { HomeIcon, TruckIcon, ShoppingBagIcon } from './icons';
+import { HomeIcon, TruckIcon, ShoppingBagIcon, CheckCircleIcon } from './icons';
 
 interface KitchenBoardProps {
     orders: Pedido[];
@@ -14,11 +14,12 @@ const KitchenColumn: React.FC<{
     title: string; 
     children: React.ReactNode; 
     count: number;
-    onDrop: (e: React.DragEvent<HTMLDivElement>) => void;
-    onDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
-}> = ({ title, children, count, onDrop, onDragOver }) => (
+    onDrop?: (e: React.DragEvent<HTMLDivElement>) => void;
+    onDragOver?: (e: React.DragEvent<HTMLDivElement>) => void;
+    className?: string;
+}> = ({ title, children, count, onDrop, onDragOver, className = '' }) => (
     <div 
-        className="bg-text-primary/5 dark:bg-slate-800/50 rounded-xl p-4 flex-1 flex-shrink-0"
+        className={`bg-text-primary/5 dark:bg-slate-800/50 rounded-xl p-4 flex-shrink-0 ${className}`}
         onDrop={onDrop}
         onDragOver={onDragOver}
     >
@@ -72,11 +73,11 @@ const KitchenBoard: React.FC<KitchenBoardProps> = ({ orders, updateOrderStatus }
     };
     
     useEffect(() => {
-        const allKitchenOrders = orders.filter(o => o.estado === 'en preparación');
+        const allKitchenOrders = orders.filter(o => ['en preparación', 'pendiente confirmar pago'].includes(o.estado));
         
         const newDeliveryOrders = allKitchenOrders.filter(o => o.areaPreparacion === 'delivery' && !announcedOrders.has(o.id));
-        const newRetiroOrders = allKitchenOrders.filter(o => o.areaPreparacion === 'retiro' && !announcedOrders.has(o.id));
-        const newSalonOrders = allKitchenOrders.filter(o => o.areaPreparacion === 'salon' && !announcedOrders.has(o.id));
+        const newRetiroOrders = allKitchenOrders.filter(o => o.areaPreparacion === 'retiro' && o.estado === 'en preparación' && !announcedOrders.has(o.id));
+        const newSalonOrders = allKitchenOrders.filter(o => o.areaPreparacion === 'salon' && o.estado === 'en preparación' && !announcedOrders.has(o.id));
 
         if (newDeliveryOrders.length > 0) speak('Nuevo pedido para Delivery');
         if (newRetiroOrders.length > 0) speak('Nuevo pedido para llevar');
@@ -121,10 +122,13 @@ const KitchenBoard: React.FC<KitchenBoardProps> = ({ orders, updateOrderStatus }
     };
 
     const filteredOrders = getFilteredOrders();
-
+    
+    const paymentConfirmationOrders = activeTab === 'delivery' ? filteredOrders.filter(o => o.estado === 'pendiente confirmar pago') : [];
     const preparingOrders = filteredOrders.filter(o => o.estado === 'en preparación');
     const assemblingOrders = filteredOrders.filter(o => o.estado === 'en armado' || o.estado === 'listo para armado');
     
+    const columnClass = activeTab === 'delivery' ? 'w-1/4' : 'flex-1';
+
     return (
         <div className="flex flex-col h-full">
             <div className="bg-surface dark:bg-slate-800 rounded-t-lg shadow-sm flex-shrink-0">
@@ -153,7 +157,22 @@ const KitchenBoard: React.FC<KitchenBoardProps> = ({ orders, updateOrderStatus }
                 </div>
             </div>
             <div className="flex flex-col md:flex-row gap-6 pt-4 flex-grow bg-background dark:bg-slate-900 p-4 rounded-b-lg">
-                <KitchenColumn title="En Preparación" count={preparingOrders.length} onDrop={handleDrop('en preparación')} onDragOver={handleDragOver}>
+                 {activeTab === 'delivery' && (
+                    <KitchenColumn title="Pagos por Confirmar" count={paymentConfirmationOrders.length} className={columnClass}>
+                        {paymentConfirmationOrders.map((order, i) => (
+                           <OrderCard key={order.id} order={order} style={{ '--delay': `${i * 50}ms` } as React.CSSProperties}>
+                               <button 
+                                   onClick={() => updateOrderStatus(order.id, 'en preparación', 'recepcionista')}
+                                   className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-purple-500/30 hover:-translate-y-0.5 active:scale-95"
+                               >
+                                   <CheckCircleIcon className="h-5 w-5 mr-2" /> Validar Pago
+                               </button>
+                           </OrderCard>
+                        ))}
+                    </KitchenColumn>
+                )}
+
+                <KitchenColumn title="En Preparación" count={preparingOrders.length} onDrop={handleDrop('en preparación')} onDragOver={handleDragOver} className={columnClass}>
                     {preparingOrders.map((order, i) => (
                         <div key={order.id} draggable onDragStart={(e) => handleDragStart(e, order.id)} className="animate-fade-in-up" style={{ '--delay': `${i * 50}ms` } as React.CSSProperties}>
                             <OrderCard order={order}>
@@ -171,7 +190,7 @@ const KitchenBoard: React.FC<KitchenBoardProps> = ({ orders, updateOrderStatus }
                         </div>
                     ))}
                 </KitchenColumn>
-                <KitchenColumn title="En Armado" count={assemblingOrders.length} onDrop={handleDrop('en armado')} onDragOver={handleDragOver}>
+                <KitchenColumn title="En Armado" count={assemblingOrders.length} onDrop={handleDrop('en armado')} onDragOver={handleDragOver} className={columnClass}>
                     {assemblingOrders.map((order, i) => (
                         <div key={order.id} draggable onDragStart={(e) => handleDragStart(e, order.id)} className="animate-fade-in-up" style={{ '--delay': `${i * 50}ms` } as React.CSSProperties}>
                             <OrderCard order={order}>
@@ -189,7 +208,7 @@ const KitchenBoard: React.FC<KitchenBoardProps> = ({ orders, updateOrderStatus }
                         </div>
                     ))}
                 </KitchenColumn>
-                <div className="bg-text-primary/5 dark:bg-slate-800/50 rounded-xl p-4 flex-1 flex-shrink-0" onDrop={handleDrop('listo')} onDragOver={handleDragOver}>
+                <div className={`bg-text-primary/5 dark:bg-slate-800/50 rounded-xl p-4 flex-shrink-0 ${columnClass}`} onDrop={handleDrop('listo')} onDragOver={handleDragOver}>
                     <h2 className="text-lg font-heading font-bold mb-4 text-text-primary dark:text-slate-200 bg-text-primary/10 dark:bg-slate-700/50 px-3 py-2 rounded-lg">Listo para Entrega</h2>
                     <div className="h-[calc(100vh-14rem)] overflow-y-auto pr-2 flex items-center justify-center border-2 border-dashed border-text-primary/20 dark:border-slate-700 rounded-lg">
                          <p className="text-text-secondary dark:text-slate-500 font-semibold">Arrastra aquí los pedidos listos</p>

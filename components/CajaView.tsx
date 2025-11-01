@@ -8,6 +8,7 @@ import SalesHistoryModal from './SalesHistoryModal';
 
 interface CajaViewProps {
     orders: Pedido[];
+    retiroOrdersToPay: Pedido[];
     paidOrders: Pedido[];
     onInitiatePayment: (order: Pedido) => void;
     cajaSession: CajaSession;
@@ -107,13 +108,13 @@ const MovimientoCajaModal: React.FC<{
     );
 };
 
-const CajaView: React.FC<CajaViewProps> = ({ orders, paidOrders, onInitiatePayment, cajaSession, onOpenCaja, onCloseCaja, onAddMovimiento }) => {
+const CajaView: React.FC<CajaViewProps> = ({ orders, retiroOrdersToPay, paidOrders, onInitiatePayment, cajaSession, onOpenCaja, onCloseCaja, onAddMovimiento }) => {
     const [isOpeningModalOpen, setIsOpeningModalOpen] = useState(false);
     const [isClosingModalOpen, setIsClosingModalOpen] = useState(false);
     const [movimientoModal, setMovimientoModal] = useState<'ingreso' | 'egreso' | null>(null);
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
 
-    const cuentasPorCobrar = useMemo(() => orders, [orders]);
+    const cuentasPorCobrarSalon = useMemo(() => orders, [orders]);
     
     const { totalIngresos, totalEgresos } = useMemo(() => {
         const movimientos = cajaSession.movimientos || [];
@@ -149,25 +150,58 @@ const CajaView: React.FC<CajaViewProps> = ({ orders, paidOrders, onInitiatePayme
             <SalesHistoryModal isOpen={isHistoryModalOpen} onClose={() => setIsHistoryModalOpen(false)} paidOrders={paidOrders} />
              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
                 <div className="lg:col-span-2 bg-surface dark:bg-slate-800 rounded-2xl shadow-lg p-6 flex flex-col border border-text-primary/5 dark:border-slate-700">
-                     <h2 className="text-2xl font-heading font-bold text-text-primary dark:text-slate-100 mb-4">Cuentas por Cobrar ({cuentasPorCobrar.length})</h2>
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-grow overflow-y-auto pr-2">
-                         {cuentasPorCobrar.length > 0 ? cuentasPorCobrar.map(order => (
-                             <div key={order.id} className="bg-background dark:bg-slate-900/50 p-4 rounded-xl border border-text-primary/5 dark:border-slate-700 flex flex-col">
-                                <div className="flex justify-between items-start mb-2">
-                                     <div>
-                                        <h3 className="font-bold text-lg text-text-primary dark:text-slate-100">{order.tipo === 'local' ? `Mesa ${order.cliente.mesa}` : order.cliente.nombre}</h3>
-                                        <p className="text-xs font-mono text-text-secondary dark:text-slate-500">{order.id}</p>
-                                     </div>
-                                     <p className="font-mono text-xl font-semibold text-text-primary dark:text-slate-200">S/.{order.total.toFixed(2)}</p>
+                     <h2 className="text-2xl font-heading font-bold text-text-primary dark:text-slate-100 mb-4">Cuentas por Cobrar</h2>
+                     <div className="space-y-4 flex-grow overflow-y-auto pr-2">
+                        <div>
+                            <h3 className="text-lg font-semibold text-text-secondary dark:text-slate-400 mb-2">Salón ({cuentasPorCobrarSalon.length})</h3>
+                            {cuentasPorCobrarSalon.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {cuentasPorCobrarSalon.map(order => (
+                                        <div key={order.id} className="bg-background dark:bg-slate-900/50 p-4 rounded-xl border border-text-primary/5 dark:border-slate-700 flex flex-col">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div>
+                                                    <h3 className="font-bold text-lg text-text-primary dark:text-slate-100">Mesa {order.cliente.mesa}</h3>
+                                                    <p className="text-xs font-mono text-text-secondary dark:text-slate-500">{order.id}</p>
+                                                </div>
+                                                <p className="font-mono text-xl font-semibold text-text-primary dark:text-slate-200">S/.{order.total.toFixed(2)}</p>
+                                            </div>
+                                            <ul className="text-sm space-y-1 my-2 flex-grow">
+                                                {order.productos.map(p => <li key={p.id + p.nombre} className="text-text-secondary dark:text-slate-400">{p.cantidad}x {p.nombre}</li>)}
+                                            </ul>
+                                            <button onClick={() => onInitiatePayment(order)} className="w-full mt-3 bg-primary text-white font-bold py-2.5 rounded-lg shadow-md hover:bg-primary-dark transition-transform hover:-translate-y-0.5 active:scale-95">
+                                                Registrar Pago
+                                            </button>
+                                        </div>
+                                    ))}
                                 </div>
-                                <ul className="text-sm space-y-1 my-2 flex-grow">
-                                    {order.productos.map(p => <li key={p.id} className="text-text-secondary dark:text-slate-400">{p.cantidad}x {p.nombre}</li>)}
-                                </ul>
-                                <button onClick={() => onInitiatePayment(order)} className="w-full mt-3 bg-primary text-white font-bold py-2.5 rounded-lg shadow-md hover:bg-primary-dark transition-transform hover:-translate-y-0.5 active:scale-95">
-                                    Registrar Pago
-                                </button>
-                             </div>
-                         )) : (
+                            ) : <p className="text-text-secondary dark:text-slate-500 text-sm">No hay cuentas de salón pendientes.</p>}
+                        </div>
+                        <div className="border-t border-text-primary/10 dark:border-slate-700 my-4"></div>
+                        <div>
+                            <h3 className="text-lg font-semibold text-text-secondary dark:text-slate-400 mb-2">Retiro en Tienda ({retiroOrdersToPay.length})</h3>
+                             {retiroOrdersToPay.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {retiroOrdersToPay.map(order => (
+                                        <div key={order.id} className="bg-background dark:bg-slate-900/50 p-4 rounded-xl border border-text-primary/5 dark:border-slate-700 flex flex-col">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div>
+                                                    <h3 className="font-bold text-lg text-text-primary dark:text-slate-100">{order.cliente.nombre}</h3>
+                                                    <p className="text-xs font-mono text-text-secondary dark:text-slate-500">{order.id}</p>
+                                                </div>
+                                                <p className="font-mono text-xl font-semibold text-text-primary dark:text-slate-200">S/.{order.total.toFixed(2)}</p>
+                                            </div>
+                                            <ul className="text-sm space-y-1 my-2 flex-grow">
+                                                 {order.productos.map(p => <li key={p.id + p.nombre} className="text-text-secondary dark:text-slate-400">{p.cantidad}x {p.nombre}</li>)}
+                                            </ul>
+                                            <button onClick={() => onInitiatePayment(order)} className="w-full mt-3 bg-primary text-white font-bold py-2.5 rounded-lg shadow-md hover:bg-primary-dark transition-transform hover:-translate-y-0.5 active:scale-95">
+                                                Registrar Pago
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                             ) : <p className="text-text-secondary dark:text-slate-500 text-sm">No hay pedidos de retiro pendientes de pago.</p>}
+                        </div>
+                         {cuentasPorCobrarSalon.length === 0 && retiroOrdersToPay.length === 0 && (
                             <div className="md:col-span-2 h-full flex flex-col items-center justify-center text-center text-text-secondary/60 dark:text-slate-500">
                                 <CheckCircleIcon className="h-20 w-20 mb-4" />
                                 <p className="text-lg font-semibold">¡Todo al día!</p>
