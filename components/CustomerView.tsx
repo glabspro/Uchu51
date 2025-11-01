@@ -61,6 +61,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
 
     const [loyalCustomer, setLoyalCustomer] = useState<ClienteLeal | null>(null);
     const [isCartAnimating, setIsCartAnimating] = useState(false);
+    const [promosShownThisLoad, setPromosShownThisLoad] = useState(false);
 
     const activeProgram = useMemo(() => loyaltyPrograms.find(p => p.isActive), [loyaltyPrograms]);
     const activePromotions = useMemo(() => promotions.filter(p => p.isActive), [promotions]);
@@ -97,12 +98,35 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
     }, [customerInfo.telefono, customers]);
 
     useEffect(() => {
-        const hasSeenPromos = sessionStorage.getItem('hasSeenPromos');
-        if (!hasSeenPromos && activePromotions.length > 0) {
+        // Show promos modal once on page load if available, instead of only once per session.
+        if (!promosShownThisLoad && activePromotions.length > 0) {
             setShowPromosModal(true);
-            sessionStorage.setItem('hasSeenPromos', 'true');
+            setPromosShownThisLoad(true);
         }
-    }, [activePromotions]);
+    }, [activePromotions, promosShownThisLoad]);
+
+    const getPromoImageUrl = (promo: Promocion, allProducts: Producto[]): string | undefined => {
+        // Prioritize the image URL set directly on the promotion object.
+        if (promo.imagenUrl && promo.imagenUrl.trim() !== '') {
+            return promo.imagenUrl;
+        }
+
+        // If no image is on the promotion, fall back to the main product's image.
+        let productId: string | undefined;
+
+        if (promo.tipo === 'combo_fijo' && promo.condiciones.productos && promo.condiciones.productos.length > 0) {
+            productId = promo.condiciones.productos[0].productoId;
+        } else if (promo.tipo === 'dos_por_uno') {
+            productId = promo.condiciones.productoId_2x1;
+        }
+
+        if (productId) {
+            const product = allProducts.find(p => p.id === productId);
+            return product?.imagenUrl;
+        }
+
+        return undefined; // No image found
+    };
 
 
     const groupedProducts = useMemo(() => {
@@ -433,33 +457,36 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
                 
                 <div className="overflow-hidden relative rounded-2xl shadow-2xl">
                     <div className="flex transition-transform ease-out duration-500" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
-                        {activePromotions.map((promo) => (
-                            <div key={promo.id} className="w-full flex-shrink-0 min-h-[400px] flex flex-col justify-between relative text-white p-6">
-                                {promo.imagenUrl && <img src={promo.imagenUrl} alt={promo.nombre} className="absolute inset-0 w-full h-full object-cover z-0" />}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10"></div>
-                                <div className="relative z-20 flex flex-col h-full justify-end text-left">
-                                    <SparklesIcon className="h-8 w-8 text-white/80 mb-2" />
-                                    <h3 className="text-2xl font-heading font-bold mb-1">{promo.nombre}</h3>
-                                    <p className="text-sm opacity-90 mb-4 flex-grow">{promo.descripcion}</p>
-                                    {promo.tipo === 'combo_fijo' && promo.condiciones.precioFijo &&
-                                        <p className="text-3xl font-heading font-extrabold mb-4">S/.{promo.condiciones.precioFijo.toFixed(2)}</p>
-                                    }
-                                    <button 
-                                       onClick={() => { 
-                                           handleAddPromotionToCart(promo); 
-                                           setShowPromosModal(false);
-                                           if (stage === 'selection') {
-                                               setOrderType('retiro');
-                                           }
-                                           setStage('checkout');
-                                       }} 
-                                       className="bg-white/20 hover:bg-white/30 text-white font-bold py-3 px-8 rounded-lg transition-all backdrop-blur-sm mt-auto w-full"
-                                   >
-                                        ¡Lo quiero!
-                                    </button>
+                        {activePromotions.map((promo) => {
+                            const imageUrl = getPromoImageUrl(promo, products);
+                            return (
+                                <div key={promo.id} className="w-full flex-shrink-0 min-h-[400px] flex flex-col justify-between relative text-white p-6">
+                                    {imageUrl && <img src={imageUrl} alt={promo.nombre} className="absolute inset-0 w-full h-full object-cover z-0" />}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10"></div>
+                                    <div className="relative z-20 flex flex-col h-full justify-end text-left">
+                                        <SparklesIcon className="h-8 w-8 text-white/80 mb-2" />
+                                        <h3 className="text-2xl font-heading font-bold mb-1">{promo.nombre}</h3>
+                                        <p className="text-sm opacity-90 mb-4 flex-grow">{promo.descripcion}</p>
+                                        {promo.tipo === 'combo_fijo' && promo.condiciones.precioFijo &&
+                                            <p className="text-3xl font-heading font-extrabold mb-4">S/.{promo.condiciones.precioFijo.toFixed(2)}</p>
+                                        }
+                                        <button 
+                                           onClick={() => { 
+                                               handleAddPromotionToCart(promo); 
+                                               setShowPromosModal(false);
+                                               if (stage === 'selection') {
+                                                   setOrderType('retiro');
+                                               }
+                                               setStage('checkout');
+                                           }} 
+                                           className="bg-white/20 hover:bg-white/30 text-white font-bold py-3 px-8 rounded-lg transition-all backdrop-blur-sm mt-auto w-full"
+                                       >
+                                            ¡Lo quiero!
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                     
                     {activePromotions.length > 1 && (
@@ -568,25 +595,28 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4 mt-4">
                  {activeCategory === 'Promociones' && !searchTerm ? (
-                    activePromotions.map((promo, i) => (
-                        <button key={promo.id} onClick={() => { handleAddPromotionToCart(promo); setStage('checkout'); }} className={`product-card bg-surface dark:bg-slate-800 rounded-2xl border border-primary/20 dark:border-orange-500/30 overflow-hidden flex group p-4 animate-fade-in-up w-full text-left`} style={{'--delay': `${i * 30}ms`} as React.CSSProperties}>
-                             <div className="flex-grow flex flex-col">
-                                 <h3 className="text-lg font-heading font-bold text-primary dark:text-orange-400 leading-tight flex items-center gap-2"><SparklesIcon className="h-5 w-5"/>{promo.nombre}</h3>
-                                 <p className="text-sm text-text-secondary dark:text-slate-400 mt-1 line-clamp-2 mb-2 flex-grow">{promo.descripcion}</p>
-                                 <div className="flex justify-between items-center mt-2">
-                                     <p className="text-xl font-heading font-extrabold text-text-primary dark:text-white">{promo.tipo === 'combo_fijo' ? `S/.${promo.condiciones.precioFijo?.toFixed(2)}` : '¡Ofertón!'}</p>
-                                     <div className="flex items-center gap-2 bg-primary rounded-lg text-white font-semibold px-4 py-2 group-hover:bg-primary-dark transition-all duration-300 shadow-lg group-hover:shadow-primary/30 transform group-hover:scale-105 active:scale-95">
-                                         <PlusIcon className="h-5 w-5" /> Añadir
+                    activePromotions.map((promo, i) => {
+                        const imageUrl = getPromoImageUrl(promo, products);
+                        return (
+                            <button key={promo.id} onClick={() => { handleAddPromotionToCart(promo); setStage('checkout'); }} className={`product-card bg-surface dark:bg-slate-800 rounded-2xl border border-primary/20 dark:border-orange-500/30 overflow-hidden flex group p-4 animate-fade-in-up w-full text-left`} style={{'--delay': `${i * 30}ms`} as React.CSSProperties}>
+                                 <div className="flex-grow flex flex-col">
+                                     <h3 className="text-lg font-heading font-bold text-primary dark:text-orange-400 leading-tight flex items-center gap-2"><SparklesIcon className="h-5 w-5"/>{promo.nombre}</h3>
+                                     <p className="text-sm text-text-secondary dark:text-slate-400 mt-1 line-clamp-2 mb-2 flex-grow">{promo.descripcion}</p>
+                                     <div className="flex justify-between items-center mt-2">
+                                         <p className="text-xl font-heading font-extrabold text-text-primary dark:text-white">{promo.tipo === 'combo_fijo' ? `S/.${promo.condiciones.precioFijo?.toFixed(2)}` : '¡Ofertón!'}</p>
+                                         <div className="flex items-center gap-2 bg-primary rounded-lg text-white font-semibold px-4 py-2 group-hover:bg-primary-dark transition-all duration-300 shadow-lg group-hover:shadow-primary/30 transform group-hover:scale-105 active:scale-95">
+                                             <PlusIcon className="h-5 w-5" /> Añadir
+                                         </div>
                                      </div>
                                  </div>
-                             </div>
-                             {promo.imagenUrl && (
-                                <div className="h-28 w-28 overflow-hidden rounded-xl ml-4 flex-shrink-0 relative">
-                                    <img className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" src={promo.imagenUrl} alt={promo.nombre} />
-                                </div>
-                             )}
-                        </button>
-                    ))
+                                 {imageUrl && (
+                                    <div className="h-28 w-28 overflow-hidden rounded-xl ml-4 flex-shrink-0 relative">
+                                        <img className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" src={imageUrl} alt={promo.nombre} />
+                                    </div>
+                                 )}
+                            </button>
+                        );
+                    })
                 ) : filteredProducts.length > 0 ? filteredProducts.map((product, i) => (
                    <button key={product.id} onClick={() => setSelectedProduct(product)} disabled={product.stock <= 0} className={`product-card bg-surface dark:bg-slate-800 rounded-2xl border border-text-primary/5 dark:border-slate-700 overflow-hidden flex group p-4 animate-fade-in-up w-full text-left ${product.stock <= 0 ? 'opacity-60' : ''}`} style={{'--delay': `${i * 30}ms`} as React.CSSProperties}>
                         <div className="flex-grow">
