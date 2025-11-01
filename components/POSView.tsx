@@ -117,6 +117,8 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
     };
 
     const handleProductClick = (product: Producto) => {
+        if (product.stock <= 0) return;
+
         if (['Bebidas', 'Postres'].includes(product.categoria)) {
             const newItem: ProductoPedido = {
                 id: product.id,
@@ -332,9 +334,14 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, onExit, onSave
                     <div className="flex-grow overflow-y-auto pt-4 pr-2">
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                             {(groupedProducts[activeCategory] || []).map(product => (
-                                <button key={product.id} onClick={() => handleProductClick(product)} className="bg-surface dark:bg-slate-800 rounded-lg shadow-md p-2 text-center transition-transform hover:-translate-y-1 hover:shadow-lg flex flex-col border border-text-primary/5 dark:border-slate-700">
-                                    <div className="h-24 w-full bg-background dark:bg-slate-700 rounded-md overflow-hidden">
-                                        <img src={product.imagenUrl} alt={product.nombre} className="w-full h-full object-cover" />
+                                <button key={product.id} onClick={() => handleProductClick(product)} className="bg-surface dark:bg-slate-800 rounded-lg shadow-md p-2 text-center transition-transform hover:-translate-y-1 hover:shadow-lg flex flex-col border border-text-primary/5 dark:border-slate-700 relative disabled:opacity-50 disabled:cursor-not-allowed" disabled={product.stock <= 0}>
+                                    <div className="h-24 w-full bg-background dark:bg-slate-700 rounded-md overflow-hidden relative">
+                                        <img src={product.imagenUrl} alt={product.nombre} className={`w-full h-full object-cover ${product.stock <= 0 ? 'filter grayscale' : ''}`} />
+                                         {product.stock <= 0 && (
+                                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center rounded-md">
+                                                <span className="bg-danger text-white font-bold text-xs px-2 py-1 rounded">AGOTADO</span>
+                                            </div>
+                                        )}
                                     </div>
                                     <p className="font-semibold text-sm mt-2 flex-grow text-text-primary dark:text-slate-200 leading-tight">{product.nombre}</p>
                                     <p className="font-bold text-text-secondary dark:text-slate-400 mt-1">S/.{product.precio.toFixed(2)}</p>

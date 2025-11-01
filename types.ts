@@ -3,7 +3,7 @@
 export type EstadoPedido = 'pendiente confirmar pago' | 'pendiente de confirmación' | 'nuevo' | 'confirmado' | 'en preparación' | 'en armado' | 'listo para armado' | 'listo' | 'en camino' | 'entregado' | 'cancelado' | 'recogido' | 'pagado' | 'cuenta solicitada';
 export type TipoPedido = 'delivery' | 'local' | 'retiro';
 export type Turno = 'mañana' | 'tarde' | 'noche';
-export type View = 'dashboard' | 'local' | 'cocina' | 'retiro' | 'delivery' | 'caja';
+export type View = 'dashboard' | 'local' | 'cocina' | 'retiro' | 'delivery' | 'gestion' | 'caja';
 export type UserRole = 'admin' | 'cocinero' | 'repartidor' | 'recepcionista' | 'cliente';
 export type MetodoPago = 'efectivo' | 'tarjeta' | 'yape' | 'plin' | 'online';
 export type Theme = 'light' | 'dark';
@@ -38,6 +38,7 @@ export interface Producto {
     categoria: string;
     precio: number;
     costo: number;
+    stock: number;
     descripcion?: string;
     imagenUrl?: string;
 }
@@ -113,4 +114,11 @@ export interface CajaSession {
     efectivoContadoAlCierre?: number;
     diferencia?: number;
     movimientos?: MovimientoCaja[];
+}
+
+export interface ClienteLeal {
+    telefono: string;
+    nombre: string;
+    puntos: number;
+    historialPedidos: Pedido[];
 }

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import type { Pedido, Producto, ProductoPedido, Cliente, Salsa, TipoPedido, MetodoPago, Theme } from '../types';
+import type { Pedido, Producto, ProductoPedido, Cliente, Salsa, TipoPedido, MetodoPago, Theme, ClienteLeal } from '../types';
 import { ShoppingBagIcon, TrashIcon, CheckCircleIcon, TruckIcon, UserIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon, MapPinIcon, SearchIcon, AdjustmentsHorizontalIcon, MinusIcon, PlusIcon, StarIcon, SunIcon, MoonIcon, ChevronLeftIcon, WhatsAppIcon, ArrowDownOnSquareIcon, ArrowUpOnSquareIcon, EllipsisVerticalIcon, XMarkIcon } from './icons';
 import SauceModal from './SauceModal';
 import { yapePlinInfo } from '../constants';
@@ -8,6 +8,7 @@ import { Logo } from './Logo';
 
 interface CustomerViewProps {
     products: Producto[];
+    customers: ClienteLeal[];
     onPlaceOrder: (order: Omit<Pedido, 'id' | 'fecha' | 'turno' | 'historial' | 'areaPreparacion' | 'estado'>) => void;
     onNavigateToAdmin: () => void;
     theme: Theme;
@@ -26,7 +27,7 @@ type FormErrors = {
 };
 type PaymentChoice = 'payNow' | 'payLater';
 
-const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onNavigateToAdmin, theme, onToggleTheme, installPrompt, onInstallClick }) => {
+const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, onPlaceOrder, onNavigateToAdmin, theme, onToggleTheme, installPrompt, onInstallClick }) => {
     const [cart, setCart] = useState<CartItem[]>([]);
     const [orderType, setOrderType] = useState<TipoPedido | null>(null);
     const [customerInfo, setCustomerInfo] = useState<Cliente>({ nombre: '', telefono: '' });
@@ -53,12 +54,31 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
     const [isIOS, setIsIOS] = useState(false);
     const [isAndroid, setIsAndroid] = useState(false);
 
+    const [loyalCustomer, setLoyalCustomer] = useState<ClienteLeal | null>(null);
+
     useEffect(() => {
         setIsStandalone(window.matchMedia('(display-mode: standalone)').matches);
         const userAgent = window.navigator.userAgent.toLowerCase();
         setIsIOS(/iphone|ipad|ipod/.test(userAgent));
         setIsAndroid(/android/.test(userAgent));
     }, []);
+
+    useEffect(() => {
+        if (customerInfo.telefono && /^\d{9}$/.test(customerInfo.telefono)) {
+            const found = customers.find(c => c.telefono === customerInfo.telefono);
+            if (found) {
+                setLoyalCustomer(found);
+                if (!customerInfo.nombre) {
+                    setCustomerInfo(prev => ({ ...prev, nombre: found.nombre }));
+                }
+            } else {
+                setLoyalCustomer(null);
+            }
+        } else {
+            setLoyalCustomer(null);
+        }
+    }, [customerInfo.telefono, customers]);
+
 
     const groupedProducts = useMemo(() => {
         return products.reduce((acc, product) => {
@@ -141,6 +161,8 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
     };
     
     const handleProductClick = (product: Producto) => {
+        if (product.stock <= 0) return;
+
         if (['Bebidas', 'Postres'].includes(product.categoria)) {
             // Add directly to cart without sauces
             const existingItem = cart.find(item => item.id === product.id && (!item.salsas || item.salsas.length === 0));
@@ -382,7 +404,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4 mt-4">
                 {filteredProducts.length > 0 ? filteredProducts.map((product, i) => (
-                   <div key={product.id} className="bg-surface dark:bg-slate-800 rounded-2xl border border-text-primary/5 dark:border-slate-700 overflow-hidden flex group p-4 hover:shadow-xl dark:hover:shadow-slate-950/50 transition-shadow duration-300 animate-fade-in-up" style={{'--delay': `${i * 30}ms`} as React.CSSProperties}>
+                   <div key={product.id} className={`bg-surface dark:bg-slate-800 rounded-2xl border border-text-primary/5 dark:border-slate-700 overflow-hidden flex group p-4 hover:shadow-xl dark:hover:shadow-slate-950/50 transition-shadow duration-300 animate-fade-in-up ${product.stock <= 0 ? 'opacity-60' : ''}`} style={{'--delay': `${i * 30}ms`} as React.CSSProperties}>
                         <div className="flex-grow">
                             <div className="flex justify-between items-start mb-1">
                                 <h3 className="text-lg font-heading font-bold text-text-primary dark:text-slate-100 leading-tight">{product.nombre}</h3>
@@ -394,13 +416,14 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
                             <p className="text-sm text-text-secondary dark:text-slate-400 mt-1 line-clamp-2 mb-2">{product.descripcion}</p>
                             <div className="flex justify-between items-center mt-2">
                                 <p className="text-xl font-heading font-extrabold text-text-primary dark:text-white">S/.{product.precio.toFixed(2)}</p>
-                                <button onClick={() => handleProductClick(product)} className="w-9 h-9 flex items-center justify-center bg-primary rounded-full text-white hover:bg-primary-dark transition-all duration-300 shadow-lg hover:shadow-primary/30 transform hover:scale-110 active:scale-95">
-                                    <PlusIcon className="h-5 w-5" />
+                                <button onClick={() => handleProductClick(product)} disabled={product.stock <= 0} className="w-9 h-9 flex items-center justify-center bg-primary rounded-full text-white hover:bg-primary-dark transition-all duration-300 shadow-lg hover:shadow-primary/30 transform hover:scale-110 active:scale-95 disabled:bg-gray-400 disabled:shadow-none disabled:scale-100 disabled:cursor-not-allowed">
+                                    {product.stock > 0 ? <PlusIcon className="h-5 w-5" /> : <XMarkIcon className="h-5 w-5"/>}
                                 </button>
                             </div>
                         </div>
-                        <div className="h-28 w-28 overflow-hidden rounded-xl ml-4 flex-shrink-0">
-                            <img className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" src={product.imagenUrl} alt={product.nombre} />
+                        <div className="h-28 w-28 overflow-hidden rounded-xl ml-4 flex-shrink-0 relative">
+                            <img className={`w-full h-full object-cover transition-transform duration-300 ${product.stock > 0 ? 'group-hover:scale-105' : 'filter grayscale'}`} src={product.imagenUrl} alt={product.nombre} />
+                            {product.stock <= 0 && <div className="absolute inset-0 bg-black/60 flex items-center justify-center rounded-xl"><span className="bg-danger text-white text-xs font-bold px-2 py-1 rounded">AGOTADO</span></div>}
                         </div>
                     </div>
                 )) : (
@@ -488,6 +511,12 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, onPlaceOrder, onN
                             <input type="tel" placeholder="Teléfono de Contacto (9 dígitos)" value={customerInfo.telefono} onChange={e => setCustomerInfo({...customerInfo, telefono: e.target.value})} className={`bg-surface dark:bg-slate-700 border ${formErrors.telefono ? 'border-danger' : 'border-text-primary/10 dark:border-slate-600'} rounded-lg p-3 w-full text-text-primary dark:text-slate-200 placeholder-text-secondary/70 dark:placeholder-slate-400 focus:ring-2 focus:ring-primary focus:border-primary transition`} />
                             {formErrors.telefono && <p className="text-danger text-xs mt-1">{formErrors.telefono}</p>}
                         </div>
+                        {loyalCustomer && (
+                            <div className="bg-success/10 text-success dark:text-green-300 p-3 rounded-lg text-sm font-semibold animate-fade-in-up">
+                                <p className="font-bold">¡Hola de nuevo, {loyalCustomer.nombre}!</p>
+                                <p>Tienes <span className="font-extrabold">{loyalCustomer.puntos}</span> puntos acumulados.</p>
+                            </div>
+                        )}
                         {orderType === 'delivery' && (
                             <div>
                                 <div className="relative flex items-center">

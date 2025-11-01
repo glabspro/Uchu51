@@ -1,13 +1,13 @@
 
 
 import React, { useMemo, useState, useEffect } from 'react';
-import type { Pedido, MetodoPago } from '../types';
-import { initialProducts } from '../constants';
+import type { Pedido, MetodoPago, Producto } from '../types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { PrinterIcon, DocumentArrowDownIcon } from './icons';
 
 interface DashboardProps {
     orders: Pedido[];
+    products: Producto[];
 }
 
 const MetricCard: React.FC<{ title: string; value: string | number; }> = ({ title, value }) => (
@@ -26,10 +26,9 @@ interface ReportFilters {
     productId: string;
 }
 
-const ReportPrintView: React.FC<{ data: Pedido[], filters: ReportFilters }> = ({ data, filters }) => {
-    // FIX: Ensure order.total is a number before adding it to the sum.
+const ReportPrintView: React.FC<{ data: Pedido[], filters: ReportFilters, products: Producto[] }> = ({ data, filters, products }) => {
     const total = data.reduce((sum, order) => sum + Number(order.total || 0), 0);
-    const product = initialProducts.find(p => p.id === filters.productId);
+    const product = products.find(p => p.id === filters.productId);
 
     return (
         <div className="printable-report">
@@ -74,7 +73,7 @@ const ReportPrintView: React.FC<{ data: Pedido[], filters: ReportFilters }> = ({
 };
 
 
-const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
+const Dashboard: React.FC<DashboardProps> = ({ orders, products }) => {
     const [reportData, setReportData] = useState<Pedido[] | null>(null);
     const [isPrinting, setIsPrinting] = useState(false);
     const [filters, setFilters] = useState<ReportFilters>({
@@ -93,56 +92,32 @@ const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
             .map(o => {
                 const creationEvent = o.historial.find(h => ['nuevo', 'confirmado'].includes(h.estado));
                 const completionEvent = o.historial.find(h => ['listo', 'recogido'].includes(h.estado));
-
-                if (creationEvent && completionEvent) {
-                    return (new Date(completionEvent.fecha).getTime() - new Date(creationEvent.fecha).getTime()) / 1000;
-                }
+                if (creationEvent && completionEvent) return (new Date(completionEvent.fecha).getTime() - new Date(creationEvent.fecha).getTime()) / 1000;
                 return null;
             })
             .filter((t): t is number => t !== null && t > 0);
         
-        const tiempoPromedio = preparationTimes.length > 0
-            ? Math.floor(preparationTimes.reduce((a, b) => a + b, 0) / preparationTimes.length)
-            : 0;
-
+        const tiempoPromedio = preparationTimes.length > 0 ? Math.floor(preparationTimes.reduce((a, b) => a + b, 0) / preparationTimes.length) : 0;
         const formatTime = (seconds: number) => `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
 
-        return {
-            totalPedidos,
-            pedidosCompletados,
-            pedidosEnProceso,
-            tiempoPromedio: formatTime(tiempoPromedio),
-        };
+        return { totalPedidos, pedidosCompletados, pedidosEnProceso, tiempoPromedio: formatTime(tiempoPromedio) };
     }, [orders]);
     
     const topProducts = useMemo(() => {
         const productCounts: { [key: string]: number } = {};
         orders.forEach(order => {
             order.productos.forEach(p => {
-                // FIX: The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
-                // Cast quantity to a number to prevent string concatenation if data from localStorage is malformed.
-                // This prevents `b - a` in `.sort()` from being an operation on strings.
                 productCounts[p.nombre] = (productCounts[p.nombre] || 0) + Number(p.cantidad || 0);
             });
         });
-
-        return Object.entries(productCounts)
-            // FIX: Explicitly cast values to numbers to satisfy TypeScript when it cannot infer types correctly.
-            .sort(([, a], [, b]) => Number(b) - Number(a))
-            .slice(0, 5)
-            .map(([name, value]) => ({ name, value }));
+        return Object.entries(productCounts).sort(([, a], [, b]) => Number(b) - Number(a)).slice(0, 5).map(([name, value]) => ({ name, value }));
     }, [orders]);
     
      const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
         if (type === 'checkbox') {
             const { checked } = e.target as HTMLInputElement;
-            setFilters(prev => ({
-                ...prev,
-                paymentMethods: checked
-                    ? [...prev.paymentMethods, value as MetodoPago]
-                    : prev.paymentMethods.filter(m => m !== value)
-            }));
+            setFilters(prev => ({ ...prev, paymentMethods: checked ? [...prev.paymentMethods, value as MetodoPago] : prev.paymentMethods.filter(m => m !== value) }));
         } else {
             setFilters(prev => ({ ...prev, [name]: value }));
         }
@@ -151,18 +126,14 @@ const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
     const handleGenerateReport = (e: React.FormEvent) => {
         e.preventDefault();
         const filtered = orders.filter(order => {
-            if (order.tipo !== 'local' || order.estado !== 'pagado' || !order.pagoRegistrado) {
-                return false;
-            }
+            if (order.tipo !== 'local' || order.estado !== 'pagado' || !order.pagoRegistrado) return false;
             const paymentDate = new Date(order.pagoRegistrado.fecha);
             const startDate = new Date(filters.startDate);
             const endDate = new Date(filters.endDate);
             endDate.setHours(23, 59, 59, 999); 
-
             const inDateRange = paymentDate >= startDate && paymentDate <= endDate;
             const hasPaymentMethod = filters.paymentMethods.length === 0 || filters.paymentMethods.includes(order.pagoRegistrado.metodo);
             const hasProduct = filters.productId === 'todos' || order.productos.some(p => p.id === filters.productId);
-
             return inDateRange && hasPaymentMethod && hasProduct;
         });
         setReportData(filtered);
@@ -173,20 +144,11 @@ const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
         const csvRows = [];
         const headers = ['Fecha Pago', 'Pedido ID', 'Mesa', 'Productos', 'Metodo de Pago', 'Total'];
         csvRows.push(headers.join(','));
-
         for (const order of reportData) {
             if (!order.pagoRegistrado) continue;
-            const values = [
-                new Date(order.pagoRegistrado.fecha).toLocaleString(),
-                order.id,
-                order.cliente.mesa,
-                `"${order.productos.map(p => `${p.cantidad}x ${p.nombre}`).join('; ')}"`,
-                order.pagoRegistrado.metodo,
-                order.total.toFixed(2)
-            ].join(',');
+            const values = [ new Date(order.pagoRegistrado.fecha).toLocaleString(), order.id, order.cliente.mesa, `"${order.productos.map(p => `${p.cantidad}x ${p.nombre}`).join('; ')}"`, order.pagoRegistrado.metodo, order.total.toFixed(2) ].join(',');
             csvRows.push(values);
         }
-
         const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -197,17 +159,11 @@ const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
         document.body.removeChild(a);
     };
 
-    const handlePrintPDF = () => {
-        setIsPrinting(true);
-    };
+    const handlePrintPDF = () => setIsPrinting(true);
     
     useEffect(() => {
         if (isPrinting) {
-            const handleAfterPrint = () => {
-                document.body.classList.remove('uchu-printing');
-                setIsPrinting(false);
-                window.removeEventListener('afterprint', handleAfterPrint);
-            };
+            const handleAfterPrint = () => { document.body.classList.remove('uchu-printing'); setIsPrinting(false); window.removeEventListener('afterprint', handleAfterPrint); };
             window.addEventListener('afterprint', handleAfterPrint);
             document.body.classList.add('uchu-printing');
             window.print();
@@ -216,12 +172,9 @@ const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
 
     const reportTotal = useMemo(() => {
         if (!reportData) return 0;
-        // FIX: Ensure order.total is a number before adding it to the sum to prevent type errors.
         return reportData.reduce((sum, order) => sum + Number(order.total || 0), 0);
     }, [reportData]);
 
-
-    // FIX: Changed 'yape/plin' to 'yape', 'plin' to match the MetodoPago type.
     const paymentMethods: MetodoPago[] = ['efectivo', 'tarjeta', 'yape', 'plin', 'online'];
 
     return (
@@ -240,11 +193,7 @@ const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
                              <CartesianGrid strokeDasharray="3 3" stroke="rgba(120, 109, 105, 0.2)" className="dark:stroke-slate-600" />
                             <XAxis type="number" stroke="#A8A29E" />
                             <YAxis type="category" dataKey="name" stroke="#A8A29E" width={120} tick={{fontSize: 12, fill: 'currentColor'}} className="text-text-secondary dark:text-slate-400" />
-                            <Tooltip
-                                contentStyle={{ backgroundColor: 'var(--tw-bg-surface, #FFFFFF)', border: '1px solid #e7e5e4', color: '#1c1917', borderRadius: '12px' }}
-                                wrapperClassName="dark:!bg-slate-700 dark:!border-slate-600 dark:text-slate-200"
-                                cursor={{ fill: 'rgba(253, 252, 251, 0.5)', className: 'dark:fill-slate-700/50' }}
-                            />
+                            <Tooltip contentStyle={{ backgroundColor: 'var(--tw-bg-surface, #FFFFFF)', border: '1px solid #e7e5e4', color: '#1c1917', borderRadius: '12px' }} wrapperClassName="dark:!bg-slate-700 dark:!border-slate-600 dark:text-slate-200" cursor={{ fill: 'rgba(253, 252, 251, 0.5)', className: 'dark:fill-slate-700/50' }} />
                             <Bar dataKey="value" name="Cantidad Vendida" fill="#F97316" radius={[0, 8, 8, 0]} />
                         </BarChart>
                     </ResponsiveContainer>
@@ -253,35 +202,16 @@ const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
                     <h3 className="text-lg font-heading font-bold text-text-primary dark:text-slate-100 mb-4">Distribución de Pedidos</h3>
                      <ResponsiveContainer width="100%" height={300}>
                         <PieChart>
-                            <Pie
-                                data={topProducts}
-                                cx="50%"
-                                cy="50%"
-                                labelLine={false}
-                                outerRadius={120}
-                                fill="#8884d8"
-                                dataKey="value"
-                                nameKey="name"
-                                // FIX: The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type. Explicitly cast `percent` to a number to be safe.
-                                label={({ name, percent }) => `${((Number(percent) || 0) * 100).toFixed(0)}%`}
-                                stroke="var(--tw-bg-surface, #FFFFFF)"
-                                className="dark:stroke-slate-800"
-                            >
-                                {topProducts.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                ))}
+                            <Pie data={topProducts} cx="50%" cy="50%" labelLine={false} outerRadius={120} fill="#8884d8" dataKey="value" nameKey="name" label={({ name, percent }) => `${((Number(percent) || 0) * 100).toFixed(0)}%`} stroke="var(--tw-bg-surface, #FFFFFF)" className="dark:stroke-slate-800">
+                                {topProducts.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
                             </Pie>
-                            <Tooltip 
-                                contentStyle={{ backgroundColor: 'var(--tw-bg-surface, #FFFFFF)', border: '1px solid #e7e5e4', borderRadius: '12px' }}
-                                wrapperClassName="dark:!bg-slate-700 dark:!border-slate-600"
-                            />
+                            <Tooltip contentStyle={{ backgroundColor: 'var(--tw-bg-surface, #FFFFFF)', border: '1px solid #e7e5e4', borderRadius: '12px' }} wrapperClassName="dark:!bg-slate-700 dark:!border-slate-600" />
                             <Legend wrapperStyle={{ color: 'var(--tw-text-primary, #44281D)' }} />
                         </PieChart>
                     </ResponsiveContainer>
                 </div>
             </div>
 
-            {/* Reports Section */}
             <div className="bg-surface dark:bg-slate-800 p-6 rounded-2xl shadow-lg border border-text-primary/5 dark:border-slate-700">
                 <h3 className="text-xl font-heading font-bold text-text-primary dark:text-slate-100 mb-4">Informes de Pagos POS (Salón)</h3>
                 <form onSubmit={handleGenerateReport}>
@@ -298,7 +228,7 @@ const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
                             <label className="block text-sm font-medium text-text-secondary dark:text-slate-400 mb-1">Producto</label>
                             <select name="productId" value={filters.productId} onChange={handleFilterChange} className="w-full bg-background dark:bg-slate-700 border border-text-primary/10 dark:border-slate-600 rounded-md p-2">
                                 <option value="todos">Todos los productos</option>
-                                {initialProducts.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+                                {products.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}
                             </select>
                         </div>
                         <div>
@@ -310,7 +240,6 @@ const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
                                 {paymentMethods.map(method => (
                                 <label key={method} className="flex items-center space-x-2">
                                     <input type="checkbox" name="paymentMethods" value={method} checked={filters.paymentMethods.includes(method)} onChange={handleFilterChange} className="h-4 w-4 rounded border-text-primary/20 dark:border-slate-500 text-primary focus:ring-primary bg-transparent dark:bg-slate-800" />
-                                    {/* FIX: Removed redundant .replace() call as 'yape' and 'plin' are now separate. */}
                                     <span className="capitalize">{method}</span>
                                 </label>
                                 ))}
@@ -345,7 +274,6 @@ const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
                                         <td className="p-2">{new Date(order.pagoRegistrado!.fecha).toLocaleDateString()}</td>
                                         <td className="p-2 font-mono">{order.id}</td>
                                         <td className="p-2">{order.cliente.mesa}</td>
-                                        {/* FIX: Removed redundant .replace() call as 'yape' and 'plin' are now separate. */}
                                         <td className="p-2 capitalize">{order.pagoRegistrado!.metodo}</td>
                                         <td className="p-2 text-right font-mono">S/.{order.total.toFixed(2)}</td>
                                     </tr>
@@ -359,7 +287,7 @@ const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
                      </div>
                 )}
             </div>
-            {isPrinting && reportData && <ReportPrintView data={reportData} filters={filters} />}
+            {isPrinting && reportData && <ReportPrintView data={reportData} filters={filters} products={products} />}
         </div>
     );
 };

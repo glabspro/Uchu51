@@ -31,6 +31,11 @@ const URLS_TO_CACHE = [
   'components/DeliveryPaymentModal.tsx',
   'components/CloseCajaModal.tsx',
   'components/SalesHistoryModal.tsx',
+  'components/GestionView.tsx',
+  'components/ProductManager.tsx',
+  'components/InventoryManager.tsx',
+  'components/ProductModal.tsx',
+  'components/CustomerManager.tsx',
   'icon-192x192.png',
   'icon-512x512.png'
 ];
