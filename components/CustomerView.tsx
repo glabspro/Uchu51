@@ -652,7 +652,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
                             const productInfo = products.find(p => p.id === item.id);
                             const unitPriceWithSauces = (item.precioOriginal ?? item.precio) + (item.salsas || []).reduce((sum, s) => sum + s.precio, 0);
                             const itemTotal = item.precio * item.cantidad;
-                            const canHaveSauces = productInfo && !['Bebidas', 'Postres'].includes(productInfo.categoria);
+                            const canHaveSauces = (productInfo && !['Bebidas', 'Postres'].includes(productInfo.categoria)) || item.promocionId;
                             
                             return (
                                 <div key={item.cartItemId} className="flex items-start">
