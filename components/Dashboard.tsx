@@ -1,21 +1,91 @@
-
-
 import React, { useMemo, useState, useEffect } from 'react';
-import type { Pedido, MetodoPago, Producto } from '../types';
+import type { Pedido, MetodoPago, Producto, EstadoPedido } from '../types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { PrinterIcon, DocumentArrowDownIcon } from './icons';
+import { PrinterIcon, DocumentArrowDownIcon, ShoppingBagIcon, CheckCircleIcon, ClockIcon, FireIcon, ExclamationTriangleIcon } from './icons';
 
 interface DashboardProps {
     orders: Pedido[];
     products: Producto[];
 }
 
-const MetricCard: React.FC<{ title: string; value: string | number; }> = ({ title, value }) => (
+const MetricCard: React.FC<{ title: string; value: string | number; icon: React.ReactNode; }> = ({ title, value, icon }) => (
     <div className="bg-surface dark:bg-slate-800 p-6 rounded-2xl shadow-lg border border-text-primary/5 dark:border-slate-700">
-        <h3 className="text-sm font-semibold text-text-secondary dark:text-slate-400 uppercase tracking-wider">{title}</h3>
-        <p className="text-4xl font-heading font-extrabold text-text-primary dark:text-white mt-1">{value}</p>
+        <div className="flex items-center gap-4">
+            <div className="bg-background dark:bg-slate-700/50 p-3 rounded-full">
+                {icon}
+            </div>
+            <div>
+                <h3 className="text-sm font-semibold text-text-secondary dark:text-slate-400 uppercase tracking-wider">{title}</h3>
+                <p className="text-4xl font-heading font-extrabold text-text-primary dark:text-white mt-1">{value}</p>
+            </div>
+        </div>
     </div>
 );
+
+
+const LowStockAlerts: React.FC<{ products: Producto[] }> = ({ products }) => {
+    const lowStockProducts = useMemo(() => products.filter(p => p.stock < 10).sort((a, b) => a.stock - b.stock), [products]);
+
+    if (lowStockProducts.length === 0) return null;
+
+    return (
+        <div className="bg-surface dark:bg-slate-800 p-6 rounded-2xl shadow-lg border border-amber-500/30 dark:border-amber-500/50 h-full">
+            <div className="flex items-center gap-3 mb-4">
+                <div className="bg-amber-500/10 p-2 rounded-full">
+                    <ExclamationTriangleIcon className="h-6 w-6 text-amber-500" />
+                </div>
+                <h3 className="text-lg font-heading font-bold text-amber-600 dark:text-amber-400">Inventario Bajo</h3>
+            </div>
+            <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
+                {lowStockProducts.map(p => (
+                    <div key={p.id} className="flex justify-between items-center bg-background dark:bg-slate-700/50 p-2 rounded-lg text-sm">
+                        <span className="font-semibold text-text-primary dark:text-slate-200">{p.nombre}</span>
+                        <span className="font-bold text-danger dark:text-red-400 bg-danger/10 px-2 py-0.5 rounded-full">{p.stock} restantes</span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+const RecentActivityFeed: React.FC<{ orders: Pedido[] }> = ({ orders }) => {
+    const recentOrders = useMemo(() => {
+        return [...orders]
+            .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
+            .slice(0, 5);
+    }, [orders]);
+
+    const getStatusInfo = (status: EstadoPedido) => {
+        if (['entregado', 'recogido', 'pagado'].includes(status)) return { color: 'bg-green-500' };
+        if (['en preparación', 'en armado', 'listo', 'en camino'].includes(status)) return { color: 'bg-amber-500' };
+        if (['cancelado'].includes(status)) return { color: 'bg-danger' };
+        return { color: 'bg-blue-500' };
+    };
+
+    return (
+        <div className="bg-surface dark:bg-slate-800 p-6 rounded-2xl shadow-lg border border-text-primary/5 dark:border-slate-700 h-full">
+            <h3 className="text-lg font-heading font-bold text-text-primary dark:text-slate-100 mb-4">Actividad Reciente</h3>
+            <div className="space-y-3">
+                {recentOrders.length > 0 ? recentOrders.map((order, i) => (
+                    <div key={order.id} className="flex items-center gap-4 animate-fade-in-up" style={{ animationDelay: `${i * 50}ms` }}>
+                        <div className="flex-shrink-0">
+                            <span className={`h-2.5 w-2.5 rounded-full ${getStatusInfo(order.estado).color} block`}></span>
+                        </div>
+                        <div className="flex-grow">
+                            <p className="font-semibold text-text-primary dark:text-slate-200 leading-tight">{order.id} - {order.cliente.nombre}</p>
+                            <p className="text-xs text-text-secondary dark:text-slate-400 capitalize">{order.tipo} - {new Date(order.fecha).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}</p>
+                        </div>
+                        <div className="font-mono font-semibold text-text-primary dark:text-slate-200 text-right">
+                            S/.{order.total.toFixed(2)}
+                        </div>
+                    </div>
+                )) : (
+                    <p className="text-sm text-center text-text-secondary dark:text-slate-500 py-8">No hay actividad reciente.</p>
+                )}
+            </div>
+        </div>
+    );
+};
 
 const COLORS = ['#F97316', '#FB923C', '#FDBA74', '#FECACA', '#FDE68A'];
 
@@ -180,11 +250,21 @@ const Dashboard: React.FC<DashboardProps> = ({ orders, products }) => {
     return (
         <div className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <MetricCard title="Total de Pedidos" value={metrics.totalPedidos} />
-                <MetricCard title="Pedidos Completados" value={metrics.pedidosCompletados} />
-                <MetricCard title="Pedidos en Proceso" value={metrics.pedidosEnProceso} />
-                <MetricCard title="Tiempo Promedio Prep." value={metrics.tiempoPromedio} />
+                <MetricCard title="Total de Pedidos" value={metrics.totalPedidos} icon={<ShoppingBagIcon className="h-7 w-7 text-sky-500" />} />
+                <MetricCard title="Pedidos Completados" value={metrics.pedidosCompletados} icon={<CheckCircleIcon className="h-7 w-7 text-green-500" />} />
+                <MetricCard title="Pedidos en Proceso" value={metrics.pedidosEnProceso} icon={<ClockIcon className="h-7 w-7 text-amber-500" />} />
+                <MetricCard title="Tiempo Promedio Prep." value={metrics.tiempoPromedio} icon={<FireIcon className="h-7 w-7 text-red-500" />} />
             </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2">
+                    <RecentActivityFeed orders={orders} />
+                </div>
+                <div>
+                    <LowStockAlerts products={products} />
+                </div>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
                 <div className="lg:col-span-3 bg-surface dark:bg-slate-800 p-6 rounded-2xl shadow-lg border border-text-primary/5 dark:border-slate-700">
                     <h3 className="text-lg font-heading font-bold text-text-primary dark:text-slate-100 mb-4">Top 5 Productos Vendidos</h3>
