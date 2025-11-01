@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Pedido, Producto, ProductoPedido, Cliente, Salsa, TipoPedido, MetodoPago, Theme, ClienteLeal, LoyaltyProgram, Promocion } from '../types';
-import { ShoppingBagIcon, TrashIcon, CheckCircleIcon, TruckIcon, UserIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon, MapPinIcon, SearchIcon, AdjustmentsHorizontalIcon, MinusIcon, PlusIcon, StarIcon, SunIcon, MoonIcon, ChevronLeftIcon, WhatsAppIcon, ArrowDownOnSquareIcon, ArrowUpOnSquareIcon, EllipsisVerticalIcon, XMarkIcon, SparklesIcon } from './icons';
+import { ShoppingBagIcon, TrashIcon, CheckCircleIcon, TruckIcon, UserIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon, MapPinIcon, SearchIcon, AdjustmentsHorizontalIcon, MinusIcon, PlusIcon, StarIcon, SunIcon, MoonIcon, ChevronLeftIcon, ChevronRightIcon, WhatsAppIcon, ArrowDownOnSquareIcon, ArrowUpOnSquareIcon, EllipsisVerticalIcon, XMarkIcon, SparklesIcon } from './icons';
 import SauceModal from './SauceModal';
 import { yapePlinInfo } from '../constants';
 import { Logo } from './Logo';
@@ -40,6 +40,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
     const [paymentChoice, setPaymentChoice] = useState<PaymentChoice>('payNow');
     const [showInstallInstructions, setShowInstallInstructions] = useState(false);
     const [showPromosModal, setShowPromosModal] = useState(false);
+    const [currentSlide, setCurrentSlide] = useState(0);
 
     const [formErrors, setFormErrors] = useState<FormErrors>({});
     const [cashPaymentAmount, setCashPaymentAmount] = useState('');
@@ -61,6 +62,14 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
 
     const activeProgram = useMemo(() => loyaltyPrograms.find(p => p.isActive), [loyaltyPrograms]);
     const activePromotions = useMemo(() => promotions.filter(p => p.isActive), [promotions]);
+
+    const nextSlide = () => {
+        setCurrentSlide(prev => (prev === activePromotions.length - 1 ? 0 : prev + 1));
+    };
+
+    const prevSlide = () => {
+        setCurrentSlide(prev => (prev === 0 ? activePromotions.length - 1 : prev - 1));
+    };
 
     useEffect(() => {
         setIsStandalone(window.matchMedia('(display-mode: standalone)').matches);
@@ -410,21 +419,55 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
     
     const renderPromosModal = () => (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[101] p-4 animate-fade-in-scale">
-             <div className="bg-surface dark:bg-slate-800 rounded-2xl shadow-xl p-6 max-w-sm w-full text-center relative">
-                 <button onClick={() => setShowPromosModal(false)} className="absolute top-2 right-2 p-2 rounded-full hover:bg-text-primary/10 dark:hover:bg-slate-700">
-                    <XMarkIcon className="h-6 w-6 text-text-secondary dark:text-slate-400" />
-                 </button>
-                 <SparklesIcon className="h-12 w-12 mx-auto text-primary mb-4" />
-                 <h3 className="text-2xl font-heading font-bold text-text-primary dark:text-white mb-4">¡Nuestras Promos de Hoy!</h3>
-                 <div className="space-y-3 text-left max-h-64 overflow-y-auto">
-                    {activePromotions.map(promo => (
-                        <div key={promo.id} className="bg-primary/10 text-primary dark:bg-orange-500/10 dark:text-orange-300 p-3 rounded-lg text-sm">
-                            <p className="font-bold">{promo.nombre}</p>
-                            <p className="text-xs">{promo.descripcion}</p>
-                        </div>
-                    ))}
-                 </div>
-                 <button onClick={() => setShowPromosModal(false)} className="mt-6 w-full bg-primary hover:bg-primary-dark text-white font-bold py-3 px-4 rounded-lg">Ver Menú</button>
+            <div className="bg-transparent rounded-2xl max-w-sm w-full text-center relative">
+                <button onClick={() => setShowPromosModal(false)} className="absolute -top-10 right-0 p-2 rounded-full bg-black/30 hover:bg-black/50 transition-colors z-20">
+                    <XMarkIcon className="h-6 w-6 text-white" />
+                </button>
+                
+                <div className="overflow-hidden relative rounded-2xl shadow-2xl">
+                    <div className="flex transition-transform ease-out duration-500" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
+                        {activePromotions.map((promo) => (
+                            <div key={promo.id} className="w-full flex-shrink-0 bg-gradient-to-br from-primary to-orange-400 dark:from-primary-dark dark:to-orange-600 p-8 text-white min-h-[400px] flex flex-col justify-center">
+                                <SparklesIcon className="h-12 w-12 mx-auto text-white/80 mb-4" />
+                                <h3 className="text-2xl font-heading font-bold mb-2">{promo.nombre}</h3>
+                                <p className="text-sm opacity-90 mb-6 flex-grow">{promo.descripcion}</p>
+                                {promo.tipo === 'combo_fijo' && promo.condiciones.precioFijo &&
+                                    <p className="text-4xl font-heading font-extrabold mb-6">S/.{promo.condiciones.precioFijo.toFixed(2)}</p>
+                                }
+                                <button 
+                                   onClick={() => { 
+                                       handleAddPromotionToCart(promo); 
+                                       setShowPromosModal(false); 
+                                   }} 
+                                   className="bg-white/20 hover:bg-white/30 text-white font-bold py-3 px-8 rounded-lg transition-all backdrop-blur-sm mt-auto"
+                               >
+                                    ¡Lo quiero!
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                    
+                    {/* Navigation Buttons */}
+                    {activePromotions.length > 1 && (
+                        <>
+                            <button onClick={prevSlide} className="absolute top-1/2 left-2 -translate-y-1/2 p-2 bg-black/30 hover:bg-black/50 transition-colors rounded-full z-10">
+                                <ChevronLeftIcon className="h-6 w-6 text-white" />
+                            </button>
+                            <button onClick={nextSlide} className="absolute top-1/2 right-2 -translate-y-1/2 p-2 bg-black/30 hover:bg-black/50 transition-colors rounded-full z-10">
+                                <ChevronRightIcon className="h-6 w-6 text-white" />
+                            </button>
+                        </>
+                    )}
+                </div>
+
+                {/* Dots */}
+                {activePromotions.length > 1 && (
+                    <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex gap-2">
+                        {activePromotions.map((_, i) => (
+                            <div key={i} onClick={() => setCurrentSlide(i)} className={`w-2 h-2 rounded-full cursor-pointer transition-all ${currentSlide === i ? 'bg-white scale-125' : 'bg-white/50'}`}></div>
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -688,7 +731,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
                                         aria-label="Usar ubicación actual"
                                     >
                                         {isLocating ? (
-                                            <svg className="animate-spin h-5 w-5 text-primary" xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <svg className="animate-spin h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                             </svg>
