@@ -1,9 +1,12 @@
 
 
+
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { initialOrders, initialProducts, deliveryDrivers, mesasDisponibles } from './constants';
 import type { Pedido, EstadoPedido, Turno, UserRole, View, Toast as ToastType, AreaPreparacion, Producto, ProductoPedido, Mesa, MetodoPago, Theme, CajaSession, MovimientoCaja } from './types';
 import Header from './components/Header';
+import Sidebar from './components/Sidebar';
 import WaitingBoard from './components/WaitingBoard';
 import KitchenBoard from './components/KitchenBoard';
 import DeliveryBoard from './components/DeliveryBoard';
@@ -51,6 +54,7 @@ const App: React.FC = () => {
     const [loginError, setLoginError] = useState<string | null>(null);
     const [currentUserRole, setCurrentUserRole] = useState<UserRole>('cliente');
     const [toasts, setToasts] = useState<ToastType[]>([]);
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
     const [theme, setTheme] = useState<Theme>(() => {
         if (typeof window !== 'undefined' && localStorage.getItem('theme') === 'dark') {
@@ -127,6 +131,10 @@ const App: React.FC = () => {
 
     const toggleTheme = useCallback(() => {
         setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
+    }, []);
+    
+    const toggleSidebar = useCallback(() => {
+        setIsSidebarCollapsed(prev => !prev);
     }, []);
 
     const showToast = useCallback((message: string, type: 'success' | 'info' = 'info') => {
@@ -509,7 +517,7 @@ const App: React.FC = () => {
                     onGeneratePreBill={handleGeneratePreBill}
                     updateOrderStatus={updateOrderStatus}
                  />
-                 <div className="fixed top-20 right-4 z-[100] space-y-2 w-full max-w-sm">
+                 <div className="fixed top-4 right-4 z-[100] space-y-2 w-full max-w-sm">
                     {toasts.map(toast => (
                         <Toast
                             key={toast.id}
@@ -524,26 +532,35 @@ const App: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen flex flex-col">
+        <div className="min-h-screen flex bg-background dark:bg-slate-900">
             {orderForPreBill && <PreBillModal order={orderForPreBill} onClose={() => setOrderForPreBill(null)} theme={theme} />}
             {orderToPay && <PaymentModal order={orderToPay} onClose={() => setOrderToPay(null)} onConfirmPayment={handleConfirmPayment} />}
             {orderForDeliveryPayment && <DeliveryPaymentModal order={orderForDeliveryPayment} onClose={() => setOrderForDeliveryPayment(null)} onConfirmPayment={handleConfirmDeliveryPayment} />}
             {orderForReceipt && <ReceiptModal order={orderForReceipt} onClose={handleCloseReceipt} theme={theme} />}
-            <Header
-                currentView={view}
-                onNavigate={setView}
-                currentTurno={turno}
-                onTurnoChange={setTurno}
-                onLogout={handleLogout}
-                currentTheme={theme}
-                onToggleTheme={toggleTheme}
+            
+            <Sidebar 
+                 currentView={view}
+                 onNavigate={setView}
+                 onLogout={handleLogout}
+                 currentTheme={theme}
+                 isCollapsed={isSidebarCollapsed}
+                 onToggle={toggleSidebar}
             />
-            <main className="flex-grow p-4 md:p-6 lg:p-8">
-                <div key={view} className="animate-fade-in-scale">
-                    {renderView()}
-                </div>
-            </main>
-             <div className="fixed top-20 right-4 z-[100] space-y-2 w-full max-w-sm">
+            
+            <div className="flex-1 flex flex-col">
+                <Header
+                    currentTurno={turno}
+                    onTurnoChange={setTurno}
+                    currentTheme={theme}
+                    onToggleTheme={toggleTheme}
+                />
+                <main className="flex-grow p-4 md:p-6 lg:p-8 overflow-y-auto">
+                    <div key={view} className="animate-fade-in-scale">
+                        {renderView()}
+                    </div>
+                </main>
+            </div>
+             <div className="fixed top-4 right-4 z-[100] space-y-2 w-full max-w-sm">
                 {toasts.map(toast => (
                     <Toast
                         key={toast.id}

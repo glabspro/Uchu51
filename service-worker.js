@@ -1,4 +1,5 @@
 
+
 const CACHE_NAME = 'uchu51-cache-v3';
 // This list should include all the essential files for your app to work offline.
 const URLS_TO_CACHE = [
@@ -27,6 +28,7 @@ const URLS_TO_CACHE = [
   'components/ReceiptModal.tsx',
   'components/PreBillModal.tsx',
   'components/Logo.tsx',
+  'components/LogoIcon.tsx',
   'components/DeliveryPaymentModal.tsx',
   'components/CloseCajaModal.tsx',
   'components/SalesHistoryModal.tsx',

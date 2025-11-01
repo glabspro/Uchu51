@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import type { Pedido, EstadoPedido, UserRole } from '../types';
 import OrderCard from './OrderCard';
@@ -15,7 +16,7 @@ const RetiroColumn: React.FC<{ title: string; children: React.ReactNode; count: 
             {title}
             <span className="bg-black/10 text-xs font-bold rounded-full px-2.5 py-1">{count}</span>
         </h2>
-        <div className="space-y-4 h-[calc(100vh-220px)] overflow-y-auto p-4">
+        <div className="space-y-4 h-[calc(100vh-10rem)] overflow-y-auto p-4">
             {children}
         </div>
     </div>

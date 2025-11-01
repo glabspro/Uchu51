@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import type { Pedido, EstadoPedido, UserRole, AreaPreparacion } from '../types';
 import OrderCard from './OrderCard';
@@ -25,7 +26,7 @@ const KitchenColumn: React.FC<{
             {title}
             <span className="bg-text-primary/20 dark:bg-slate-600 text-text-primary dark:text-slate-200 text-sm font-semibold rounded-full px-2.5 py-1">{count}</span>
         </h2>
-        <div className="space-y-4 h-[calc(100vh-290px)] overflow-y-auto pr-2">
+        <div className="space-y-4 h-[calc(100vh-14rem)] overflow-y-auto pr-2">
             {children}
         </div>
     </div>
@@ -190,7 +191,7 @@ const KitchenBoard: React.FC<KitchenBoardProps> = ({ orders, updateOrderStatus }
                 </KitchenColumn>
                 <div className="bg-text-primary/5 dark:bg-slate-800/50 rounded-xl p-4 flex-1 flex-shrink-0" onDrop={handleDrop('listo')} onDragOver={handleDragOver}>
                     <h2 className="text-lg font-heading font-bold mb-4 text-text-primary dark:text-slate-200 bg-text-primary/10 dark:bg-slate-700/50 px-3 py-2 rounded-lg">Listo para Entrega</h2>
-                    <div className="h-[calc(100vh-290px)] overflow-y-auto pr-2 flex items-center justify-center border-2 border-dashed border-text-primary/20 dark:border-slate-700 rounded-lg">
+                    <div className="h-[calc(100vh-14rem)] overflow-y-auto pr-2 flex items-center justify-center border-2 border-dashed border-text-primary/20 dark:border-slate-700 rounded-lg">
                          <p className="text-text-secondary dark:text-slate-500 font-semibold">Arrastra aquí los pedidos listos</p>
                     </div>
                 </div>
