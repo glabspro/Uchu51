@@ -73,7 +73,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClos
                         ) : (
                             <p className="text-sm text-text-secondary dark:text-slate-400 mb-3">Ninguna seleccionada.</p>
                         )}
-                        <button onClick={() => setIsSauceModalOpen(true)} className="w-full flex items-center justify-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary dark:bg-orange-500/20 dark:hover:bg-orange-500/30 dark:text-orange-300 font-bold py-3 px-6 rounded-xl transition-all active:scale-95">
+                        <button onClick={() => setIsSauceModalOpen(true)} className="w-full flex items-center justify-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary dark:bg-orange-500/20 dark:hover:bg-orange-500/30 dark:text-orange-300 font-bold py-3 px-6 rounded-xl transition-all active:scale-95 border-2 border-primary/20 hover:border-primary/40 shadow-sm hover:shadow-md">
                              <SparklesIcon className="h-5 w-5"/>
                             {selectedSausas.length > 0 ? 'Editar Cremas' : 'Añade tu Crema'}
                         </button>

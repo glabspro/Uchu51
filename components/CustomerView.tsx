@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Pedido, Producto, ProductoPedido, Cliente, Salsa, TipoPedido, MetodoPago, Theme, ClienteLeal, LoyaltyProgram, Promocion } from '../types';
 import { ShoppingBagIcon, TrashIcon, CheckCircleIcon, TruckIcon, UserIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon, MapPinIcon, SearchIcon, AdjustmentsHorizontalIcon, MinusIcon, PlusIcon, StarIcon, SunIcon, MoonIcon, ChevronLeftIcon, ChevronRightIcon, WhatsAppIcon, ArrowDownOnSquareIcon, ArrowUpOnSquareIcon, EllipsisVerticalIcon, XMarkIcon, SparklesIcon } from './icons';
-import ProductDetailModal from './ProductDetailModal';
 import SauceModal from './SauceModal';
 import { yapePlinInfo } from '../constants';
 import { Logo } from './Logo';
@@ -48,7 +47,6 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
     const [isExactCash, setIsExactCash] = useState(false);
     const [orderNotes, setOrderNotes] = useState('');
     
-    const [productForDetail, setProductForDetail] = useState<Producto | null>(null);
     const [editingCartItemForSauces, setEditingCartItemForSauces] = useState<CartItem | null>(null);
 
     const [isLocating, setIsLocating] = useState(false);
@@ -167,18 +165,14 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
     const handleProductClick = (product: Producto) => {
         if (product.stock <= 0) return;
 
-        if (['Bebidas', 'Postres'].includes(product.categoria)) {
-            handleAddToCart({
-                id: product.id,
-                nombre: product.nombre,
-                cantidad: 1,
-                precio: product.precio,
-                imagenUrl: product.imagenUrl,
-                salsas: [],
-            });
-        } else {
-            setProductForDetail(product);
-        }
+        handleAddToCart({
+            id: product.id,
+            nombre: product.nombre,
+            cantidad: 1,
+            precio: product.precio,
+            imagenUrl: product.imagenUrl,
+            salsas: [],
+        });
     };
     
     const handleAddPromotionToCart = (promo: Promocion) => {
@@ -412,7 +406,11 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
                                 <button 
                                    onClick={() => { 
                                        handleAddPromotionToCart(promo); 
-                                       setShowPromosModal(false); 
+                                       setShowPromosModal(false);
+                                       if (stage === 'selection') {
+                                           setOrderType('retiro');
+                                           setStage('catalog');
+                                       }
                                    }} 
                                    className="bg-white/20 hover:bg-white/30 text-white font-bold py-3 px-8 rounded-lg transition-all backdrop-blur-sm mt-auto"
                                >
@@ -606,9 +604,11 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
                     <h3 className="text-2xl font-heading font-bold text-text-primary dark:text-white mb-4">Resumen del Pedido</h3>
                     <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
                         {cart.length > 0 ? cart.map(item => {
+                            const productInfo = products.find(p => p.id === item.id);
                             const unitPriceWithSauces = (item.precioOriginal ?? item.precio) + (item.salsas || []).reduce((sum, s) => sum + s.precio, 0);
                             const itemTotal = item.precio * item.cantidad;
-                            const canHaveSauces = !['Bebidas', 'Postres'].includes(products.find(p => p.id === item.id)?.categoria || '');
+                            const canHaveSauces = productInfo && !['Bebidas', 'Postres'].includes(productInfo.categoria);
+                            
                             return (
                                 <div key={item.cartItemId} className="flex items-start">
                                     <img src={item.imagenUrl} alt={item.nombre} className="w-16 h-16 md:w-20 md:h-20 rounded-lg object-cover mr-4"/>
@@ -620,7 +620,9 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
                                             </p>
                                         )}
                                         {canHaveSauces && (
-                                             <button onClick={() => setEditingCartItemForSauces(item)} className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline">Editar Cremas</button>
+                                             <button onClick={() => setEditingCartItemForSauces(item)} className="mt-2 text-sm font-bold bg-transparent border-2 border-primary/30 text-primary dark:text-orange-300 py-1.5 px-3 rounded-lg hover:bg-primary/10 transition-colors shadow-sm">
+                                                {item.salsas && item.salsas.length > 0 ? 'Editar Cremas' : 'Añadir Cremas'}
+                                             </button>
                                         )}
                                         <p className="text-sm text-text-secondary dark:text-slate-400 mt-1">S/.{unitPriceWithSauces.toFixed(2)} c/u</p>
                                         <div className="flex items-center gap-2 mt-1">
@@ -845,13 +847,6 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
 
     return (
         <div className="min-h-screen flex flex-col font-sans bg-background dark:bg-slate-900 text-text-primary dark:text-slate-200">
-            {productForDetail && (
-                <ProductDetailModal
-                    product={productForDetail}
-                    onClose={() => setProductForDetail(null)}
-                    onAddToCart={handleAddToCart}
-                />
-            )}
             {editingCartItemForSauces && (
                 <SauceModal
                     product={products.find(p => p.id === editingCartItemForSauces.id) || null}
