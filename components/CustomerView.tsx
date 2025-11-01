@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Pedido, Producto, ProductoPedido, Cliente, Salsa, TipoPedido, MetodoPago, Theme, ClienteLeal, LoyaltyProgram, Promocion } from '../types';
 import { ShoppingBagIcon, TrashIcon, CheckCircleIcon, TruckIcon, UserIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon, MapPinIcon, SearchIcon, AdjustmentsHorizontalIcon, MinusIcon, PlusIcon, StarIcon, SunIcon, MoonIcon, ChevronLeftIcon, ChevronRightIcon, WhatsAppIcon, ArrowDownOnSquareIcon, ArrowUpOnSquareIcon, EllipsisVerticalIcon, XMarkIcon, SparklesIcon } from './icons';
+import ProductDetailModal from './ProductDetailModal';
 import SauceModal from './SauceModal';
 import { yapePlinInfo } from '../constants';
 import { Logo } from './Logo';
@@ -47,8 +48,8 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
     const [isExactCash, setIsExactCash] = useState(false);
     const [orderNotes, setOrderNotes] = useState('');
     
-    const [isSauceModalOpen, setIsSauceModalOpen] = useState(false);
-    const [currentProduct, setCurrentProduct] = useState<Producto | null>(null);
+    const [productForDetail, setProductForDetail] = useState<Producto | null>(null);
+    const [editingCartItemForSauces, setEditingCartItemForSauces] = useState<CartItem | null>(null);
 
     const [isLocating, setIsLocating] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -141,16 +142,6 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
 
     const cartItemCount = useMemo(() => cart.reduce((sum, p) => sum + p.cantidad, 0), [cart]);
 
-    const handleOpenSauceModal = (product: Producto) => {
-        setCurrentProduct(product);
-        setIsSauceModalOpen(true);
-    };
-
-    const handleCloseSauceModal = () => {
-        setCurrentProduct(null);
-        setIsSauceModalOpen(false);
-    };
-
     const updateQuantity = (cartItemId: number, quantity: number) => {
          setCart(currentCart => {
              if (quantity <= 0) {
@@ -160,59 +151,33 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
          });
     };
 
-    const handleConfirmSauces = (salsas: Salsa[]) => {
-        if (!currentProduct) return;
-    
-        const getSauceKey = (salsaList: Salsa[] = []) => {
-            return salsaList.map(s => s.nombre).sort().join(',');
-        };
-    
-        const newSauceKey = getSauceKey(salsas);
-    
-        const existingItem = cart.find(item =>
-            item.id === currentProduct.id && getSauceKey(item.salsas) === newSauceKey
-        );
-    
-        if (existingItem) {
-            updateQuantity(existingItem.cartItemId, existingItem.cantidad + 1);
-        } else {
-            const newItem: CartItem = {
-                id: currentProduct.id,
-                cartItemId: Date.now(),
-                nombre: currentProduct.nombre,
-                cantidad: 1,
-                precio: currentProduct.precio,
-                imagenUrl: currentProduct.imagenUrl,
-                salsas: salsas,
-            };
-            setCart(currentCart => [...currentCart, newItem]);
-        }
+    const handleAddToCart = (itemToAdd: Omit<CartItem, 'cartItemId'>) => {
+        const getSauceKey = (salsaList: Salsa[] = []) => salsaList.map(s => s.nombre).sort().join(',');
+        const newSauceKey = getSauceKey(itemToAdd.salsas);
+
+        const existingItem = cart.find(item => item.id === itemToAdd.id && getSauceKey(item.salsas) === newSauceKey && !item.promocionId);
         
-        handleCloseSauceModal();
+        if (existingItem) {
+            updateQuantity(existingItem.cartItemId, existingItem.cantidad + itemToAdd.cantidad);
+        } else {
+            setCart(prev => [...prev, { ...itemToAdd, cartItemId: Date.now() }]);
+        }
     };
     
     const handleProductClick = (product: Producto) => {
         if (product.stock <= 0) return;
 
         if (['Bebidas', 'Postres'].includes(product.categoria)) {
-            // Add directly to cart without sauces
-            const existingItem = cart.find(item => item.id === product.id && (!item.salsas || item.salsas.length === 0));
-            if (existingItem) {
-                updateQuantity(existingItem.cartItemId, existingItem.cantidad + 1);
-            } else {
-                const newItem: CartItem = {
-                    id: product.id,
-                    cartItemId: Date.now(),
-                    nombre: product.nombre,
-                    cantidad: 1,
-                    precio: product.precio,
-                    imagenUrl: product.imagenUrl,
-                    salsas: [],
-                };
-                setCart(currentCart => [...currentCart, newItem]);
-            }
+            handleAddToCart({
+                id: product.id,
+                nombre: product.nombre,
+                cantidad: 1,
+                precio: product.precio,
+                imagenUrl: product.imagenUrl,
+                salsas: [],
+            });
         } else {
-            handleOpenSauceModal(product);
+            setProductForDetail(product);
         }
     };
     
@@ -277,6 +242,16 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
         if (itemsToAdd.length > 0) {
             setCart(currentCart => [...currentCart, ...itemsToAdd]);
         }
+    };
+
+    const handleConfirmEditSauces = (salsas: Salsa[]) => {
+        if (!editingCartItemForSauces) return;
+        setCart(prevCart => prevCart.map(item =>
+            item.cartItemId === editingCartItemForSauces.cartItemId
+            ? { ...item, salsas }
+            : item
+        ));
+        setEditingCartItemForSauces(null);
     };
 
 
@@ -556,21 +531,21 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4 mt-4">
                  {activeCategory === 'Promociones' && !searchTerm ? (
                     activePromotions.map((promo, i) => (
-                        <div key={promo.id} className={`bg-surface dark:bg-slate-800 rounded-2xl border border-primary/20 dark:border-orange-500/30 overflow-hidden flex group p-4 hover:shadow-xl dark:hover:shadow-slate-950/50 transition-shadow duration-300 animate-fade-in-up`} style={{'--delay': `${i * 30}ms`} as React.CSSProperties}>
+                        <button key={promo.id} onClick={() => handleAddPromotionToCart(promo)} className={`bg-surface dark:bg-slate-800 rounded-2xl border border-primary/20 dark:border-orange-500/30 overflow-hidden flex group p-4 hover:shadow-xl dark:hover:shadow-slate-950/50 transition-shadow duration-300 animate-fade-in-up w-full text-left`} style={{'--delay': `${i * 30}ms`} as React.CSSProperties}>
                              <div className="flex-grow">
                                  <h3 className="text-lg font-heading font-bold text-primary dark:text-orange-400 leading-tight flex items-center gap-2"><SparklesIcon className="h-5 w-5"/>{promo.nombre}</h3>
                                  <p className="text-sm text-text-secondary dark:text-slate-400 mt-1 line-clamp-2 mb-2">{promo.descripcion}</p>
                                  <div className="flex justify-between items-center mt-2">
                                      <p className="text-xl font-heading font-extrabold text-text-primary dark:text-white">{promo.tipo === 'combo_fijo' ? `S/.${promo.condiciones.precioFijo?.toFixed(2)}` : '¡Ofertón!'}</p>
-                                     <button onClick={() => handleAddPromotionToCart(promo)} className="flex items-center gap-2 bg-primary rounded-lg text-white font-semibold px-4 py-2 hover:bg-primary-dark transition-all duration-300 shadow-lg hover:shadow-primary/30 transform hover:scale-105 active:scale-95">
+                                     <div className="flex items-center gap-2 bg-primary rounded-lg text-white font-semibold px-4 py-2 group-hover:bg-primary-dark transition-all duration-300 shadow-lg group-hover:shadow-primary/30 transform group-hover:scale-105 active:scale-95">
                                          <PlusIcon className="h-5 w-5" /> Añadir
-                                     </button>
+                                     </div>
                                  </div>
                              </div>
-                        </div>
+                        </button>
                     ))
                 ) : filteredProducts.length > 0 ? filteredProducts.map((product, i) => (
-                   <div key={product.id} className={`bg-surface dark:bg-slate-800 rounded-2xl border border-text-primary/5 dark:border-slate-700 overflow-hidden flex group p-4 hover:shadow-xl dark:hover:shadow-slate-950/50 transition-shadow duration-300 animate-fade-in-up ${product.stock <= 0 ? 'opacity-60' : ''}`} style={{'--delay': `${i * 30}ms`} as React.CSSProperties}>
+                   <button key={product.id} onClick={() => handleProductClick(product)} disabled={product.stock <= 0} className={`bg-surface dark:bg-slate-800 rounded-2xl border border-text-primary/5 dark:border-slate-700 overflow-hidden flex group p-4 hover:shadow-xl dark:hover:shadow-slate-950/50 transition-shadow duration-300 animate-fade-in-up w-full text-left ${product.stock <= 0 ? 'opacity-60' : ''}`} style={{'--delay': `${i * 30}ms`} as React.CSSProperties}>
                         <div className="flex-grow">
                             <div className="flex justify-between items-start mb-1">
                                 <h3 className="text-lg font-heading font-bold text-text-primary dark:text-slate-100 leading-tight">{product.nombre}</h3>
@@ -582,16 +557,16 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
                             <p className="text-sm text-text-secondary dark:text-slate-400 mt-1 line-clamp-2 mb-2">{product.descripcion}</p>
                             <div className="flex justify-between items-center mt-2">
                                 <p className="text-xl font-heading font-extrabold text-text-primary dark:text-white">S/.{product.precio.toFixed(2)}</p>
-                                <button onClick={() => handleProductClick(product)} disabled={product.stock <= 0} className="w-9 h-9 flex items-center justify-center bg-primary rounded-full text-white hover:bg-primary-dark transition-all duration-300 shadow-lg hover:shadow-primary/30 transform hover:scale-110 active:scale-95 disabled:bg-gray-400 disabled:shadow-none disabled:scale-100 disabled:cursor-not-allowed">
+                                <div className="w-9 h-9 flex items-center justify-center bg-primary rounded-full text-white group-hover:bg-primary-dark transition-all duration-300 shadow-lg group-hover:shadow-primary/30 transform group-hover:scale-110 active:scale-95 group-disabled:bg-gray-400 group-disabled:shadow-none group-disabled:scale-100">
                                     {product.stock > 0 ? <PlusIcon className="h-5 w-5" /> : <XMarkIcon className="h-5 w-5"/>}
-                                </button>
+                                </div>
                             </div>
                         </div>
                         <div className="h-28 w-28 overflow-hidden rounded-xl ml-4 flex-shrink-0 relative">
                             <img className={`w-full h-full object-cover transition-transform duration-300 ${product.stock > 0 ? 'group-hover:scale-105' : 'filter grayscale'}`} src={product.imagenUrl} alt={product.nombre} />
                             {product.stock <= 0 && <div className="absolute inset-0 bg-black/60 flex items-center justify-center rounded-xl"><span className="bg-danger text-white text-xs font-bold px-2 py-1 rounded">AGOTADO</span></div>}
                         </div>
-                    </div>
+                    </button>
                 )) : (
                      <div className="col-span-full text-center py-16">
                         <p className="text-xl font-semibold text-text-secondary dark:text-slate-400">No se encontraron productos</p>
@@ -633,6 +608,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
                         {cart.length > 0 ? cart.map(item => {
                             const unitPriceWithSauces = (item.precioOriginal ?? item.precio) + (item.salsas || []).reduce((sum, s) => sum + s.precio, 0);
                             const itemTotal = item.precio * item.cantidad;
+                            const canHaveSauces = !['Bebidas', 'Postres'].includes(products.find(p => p.id === item.id)?.categoria || '');
                             return (
                                 <div key={item.cartItemId} className="flex items-start">
                                     <img src={item.imagenUrl} alt={item.nombre} className="w-16 h-16 md:w-20 md:h-20 rounded-lg object-cover mr-4"/>
@@ -643,7 +619,10 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
                                                 + {item.salsas.map(s => s.nombre).join(', ')}
                                             </p>
                                         )}
-                                        <p className="text-sm text-text-secondary dark:text-slate-400">S/.{unitPriceWithSauces.toFixed(2)} c/u</p>
+                                        {canHaveSauces && (
+                                             <button onClick={() => setEditingCartItemForSauces(item)} className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline">Editar Cremas</button>
+                                        )}
+                                        <p className="text-sm text-text-secondary dark:text-slate-400 mt-1">S/.{unitPriceWithSauces.toFixed(2)} c/u</p>
                                         <div className="flex items-center gap-2 mt-1">
                                             <button onClick={() => updateQuantity(item.cartItemId, item.cantidad - 1)} className="bg-text-primary/10 dark:bg-slate-700 rounded-full h-7 w-7 flex items-center justify-center font-bold text-text-primary dark:text-slate-200 hover:bg-text-primary/20 dark:hover:bg-slate-600 transition-transform active:scale-90">
                                                 {item.cantidad > 1 ? <MinusIcon className="h-4 w-4"/> : <TrashIcon className="h-4 w-4 text-danger" />}
@@ -866,7 +845,21 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
 
     return (
         <div className="min-h-screen flex flex-col font-sans bg-background dark:bg-slate-900 text-text-primary dark:text-slate-200">
-            {isSauceModalOpen && <SauceModal product={currentProduct} onClose={handleCloseSauceModal} onConfirm={handleConfirmSauces} />}
+            {productForDetail && (
+                <ProductDetailModal
+                    product={productForDetail}
+                    onClose={() => setProductForDetail(null)}
+                    onAddToCart={handleAddToCart}
+                />
+            )}
+            {editingCartItemForSauces && (
+                <SauceModal
+                    product={products.find(p => p.id === editingCartItemForSauces.id) || null}
+                    initialSalsas={editingCartItemForSauces.salsas}
+                    onClose={() => setEditingCartItemForSauces(null)}
+                    onConfirm={handleConfirmEditSauces}
+                />
+            )}
             {showInstallInstructions && renderInstallInstructions()}
             {showPromosModal && renderPromosModal()}
             {showGoBackConfirm && (

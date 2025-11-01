@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { Producto, Salsa } from '../types';
 import { listaDeSalsas } from '../constants';
 
@@ -6,10 +6,11 @@ interface SauceModalProps {
     product: Producto | null;
     onClose: () => void;
     onConfirm: (salsas: Salsa[]) => void;
+    initialSalsas?: Salsa[];
 }
 
-const SauceModal: React.FC<SauceModalProps> = ({ product, onClose, onConfirm }) => {
-    const [selectedSalsas, setSelectedSalsas] = useState<Salsa[]>([]);
+const SauceModal: React.FC<SauceModalProps> = ({ product, onClose, onConfirm, initialSalsas = [] }) => {
+    const [selectedSalsas, setSelectedSalsas] = useState<Salsa[]>(initialSalsas);
 
     if (!product) return null;
 
@@ -24,7 +25,7 @@ const SauceModal: React.FC<SauceModalProps> = ({ product, onClose, onConfirm }) 
     const totalSalsas = selectedSalsas.reduce((acc, s) => acc + s.precio, 0);
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-[100] p-4 font-sans" onClick={onClose}>
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-[102] p-4 font-sans" onClick={onClose}>
             <div className="bg-surface dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col animate-fade-in-scale border border-text-primary/10 dark:border-slate-700" onClick={e => e.stopPropagation()}>
                 <div className="p-6 border-b border-text-primary/10 dark:border-slate-700">
                     <h2 className="text-2xl font-heading font-bold text-text-primary dark:text-slate-100">Añade tus cremas para</h2>
@@ -55,7 +56,7 @@ const SauceModal: React.FC<SauceModalProps> = ({ product, onClose, onConfirm }) 
                         <span className="text-2xl font-heading font-bold text-primary dark:text-orange-400">S/.{(product.precio + totalSalsas).toFixed(2)}</span>
                     </div>
                     <button onClick={() => onConfirm(selectedSalsas)} className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg shadow-primary/30 hover:shadow-primary/40 hover:-translate-y-0.5">
-                        Agregar al Pedido
+                        Confirmar Cremas
                     </button>
                 </div>
             </div>
