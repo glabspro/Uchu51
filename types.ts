@@ -72,6 +72,7 @@ export interface Pedido {
     historial: HistorialEstado[];
     estacion?: 'caliente' | 'fria';
     areaPreparacion?: AreaPreparacion;
+    puntosGanados?: number;
     pagoRegistrado?: {
         metodo: MetodoPago;
         montoTotal: number;

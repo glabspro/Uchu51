@@ -262,7 +262,7 @@ const App: React.FC = () => {
     };
 
     const registrarVentaEnCaja = useCallback((order: Pedido) => {
-        if (cajaSession.estado !== 'abierta' || !order.pagoRegistrado) return;
+        if (cajaSession.estado !== 'abierta' || !order.pagoRegistrado) return order;
         const { total: monto, pagoRegistrado: { metodo } } = order;
         const costoTotal = order.productos.reduce((acc, p) => acc + (products.find(pm => pm.id === p.id)?.costo || 0) * p.cantidad, 0);
         const ganancia = monto - costoTotal;
@@ -292,13 +292,13 @@ const App: React.FC = () => {
         // Add/update customer loyalty points
         const customerPhone = order.cliente.telefono;
         const activeProgram = loyaltyPrograms.find(p => p.isActive);
+        let pointsToAdd = 0;
 
         if (customerPhone && /^\d{9}$/.test(customerPhone) && activeProgram) {
             setCustomers(prevCustomers => {
                 const existingCustomerIndex = prevCustomers.findIndex(c => c.telefono === customerPhone);
                 
                 const { config } = activeProgram;
-                let pointsToAdd = 0;
                 if (config.pointEarningMethod === 'monto') {
                     const safeMontoForPoints = config.montoForPoints > 0 ? config.montoForPoints : 1;
                     pointsToAdd = Math.floor(order.total / safeMontoForPoints) * (config.pointsPerMonto || 0);
@@ -324,6 +324,8 @@ const App: React.FC = () => {
                 }
             });
         }
+        
+        return { ...order, puntosGanados: pointsToAdd > 0 ? pointsToAdd : undefined };
 
     }, [cajaSession.estado, cajaSession.saldoInicial, cajaSession.movimientos, products, loyaltyPrograms]);
 
@@ -365,8 +367,8 @@ const App: React.FC = () => {
         const order = orders.find(o => o.id === orderId);
         if (!order) return;
         let vuelto = (details.metodo === 'efectivo' && details.montoPagado && details.montoPagado >= order.total) ? details.montoPagado - order.total : 0;
-        const updatedOrder: Pedido = { ...order, estado: 'pagado', historial: [...order.historial, { estado: 'pagado', fecha: new Date().toISOString(), usuario: 'admin' }], pagoRegistrado: { metodo: details.metodo, montoTotal: order.total, montoPagado: details.montoPagado, vuelto, fecha: new Date().toISOString() } };
-        registrarVentaEnCaja(updatedOrder);
+        let updatedOrder: Pedido = { ...order, estado: 'pagado', historial: [...order.historial, { estado: 'pagado', fecha: new Date().toISOString(), usuario: 'admin' }], pagoRegistrado: { metodo: details.metodo, montoTotal: order.total, montoPagado: details.montoPagado, vuelto, fecha: new Date().toISOString() } };
+        updatedOrder = registrarVentaEnCaja(updatedOrder);
         setOrders(prev => prev.map(o => (o.id === orderId ? updatedOrder : o)));
         generateAndShowNotification(updatedOrder);
         setOrderToPay(null);
@@ -377,8 +379,8 @@ const App: React.FC = () => {
         const order = orders.find(o => o.id === orderId);
         if (!order) return;
         let vuelto = (details.metodo === 'efectivo' && details.montoPagado && details.montoPagado >= order.total) ? details.montoPagado - order.total : 0;
-        const updatedOrder: Pedido = { ...order, estado: 'pagado', historial: [...order.historial, { estado: 'pagado', fecha: new Date().toISOString(), usuario: 'repartidor' }], pagoRegistrado: { metodo: details.metodo, montoTotal: order.total, montoPagado: details.montoPagado, vuelto, fecha: new Date().toISOString() } };
-        registrarVentaEnCaja(updatedOrder);
+        let updatedOrder: Pedido = { ...order, estado: 'pagado', historial: [...order.historial, { estado: 'pagado', fecha: new Date().toISOString(), usuario: 'repartidor' }], pagoRegistrado: { metodo: details.metodo, montoTotal: order.total, montoPagado: details.montoPagado, vuelto, fecha: new Date().toISOString() } };
+        updatedOrder = registrarVentaEnCaja(updatedOrder);
         setOrders(prev => prev.map(o => (o.id === orderId ? updatedOrder : o)));
         showToast(`Pedido ${orderId} entregado y pagado.`, 'success');
         setOrderForDeliveryPayment(null);
@@ -438,7 +440,7 @@ const App: React.FC = () => {
             <>
                 {orderForPreBill && <PreBillModal order={orderForPreBill} onClose={() => setOrderForPreBill(null)} theme={theme} />}
                 {orderToPay && <PaymentModal order={orderToPay} onClose={() => setOrderToPay(null)} onConfirmPayment={handleConfirmPayment} />}
-                {orderForReceipt && <ReceiptModal order={orderForReceipt} onClose={handleCloseReceipt} theme={theme} />}
+                {orderForReceipt && <ReceiptModal order={orderForReceipt} onClose={handleCloseReceipt} theme={theme} showToast={showToast} />}
                 <POSView
                     mesa={posMesaActiva}
                     onExit={handleExitPOS}
@@ -463,7 +465,7 @@ const App: React.FC = () => {
             {orderForPreBill && <PreBillModal order={orderForPreBill} onClose={() => setOrderForPreBill(null)} theme={theme} />}
             {orderToPay && <PaymentModal order={orderToPay} onClose={() => setOrderToPay(null)} onConfirmPayment={handleConfirmPayment} />}
             {orderForDeliveryPayment && <DeliveryPaymentModal order={orderForDeliveryPayment} onClose={() => setOrderForDeliveryPayment(null)} onConfirmPayment={handleConfirmDeliveryPayment} />}
-            {orderForReceipt && <ReceiptModal order={orderForReceipt} onClose={handleCloseReceipt} theme={theme} />}
+            {orderForReceipt && <ReceiptModal order={orderForReceipt} onClose={handleCloseReceipt} theme={theme} showToast={showToast} />}
             <Sidebar currentView={view} onNavigate={setView} onLogout={handleLogout} currentTheme={theme} isCollapsed={isSidebarCollapsed} onToggle={toggleSidebar} />
             <div className="flex-1 flex flex-col">
                 <Header currentTurno={turno} onTurnoChange={setTurno} currentTheme={theme} onToggleTheme={toggleTheme} />
