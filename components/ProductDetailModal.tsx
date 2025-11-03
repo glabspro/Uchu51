@@ -15,6 +15,8 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClos
     const [isSauceModalOpen, setIsSauceModalOpen] = useState(false);
     const imageRef = useRef<HTMLImageElement>(null);
 
+    const canHaveSauces = product && !['Bebidas', 'Postres'].includes(product.categoria);
+
     const handleAddToCartClick = () => {
         onAddToCart({
             id: product.id,
@@ -59,25 +61,27 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClos
                     <h2 className="text-3xl font-heading font-bold text-text-primary dark:text-slate-100">{product.nombre}</h2>
                     <p className="text-text-secondary dark:text-slate-400 mt-2">{product.descripcion}</p>
                     
-                    <div className="mt-4 pt-4 border-t border-text-primary/10 dark:border-slate-700">
-                        <div className="flex justify-between items-center mb-2">
-                             <h3 className="font-semibold text-text-primary dark:text-slate-200">Cremas Seleccionadas</h3>
-                             <span className="text-sm font-mono text-text-secondary dark:text-slate-400">
-                                + S/.{(totalSaucePrice * quantity).toFixed(2)}
-                             </span>
-                        </div>
-                        {selectedSausas.length > 0 ? (
-                            <div className="bg-background dark:bg-slate-700/50 p-3 rounded-lg mb-3">
-                                <p className="text-sm text-primary dark:text-orange-400">{selectedSausas.map(s => s.nombre).join(', ')}</p>
+                    {canHaveSauces && (
+                        <div className="mt-4 pt-4 border-t border-text-primary/10 dark:border-slate-700">
+                            <div className="flex justify-between items-center mb-2">
+                                <h3 className="font-semibold text-text-primary dark:text-slate-200">Cremas Seleccionadas</h3>
+                                <span className="text-sm font-mono text-text-secondary dark:text-slate-400">
+                                    + S/.{(totalSaucePrice * quantity).toFixed(2)}
+                                </span>
                             </div>
-                        ) : (
-                            <p className="text-sm text-text-secondary dark:text-slate-400 mb-3">Ninguna seleccionada.</p>
-                        )}
-                        <button onClick={() => setIsSauceModalOpen(true)} className="w-full flex items-center justify-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary dark:bg-orange-500/20 dark:hover:bg-orange-500/30 dark:text-orange-300 font-bold py-3 px-6 rounded-xl transition-all active:scale-95 border-2 border-primary/20 hover:border-primary/40 shadow-sm hover:shadow-md">
-                             <SparklesIcon className="h-5 w-5"/>
-                            {selectedSausas.length > 0 ? 'Editar Cremas' : 'Añade tu Crema'}
-                        </button>
-                    </div>
+                            {selectedSausas.length > 0 ? (
+                                <div className="bg-background dark:bg-slate-700/50 p-3 rounded-lg mb-3">
+                                    <p className="text-sm text-primary dark:text-orange-400">{selectedSausas.map(s => s.nombre).join(', ')}</p>
+                                </div>
+                            ) : (
+                                <p className="text-sm text-text-secondary dark:text-slate-400 mb-3">Ninguna seleccionada.</p>
+                            )}
+                            <button onClick={() => setIsSauceModalOpen(true)} className="w-full flex items-center justify-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary dark:bg-orange-500/20 dark:hover:bg-orange-500/30 dark:text-orange-300 font-bold py-3 px-6 rounded-xl transition-all active:scale-95 border-2 border-primary/20 hover:border-primary/40 shadow-sm hover:shadow-md">
+                                <SparklesIcon className="h-5 w-5"/>
+                                {selectedSausas.length > 0 ? 'Editar Cremas' : 'Añade tu Crema'}
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 <div className="p-6 border-t border-text-primary/10 dark:border-slate-700 mt-auto bg-background dark:bg-slate-900/50 rounded-b-2xl sm:rounded-b-lg">
