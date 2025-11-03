@@ -27,6 +27,8 @@ interface AppState {
     orderForDeliveryPayment: Pedido | null;
     orderForReceipt: Pedido | null;
     installPrompt: any;
+    mesaParaAsignarCliente: Mesa | null;
+    preselectedCustomerForPOS: ClienteLeal | null;
 }
 
 const initialState: AppState = {
@@ -60,6 +62,8 @@ const initialState: AppState = {
     orderForDeliveryPayment: null,
     orderForReceipt: null,
     installPrompt: null,
+    mesaParaAsignarCliente: null,
+    preselectedCustomerForPOS: null,
 };
 
 
@@ -191,7 +195,7 @@ function appReducer(state: AppState, action: Action): AppState {
                 toastMessage = `Nuevo pedido ${newOrderForTable.id} creado y enviado a cocina.`;
             }
             const updatedMesa = (state.posMesaActiva && state.posMesaActiva.numero === mesaNumero && newOrderForTable) ? { ...state.posMesaActiva, ocupada: true, pedidoId: newOrderForTable.id } : state.posMesaActiva;
-            return { ...state, orders: newOrders, posMesaActiva: updatedMesa, toasts: [...state.toasts, { id: Date.now(), message: toastMessage, type: 'success' }] };
+            return { ...state, orders: newOrders, posMesaActiva: updatedMesa, preselectedCustomerForPOS: null, toasts: [...state.toasts, { id: Date.now(), message: toastMessage, type: 'success' }] };
         }
         case 'OPEN_CAJA': {
             const newSession: CajaSession = { estado: 'abierta', fechaApertura: new Date().toISOString(), saldoInicial: action.payload, ventasPorMetodo: {}, totalVentas: 0, gananciaTotal: 0, totalEfectivoEsperado: action.payload, movimientos: [] };
@@ -281,7 +285,18 @@ function appReducer(state: AppState, action: Action): AppState {
         case 'INITIATE_PAYMENT': return { ...state, orderToPay: action.payload };
         case 'INITIATE_DELIVERY_PAYMENT': return { ...state, orderForDeliveryPayment: action.payload };
         case 'CLOSE_MODALS': return { ...state, orderForPreBill: null, orderToPay: null, orderForDeliveryPayment: null, orderForReceipt: null };
-        case 'SELECT_MESA': return { ...state, posMesaActiva: action.payload };
+        case 'SELECT_MESA': {
+            return {
+                ...state,
+                posMesaActiva: action.payload.mesa,
+                preselectedCustomerForPOS: action.payload.customer || null,
+                mesaParaAsignarCliente: null, // Cierra el modal de asignación al proceder
+            };
+        }
+        case 'INITIATE_ASSIGN_CUSTOMER_TO_MESA':
+            return { ...state, mesaParaAsignarCliente: action.payload };
+        case 'CANCEL_ASSIGN_CUSTOMER':
+            return { ...state, mesaParaAsignarCliente: null };
         case 'SET_PRODUCTS': return { ...state, products: action.payload };
         case 'SET_PROMOTIONS': return { ...state, promotions: action.payload };
         case 'SET_LOYALTY_PROGRAMS': return { ...state, loyaltyPrograms: action.payload };

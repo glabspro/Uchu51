@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useCallback } from 'react';
 // FIX: Import necessary types for POSView props
-import type { Pedido, Mesa, EstadoPedido, UserRole, Recompensa } from './types';
+import type { Pedido, Mesa, EstadoPedido, UserRole, Recompensa, ClienteLeal } from './types';
 import { mesasDisponibles } from './constants';
 import { useAppContext } from './store';
 import Header from './components/Header';
@@ -21,6 +21,7 @@ import ReceiptModal from './components/ReceiptModal';
 import PreBillModal from './components/PreBillModal';
 import DeliveryPaymentModal from './components/DeliveryPaymentModal';
 import GestionView from './components/GestionView';
+import AssignCustomerModal from './components/AssignCustomerModal';
 
 
 const App: React.FC = () => {
@@ -44,7 +45,8 @@ const App: React.FC = () => {
         orderToPay,
         orderForDeliveryPayment,
         orderForReceipt,
-        installPrompt
+        installPrompt,
+        mesaParaAsignarCliente,
     } = state;
 
     useEffect(() => {
@@ -85,7 +87,7 @@ const App: React.FC = () => {
 
     // FIX: Added callbacks for POSView props
     const onExitPOS = useCallback(() => {
-        dispatch({ type: 'SELECT_MESA', payload: null });
+        dispatch({ type: 'SELECT_MESA', payload: { mesa: null } });
     }, [dispatch]);
 
     const onSavePOSOrder = useCallback((orderData: Pedido, mesaNumero: number) => {
@@ -157,6 +159,18 @@ const App: React.FC = () => {
             {orderToPay && <PaymentModal order={orderToPay} />}
             {orderForDeliveryPayment && <DeliveryPaymentModal order={orderForDeliveryPayment} />}
             {orderForReceipt && <ReceiptModal order={orderForReceipt} />}
+            {mesaParaAsignarCliente && (
+                <AssignCustomerModal
+                    customers={customers}
+                    onAssign={(customer: ClienteLeal) => {
+                        dispatch({ type: 'SELECT_MESA', payload: { mesa: mesaParaAsignarCliente, customer } });
+                    }}
+                    onClose={() => {
+                        dispatch({ type: 'SELECT_MESA', payload: { mesa: mesaParaAsignarCliente, customer: null } });
+                    }}
+                    onAddNewCustomer={onAddNewCustomer}
+                />
+            )}
             <Sidebar />
             <div className="flex-1 flex flex-col">
                 <Header />

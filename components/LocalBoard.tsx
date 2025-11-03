@@ -21,7 +21,14 @@ const LocalBoard: React.FC<LocalBoardProps> = ({ mesas }) => {
     const { dispatch } = useAppContext();
 
     const onSelectMesa = (mesa: Mesa) => {
-        dispatch({ type: 'SELECT_MESA', payload: mesa });
+        // If the table is already occupied, go directly to the POS for that order.
+        // The modal is only for assigning a customer to a NEW order.
+        if (mesa.ocupada) {
+            dispatch({ type: 'SELECT_MESA', payload: { mesa, customer: null } });
+        } else {
+            // If the table is free, initiate the process to assign a customer to a new order.
+            dispatch({ type: 'INITIATE_ASSIGN_CUSTOMER_TO_MESA', payload: mesa });
+        }
     };
 
     return (

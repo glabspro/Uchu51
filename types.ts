@@ -200,7 +200,9 @@ export type Action =
   | { type: 'CONFIRM_PAYMENT'; payload: { orderId: string; details: { metodo: MetodoPago; montoPagado?: number } } }
   | { type: 'CONFIRM_DELIVERY_PAYMENT'; payload: { orderId: string; details: { metodo: MetodoPago; montoPagado?: number } } }
   | { type: 'CLOSE_MODALS' }
-  | { type: 'SELECT_MESA'; payload: Mesa | null }
+  | { type: 'SELECT_MESA'; payload: { mesa: Mesa | null; customer?: ClienteLeal | null } }
+  | { type: 'INITIATE_ASSIGN_CUSTOMER_TO_MESA', payload: Mesa }
+  | { type: 'CANCEL_ASSIGN_CUSTOMER' }
   | { type: 'SET_PRODUCTS'; payload: Producto[] }
   | { type: 'SET_PROMOTIONS'; payload: Promocion[] }
   | { type: 'SET_LOYALTY_PROGRAMS'; payload: LoyaltyProgram[] }

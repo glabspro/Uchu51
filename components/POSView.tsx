@@ -5,6 +5,7 @@ import SauceModal from './SauceModal';
 import AssignCustomerModal from './AssignCustomerModal';
 import RedeemRewardModal from './RedeemRewardModal';
 import ApplyPromotionModal from './ApplyPromotionModal';
+import { useAppContext } from '../store';
 
 interface POSViewProps {
     mesa: Mesa;
@@ -35,6 +36,8 @@ const getStatusAppearance = (status: Pedido['estado']) => {
 };
 
 const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, onExit, onSaveOrder, onGeneratePreBill, updateOrderStatus, customers, loyaltyPrograms, redeemReward, onAddNewCustomer }) => {
+    const { state } = useAppContext();
+    const { preselectedCustomerForPOS } = state;
     const [activeCategory, setActiveCategory] = useState('Hamburguesas');
     const [selectedItem, setSelectedItem] = useState<ProductoPedido | null>(null);
     const [currentOrder, setCurrentOrder] = useState<Pedido | null>(order);
@@ -49,33 +52,52 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
     const [assignedCustomer, setAssignedCustomer] = useState<ClienteLeal | null>(null);
     
     useEffect(() => {
-        setCurrentOrder(order);
-        if (order?.cliente.telefono) {
-            const customer = customers.find(c => c.telefono === order.cliente.telefono);
-            if(customer) setAssignedCustomer(customer);
+        // If it's an existing order, load it
+        if (order) {
+            setCurrentOrder(order);
+            if (order.cliente.telefono) {
+                const customer = customers.find(c => c.telefono === order.cliente.telefono);
+                if (customer) setAssignedCustomer(customer);
+            } else {
+                setAssignedCustomer(null);
+            }
+        // If it's a new order AND a customer was pre-selected from the modal
+        } else if (preselectedCustomerForPOS) {
+            setAssignedCustomer(preselectedCustomerForPOS);
+            const newOrderShell: Pedido = {
+                id: '', fecha: new Date().toISOString(), tipo: 'local', estado: 'nuevo', turno: 'tarde',
+                cliente: {
+                    nombre: preselectedCustomerForPOS.nombre,
+                    telefono: preselectedCustomerForPOS.telefono,
+                    mesa: mesa.numero
+                },
+                productos: [], total: 0, metodoPago: 'efectivo', tiempoEstimado: 15, historial: [], areaPreparacion: 'salon', notas: '',
+             };
+             setCurrentOrder(newOrderShell);
         } else {
+            setCurrentOrder(null);
             setAssignedCustomer(null);
         }
         setIsSubmitting(false);
-    }, [order, customers]);
+    }, [order, customers, preselectedCustomerForPOS, mesa.numero]);
+
 
     const hasUnsavedChanges = useMemo(() => {
         if (!currentOrder) return false;
 
-        // 1. Check for new products that haven't been sent to kitchen
         if (currentOrder.productos.some(p => !p.sentToKitchen)) {
             return true;
         }
 
-        // This is a brand new order (no original `order` prop)
         if (!order) {
-            // If it has products or an assigned customer, it's an unsaved change
-            return currentOrder.productos.length > 0 || !!currentOrder.cliente.telefono;
+            return currentOrder.productos.length > 0 || !!currentOrder.cliente.telefono || !!currentOrder.notas;
         }
 
-        // An existing order has been modified
-        // Customer was added, removed, or changed. Check both phone and name for robustness.
         if (order.cliente.telefono !== currentOrder.cliente.telefono || order.cliente.nombre !== currentOrder.cliente.nombre) {
+            return true;
+        }
+        
+        if (order.notas !== currentOrder.notas) {
             return true;
         }
 
@@ -125,6 +147,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                 tiempoEstimado: 15,
                 historial: [],
                 areaPreparacion: 'salon',
+                notas: '',
              };
              setCurrentOrder(newOrderShell);
         }
@@ -197,6 +220,19 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
         }
         updateCurrentOrder(updatedProductos);
     };
+
+    const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        if (currentOrder) {
+            setCurrentOrder({ ...currentOrder, notas: e.target.value });
+        } else {
+             const newOrderShell: Pedido = {
+                id: '', fecha: new Date().toISOString(), tipo: 'local', estado: 'nuevo', turno: 'tarde',
+                cliente: { nombre: `Mesa ${mesa.numero}`, telefono: '', mesa: mesa.numero },
+                productos: [], total: 0, metodoPago: 'efectivo', tiempoEstimado: 15, historial: [], areaPreparacion: 'salon', notas: e.target.value
+             };
+             setCurrentOrder(newOrderShell);
+        }
+    };
     
     const handleSendToKitchen = () => {
         if(isSubmitting || !currentOrder || currentOrder.productos.length === 0) {
@@ -235,12 +271,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                     telefono: '',
                     mesa: mesa.numero
                 },
-                productos: [],
-                total: 0,
-                metodoPago: 'efectivo',
-                tiempoEstimado: 15,
-                historial: [],
-                areaPreparacion: 'salon',
+                productos: [], total: 0, metodoPago: 'efectivo', tiempoEstimado: 15, historial: [], areaPreparacion: 'salon', notas: '',
             };
             return {
                 ...baseOrder,
@@ -452,6 +483,16 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                                 </button>
                             </div>
                         )}
+                    </div>
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium text-text-secondary dark:text-slate-400 mb-1">Indicaciones Especiales</label>
+                        <textarea
+                            value={currentOrder?.notas || ''}
+                            onChange={handleNotesChange}
+                            rows={2}
+                            placeholder="Ej: sin ají, término 3/4, alergia..."
+                            className="w-full bg-background dark:bg-slate-900/50 rounded-lg p-2 border border-text-primary/10 dark:border-slate-700 focus:ring-2 focus:ring-primary focus:border-primary transition"
+                        />
                     </div>
                     <div className="flex-grow overflow-y-auto pr-2">
                         {currentOrder && currentOrder.productos.length > 0 ? (
