@@ -61,8 +61,26 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
 
     const hasUnsavedChanges = useMemo(() => {
         if (!currentOrder) return false;
-        return currentOrder.productos.some(p => !p.sentToKitchen);
-    }, [currentOrder]);
+
+        // 1. Check for new products that haven't been sent to kitchen
+        if (currentOrder.productos.some(p => !p.sentToKitchen)) {
+            return true;
+        }
+
+        // This is a brand new order (no original `order` prop)
+        if (!order) {
+            // If it has products or an assigned customer, it's an unsaved change
+            return currentOrder.productos.length > 0 || !!currentOrder.cliente.telefono;
+        }
+
+        // An existing order has been modified
+        // Customer was added, removed, or changed. Check both phone and name for robustness.
+        if (order.cliente.telefono !== currentOrder.cliente.telefono || order.cliente.nombre !== currentOrder.cliente.nombre) {
+            return true;
+        }
+
+        return false;
+    }, [currentOrder, order]);
     
     const groupedProducts = useMemo(() => {
         return products.reduce((acc, product) => {
@@ -205,15 +223,51 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
     const handleAssignCustomer = (customer: ClienteLeal) => {
         setAssignedCustomer(customer);
         setIsAssignCustomerModalOpen(false);
-        const updateOrderWithCustomer = (order: Pedido | null): Pedido => {
-            const baseOrder = order || {
-                id: '', fecha: new Date().toISOString(), tipo: 'local', estado: 'nuevo', turno: 'tarde',
-                productos: [], total: 0, metodoPago: 'efectivo', tiempoEstimado: 15, historial: [], areaPreparacion: 'salon',
-                cliente: { nombre: `Mesa ${mesa.numero}`, telefono: '', mesa: mesa.numero }
+        setCurrentOrder(prevOrder => {
+            const baseOrder = prevOrder || {
+                id: '',
+                fecha: new Date().toISOString(),
+                tipo: 'local',
+                estado: 'nuevo',
+                turno: 'tarde',
+                cliente: {
+                    nombre: `Mesa ${mesa.numero}`,
+                    telefono: '',
+                    mesa: mesa.numero
+                },
+                productos: [],
+                total: 0,
+                metodoPago: 'efectivo',
+                tiempoEstimado: 15,
+                historial: [],
+                areaPreparacion: 'salon',
             };
-            return { ...baseOrder, cliente: { ...baseOrder.cliente, nombre: customer.nombre, telefono: customer.telefono, mesa: mesa.numero } };
-        };
-        setCurrentOrder(updateOrderWithCustomer(currentOrder));
+            return {
+                ...baseOrder,
+                cliente: {
+                    ...baseOrder.cliente,
+                    nombre: customer.nombre,
+                    telefono: customer.telefono,
+                }
+            };
+        });
+    };
+
+    const handleRemoveCustomer = () => {
+        setAssignedCustomer(null);
+        if (currentOrder) {
+            setCurrentOrder(prevOrder => {
+                if (!prevOrder) return null;
+                return {
+                    ...prevOrder,
+                    cliente: {
+                        ...prevOrder.cliente,
+                        nombre: `Mesa ${mesa.numero}`,
+                        telefono: ''
+                    }
+                };
+            });
+        }
     };
 
     const handleRedeemReward = (reward: Recompensa) => {
@@ -387,7 +441,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                                     <p className="text-sm text-text-secondary dark:text-slate-400">{assignedCustomer.telefono}</p>
                                     <p className="text-sm font-bold text-primary dark:text-orange-400">{assignedCustomer.puntos} Puntos</p>
                                 </div>
-                                <button onClick={() => setAssignedCustomer(null)} className="text-xs font-semibold text-danger hover:underline">Quitar</button>
+                                <button onClick={handleRemoveCustomer} className="text-xs font-semibold text-danger hover:underline">Quitar</button>
                             </div>
                         ) : (
                             <div className="p-4 bg-primary/10 dark:bg-orange-500/20 rounded-lg border-2 border-dashed border-primary/30 dark:border-orange-500/40 text-center">
@@ -497,9 +551,9 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                                     {isSubmitting ? 'Enviando...' : 'Enviar a Cocina'}
                                 </button>
                              )}
-                              {hasUnsavedChanges && currentOrder?.id && (
+                              {hasUnsavedChanges && (
                                 <p className="text-xs text-center text-warning dark:text-yellow-400 mt-2 animate-fade-in-up">
-                                    Tienes cambios sin enviar. Haz clic en "Adicionar y Enviar".
+                                    Tienes cambios sin guardar. Haz clic en "Adicionar y Enviar".
                                 </p>
                             )}
                         </div>
