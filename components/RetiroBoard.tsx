@@ -1,14 +1,10 @@
-
-
 import React from 'react';
 import type { Pedido, EstadoPedido, UserRole } from '../types';
+import { useAppContext } from '../store';
 import OrderCard from './OrderCard';
 import { CheckCircleIcon } from './icons';
 
-interface RetiroBoardProps {
-    orders: Pedido[];
-    updateOrderStatus: (orderId: string, newStatus: EstadoPedido, user: UserRole) => void;
-}
+interface RetiroBoardProps {}
 
 const RetiroColumn: React.FC<{ title: string; children: React.ReactNode; count: number; }> = ({ title, children, count }) => (
     <div className="bg-background dark:bg-slate-800/50 rounded-2xl w-full md:w-1/4 flex-shrink-0 shadow-sm flex flex-col border border-text-primary/5 dark:border-slate-700">
@@ -22,11 +18,20 @@ const RetiroColumn: React.FC<{ title: string; children: React.ReactNode; count: 
     </div>
 );
 
-const RetiroBoard: React.FC<RetiroBoardProps> = ({ orders, updateOrderStatus }) => {
-    const paymentConfirmationOrders = orders.filter(o => o.estado === 'pendiente confirmar pago');
-    const pendingConfirmationOrders = orders.filter(o => o.estado === 'pendiente de confirmación');
-    const readyOrders = orders.filter(o => o.estado === 'listo');
-    const pickedUpOrders = orders.filter(o => ['recogido', 'pagado'].includes(o.estado));
+const RetiroBoard: React.FC<RetiroBoardProps> = () => {
+    const { state, dispatch } = useAppContext();
+    const { orders, turno } = state;
+
+    const updateOrderStatus = (orderId: string, newStatus: EstadoPedido, user: UserRole) => {
+        dispatch({ type: 'UPDATE_ORDER_STATUS', payload: { orderId, newStatus, user } });
+    };
+
+    const componentOrders = orders.filter(o => o.tipo === 'retiro' && ['pendiente confirmar pago', 'pendiente de confirmación', 'listo', 'recogido', 'pagado'].includes(o.estado) && o.turno === turno);
+
+    const paymentConfirmationOrders = componentOrders.filter(o => o.estado === 'pendiente confirmar pago');
+    const pendingConfirmationOrders = componentOrders.filter(o => o.estado === 'pendiente de confirmación');
+    const readyOrders = componentOrders.filter(o => o.estado === 'listo');
+    const pickedUpOrders = componentOrders.filter(o => ['recogido', 'pagado'].includes(o.estado));
 
     return (
         <div className="flex flex-col md:flex-row gap-6">

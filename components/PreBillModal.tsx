@@ -1,14 +1,17 @@
 import React from 'react';
-import type { Pedido, Theme } from '../types';
+import type { Pedido } from '../types';
+import { useAppContext } from '../store';
 import { Logo } from './Logo';
 
 interface PreBillModalProps {
     order: Pedido;
-    onClose: () => void;
-    theme: Theme;
 }
 
-const PreBillModal: React.FC<PreBillModalProps> = ({ order, onClose, theme }) => {
+const PreBillModal: React.FC<PreBillModalProps> = ({ order }) => {
+    const { state, dispatch } = useAppContext();
+    const { theme } = state;
+
+    const onClose = () => dispatch({ type: 'CLOSE_MODALS' });
     
     const handlePrint = () => {
         const handleAfterPrint = () => {

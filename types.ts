@@ -73,6 +73,7 @@ export interface Pedido {
     estacion?: 'caliente' | 'fria';
     areaPreparacion?: AreaPreparacion;
     puntosGanados?: number;
+    gananciaEstimada?: number; // FIX: Add missing property
     pagoRegistrado?: {
         metodo: MetodoPago;
         montoTotal: number;
@@ -174,3 +175,36 @@ export interface Promocion {
     diasActivos?: ('lunes' | 'martes' | 'miercoles' | 'jueves' | 'viernes' | 'sabado' | 'domingo')[];
     horarioActivo?: { desde: string; hasta: string };
 }
+
+export type Action =
+  | { type: 'SET_VIEW'; payload: View }
+  | { type: 'SET_TURNO'; payload: Turno }
+  | { type: 'TOGGLE_THEME' }
+  | { type: 'TOGGLE_SIDEBAR' }
+  | { type: 'LOGIN'; payload: UserRole }
+  | { type: 'LOGIN_FAILED'; payload: string }
+  | { type: 'LOGOUT' }
+  | { type: 'GO_TO_LOGIN' }
+  | { type: 'ADD_TOAST'; payload: Omit<Toast, 'id'> }
+  | { type: 'REMOVE_TOAST'; payload: number }
+  | { type: 'UPDATE_ORDER_STATUS'; payload: { orderId: string; newStatus: EstadoPedido; user: UserRole } }
+  | { type: 'ASSIGN_DRIVER'; payload: { orderId: string; driverName: string } }
+  | { type: 'SAVE_ORDER'; payload: Omit<Pedido, 'id' | 'fecha' | 'turno' | 'historial' | 'areaPreparacion' | 'estado' | 'gananciaEstimada'> }
+  | { type: 'SAVE_POS_ORDER'; payload: { orderData: Pedido; mesaNumero: number } }
+  | { type: 'OPEN_CAJA'; payload: number }
+  | { type: 'CLOSE_CAJA'; payload: number }
+  | { type: 'ADD_MOVIMIENTO_CAJA'; payload: { monto: number; descripcion: string; tipo: 'ingreso' | 'egreso' } }
+  | { type: 'INITIATE_PREBILL'; payload: string }
+  | { type: 'INITIATE_PAYMENT'; payload: Pedido }
+  | { type: 'INITIATE_DELIVERY_PAYMENT'; payload: Pedido }
+  | { type: 'CONFIRM_PAYMENT'; payload: { orderId: string; details: { metodo: MetodoPago; montoPagado?: number } } }
+  | { type: 'CONFIRM_DELIVERY_PAYMENT'; payload: { orderId: string; details: { metodo: MetodoPago; montoPagado?: number } } }
+  | { type: 'CLOSE_MODALS' }
+  | { type: 'SELECT_MESA'; payload: Mesa | null }
+  | { type: 'SET_PRODUCTS'; payload: Producto[] }
+  | { type: 'SET_PROMOTIONS'; payload: Promocion[] }
+  | { type: 'SET_LOYALTY_PROGRAMS'; payload: LoyaltyProgram[] }
+  | { type: 'ADD_NEW_CUSTOMER'; payload: { telefono: string; nombre: string } }
+  | { type: 'REDEEM_REWARD'; payload: { customerId: string; reward: Recompensa } }
+  | { type: 'SET_INSTALL_PROMPT'; payload: any }
+  | { type: 'SET_STATE'; payload: any };

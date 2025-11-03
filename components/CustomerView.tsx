@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Pedido, Producto, ProductoPedido, Cliente, Salsa, TipoPedido, MetodoPago, Theme, ClienteLeal, LoyaltyProgram, Promocion } from '../types';
+import { useAppContext } from '../store';
 import { ShoppingBagIcon, TrashIcon, CheckCircleIcon, TruckIcon, UserIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon, MapPinIcon, SearchIcon, AdjustmentsHorizontalIcon, MinusIcon, PlusIcon, StarIcon, SunIcon, MoonIcon, ChevronLeftIcon, ChevronRightIcon, WhatsAppIcon, ArrowDownOnSquareIcon, ArrowUpOnSquareIcon, EllipsisVerticalIcon, XMarkIcon, SparklesIcon } from './icons';
 import SauceModal from './SauceModal';
 import ProductDetailModal from './ProductDetailModal';
@@ -7,18 +8,7 @@ import { yapePlinInfo } from '../constants';
 import { Logo } from './Logo';
 
 
-interface CustomerViewProps {
-    products: Producto[];
-    customers: ClienteLeal[];
-    loyaltyPrograms: LoyaltyProgram[];
-    promotions: Promocion[];
-    onPlaceOrder: (order: Omit<Pedido, 'id' | 'fecha' | 'turno' | 'historial' | 'areaPreparacion' | 'estado'>) => void;
-    onNavigateToAdmin: () => void;
-    theme: Theme;
-    onToggleTheme: () => void;
-    installPrompt: any;
-    onInstallClick: () => void;
-}
+interface CustomerViewProps { }
 
 type CartItem = ProductoPedido & { cartItemId: number };
 type Stage = 'selection' | 'catalog' | 'checkout' | 'confirmation';
@@ -30,7 +20,11 @@ type FormErrors = {
 };
 type PaymentChoice = 'payNow' | 'payLater';
 
-const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyaltyPrograms, promotions, onPlaceOrder, onNavigateToAdmin, theme, onToggleTheme, installPrompt, onInstallClick }) => {
+// FIX: Change to named export to fix import issue
+export const CustomerView: React.FC<CustomerViewProps> = () => {
+    const { state, dispatch } = useAppContext();
+    const { products, customers, loyaltyPrograms, promotions, theme, installPrompt } = state;
+
     const [cart, setCart] = useState<CartItem[]>([]);
     const [orderType, setOrderType] = useState<TipoPedido | null>(null);
     const [customerInfo, setCustomerInfo] = useState<Cliente>({ nombre: '', telefono: '' });
@@ -62,6 +56,32 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
     const [loyalCustomer, setLoyalCustomer] = useState<ClienteLeal | null>(null);
     const [isCartAnimating, setIsCartAnimating] = useState(false);
     const [promosShownThisLoad, setPromosShownThisLoad] = useState(false);
+
+    const [logoClickCount, setLogoClickCount] = useState(0);
+    const [logoClickTimer, setLogoClickTimer] = useState<number | null>(null);
+
+    const onPlaceOrder = (order: Omit<Pedido, 'id' | 'fecha' | 'turno' | 'historial' | 'areaPreparacion' | 'estado' | 'gananciaEstimada'>) => dispatch({ type: 'SAVE_ORDER', payload: order });
+    const onToggleTheme = () => dispatch({ type: 'TOGGLE_THEME' });
+    const onInstallClick = () => { if (installPrompt) { installPrompt.prompt(); /* Can't reset prompt from here easily */ }};
+
+    const handleLogoClick = () => {
+        if (logoClickTimer) {
+            clearTimeout(logoClickTimer);
+        }
+
+        const newClickCount = logoClickCount + 1;
+        setLogoClickCount(newClickCount);
+
+        if (newClickCount >= 5) {
+            dispatch({ type: 'GO_TO_LOGIN' });
+            setLogoClickCount(0); // Reset after navigating
+        } else {
+            const timer = window.setTimeout(() => {
+                setLogoClickCount(0); // Reset if not tapped again within 2 seconds
+            }, 2000);
+            setLogoClickTimer(timer);
+        }
+    };
 
     const activeProgram = useMemo(() => loyaltyPrograms.find(p => p.isActive), [loyaltyPrograms]);
     const activePromotions = useMemo(() => promotions.filter(p => p.isActive), [promotions]);
@@ -341,7 +361,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
         
         const effectivePaymentMethod = paymentChoice === 'payNow' ? 'yape' : paymentMethod;
 
-        const newOrder: Omit<Pedido, 'id' | 'fecha' | 'turno' | 'historial' | 'areaPreparacion' | 'estado'> = {
+        const newOrder: Omit<Pedido, 'id' | 'fecha' | 'turno' | 'historial' | 'areaPreparacion' | 'estado' | 'gananciaEstimada'> = {
             tipo: orderType,
             cliente: customerInfo,
             productos: finalCart,
@@ -515,7 +535,9 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
     const renderSelectionScreen = () => (
         <div className="text-center w-full max-w-md mx-auto animate-fade-in-up flex flex-col justify-between h-full p-4">
             <div className="w-full flex justify-between items-center pt-4">
-                <Logo className="h-9 w-auto" variant={theme === 'dark' ? 'light' : 'default'} />
+                <div onClick={handleLogoClick} className="cursor-pointer" title="Acceso de administrador">
+                    <Logo className="h-9 w-auto" variant={theme === 'dark' ? 'light' : 'default'} />
+                </div>
                 <button onClick={onToggleTheme} className="flex items-center justify-center h-10 w-10 rounded-full text-text-secondary dark:text-slate-400 hover:bg-surface dark:hover:bg-slate-800 hover:text-primary dark:hover:text-amber-400 transition-colors">
                     {theme === 'light' ? <MoonIcon className="h-6 w-6" /> : <SunIcon className="h-6 w-6" />}
                 </button>
@@ -947,57 +969,38 @@ const CustomerView: React.FC<CustomerViewProps> = ({ products, customers, loyalt
                         <p className="text-text-secondary dark:text-slate-400 my-3">Tu pedido actual se perderá. ¿Estás seguro que quieres continuar?</p>
                         <div className="grid grid-cols-2 gap-3 mt-6">
                             <button onClick={() => setShowGoBackConfirm(false)} className="bg-text-primary/10 dark:bg-slate-700 hover:bg-text-primary/20 dark:hover:bg-slate-600 text-text-primary dark:text-slate-200 font-bold py-2 px-4 rounded-lg transition-colors active:scale-95">Cancelar</button>
-                            <button onClick={confirmGoBack} className="bg-danger hover:brightness-110 text-white font-bold py-2 px-4 rounded-lg transition-all active:scale-95">Sí, volver</button>
+                            <button onClick={confirmGoBack} className="bg-danger hover:brightness-110 text-white font-bold py-2 px-4 rounded-lg transition-all active:scale-95">Sí, Volver</button>
                         </div>
                     </div>
                 </div>
             )}
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-0 flex-grow flex flex-col">
-                {stage !== 'selection' && (
-                    <header className="flex justify-between items-center py-4">
-                       <button onClick={handleGoBack} className="flex items-center space-x-2 font-semibold text-text-secondary dark:text-slate-300 hover:text-primary dark:hover:text-orange-400 transition-colors">
-                           <ChevronLeftIcon className="h-5 w-5" />
-                           <span>Inicio</span>
-                       </button>
-                        {stage === 'catalog' && orderType && (
-                            <div className="flex items-center p-1 bg-surface dark:bg-slate-800 rounded-full border border-text-primary/10 dark:border-slate-700">
-                                <button onClick={() => setOrderType('retiro')} className={`px-4 py-1.5 text-sm font-semibold rounded-full transition-colors ${orderType === 'retiro' ? 'bg-primary text-white' : 'text-text-secondary dark:text-slate-300 hover:bg-background dark:hover:bg-slate-700'}`}>Para Llevar</button>
-                                <button onClick={() => setOrderType('delivery')} className={`px-4 py-1.5 text-sm font-semibold rounded-full transition-colors ${orderType === 'delivery' ? 'bg-primary text-white' : 'text-text-secondary dark:text-slate-300 hover:bg-background dark:hover:bg-slate-700'}`}>Delivery</button>
-                            </div>
-                        )}
-                        <button onClick={onToggleTheme} className="flex items-center justify-center h-10 w-10 rounded-full text-text-secondary dark:text-slate-400 hover:bg-surface dark:hover:bg-slate-800 hover:text-primary dark:hover:text-amber-400 transition-colors">
-                            {theme === 'light' ? <MoonIcon className="h-6 w-6" /> : <SunIcon className="h-6 w-6" />}
-                        </button>
-                    </header>
-                )}
-                <main className={`flex-grow flex ${stage === 'catalog' ? 'flex-col items-start' : 'items-center justify-center'}`}>
-                    {stage === 'selection' && renderSelectionScreen()}
-                    {stage === 'catalog' && renderCatalog()}
-                    {stage === 'checkout' && renderCheckout()}
-                    {stage === 'confirmation' && renderConfirmation()}
-                </main>
-            </div>
-             <footer className="text-center py-4 border-t border-text-primary/5 dark:border-slate-800 mt-auto">
-                <button onClick={onNavigateToAdmin} className="text-sm text-text-secondary/80 dark:text-slate-500 hover:text-primary dark:hover:text-orange-400 hover:underline transition-colors">
-                    Acceso Admin
-                </button>
-            </footer>
 
             {isCatalogStage && (
-                 <div className={`fixed bottom-0 left-0 right-0 z-50 p-4 bg-transparent transition-transform ${cart.length === 0 && 'translate-y-full'}`}>
-                    <button id="cart-button" onClick={() => cart.length > 0 ? setStage('checkout') : null} className={`w-full max-w-md mx-auto bg-text-primary dark:bg-slate-700 text-white rounded-xl px-6 py-4 shadow-2xl transition-transform transform md:hover:scale-105 active:scale-95 flex items-center justify-between animate-fade-in-up ${isCartAnimating ? 'animate-cart-jiggle' : ''}`}>
-                        <div className="flex items-center space-x-3">
-                            <div className="relative">
-                                <ShoppingBagIcon className="h-6 w-6" />
-                                {cartItemCount > 0 && <span className="absolute -top-2 -right-2 bg-primary text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-text-primary dark:border-slate-700">{cartItemCount}</span>}
+                <header className="sticky top-0 bg-background/80 dark:bg-slate-900/80 backdrop-blur-lg z-30 w-full animate-fade-in-down">
+                    <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="flex items-center justify-between h-16">
+                            <button onClick={handleGoBack} className="flex items-center space-x-1 text-text-secondary dark:text-slate-400 hover:text-primary dark:hover:text-orange-400 transition-colors font-semibold">
+                                <ChevronLeftIcon className="h-6 w-6" />
+                                <span>Inicio</span>
+                            </button>
+                             <div className="text-center">
+                                <p className="font-bold text-lg text-text-primary dark:text-white capitalize">{orderType}</p>
                             </div>
-                            <span className="font-bold">Ver Pedido</span>
+                            <button id="cart-button" onClick={() => setStage('checkout')} className={`relative p-2 rounded-full transition-colors ${stage === 'checkout' ? 'bg-primary/10 text-primary' : 'hover:bg-surface dark:hover:bg-slate-800'}`}>
+                                <ShoppingBagIcon className={`h-7 w-7 transition-transform ${isCartAnimating ? 'animate-wiggle' : ''}`}/>
+                                {cartItemCount > 0 && <span className="absolute -top-1 -right-1 bg-danger text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">{cartItemCount}</span>}
+                            </button>
                         </div>
-                        <span className="font-mono text-lg">S/.{total.toFixed(2)}</span>
-                    </button>
-                </div>
+                    </div>
+                </header>
             )}
+
+            <main className="flex-grow flex items-center justify-center p-4 sm:p-6 lg:p-8">
+                {stage === 'selection' && renderSelectionScreen()}
+                {stage === 'catalog' && renderCatalog()}
+                {stage === 'checkout' && renderCheckout()}
+                {stage === 'confirmation' && renderConfirmation()}
+            </main>
         </div>
     );
 };
-export default CustomerView;

@@ -1,7 +1,6 @@
-
-
 import React, { useState, useMemo } from 'react';
 import type { Pedido, CajaSession, MovimientoCaja } from '../types';
+import { useAppContext } from '../store';
 import { CheckCircleIcon, CashIcon, CalculatorIcon, PlusCircleIcon, MinusCircleIcon, DocumentMagnifyingGlassIcon } from './icons';
 import CloseCajaModal from './CloseCajaModal';
 import SalesHistoryModal from './SalesHistoryModal';
@@ -10,11 +9,6 @@ interface CajaViewProps {
     orders: Pedido[];
     retiroOrdersToPay: Pedido[];
     paidOrders: Pedido[];
-    onInitiatePayment: (order: Pedido) => void;
-    cajaSession: CajaSession;
-    onOpenCaja: (saldoInicial: number) => void;
-    onCloseCaja: (efectivoContado: number) => void;
-    onAddMovimiento: (monto: number, descripcion: string, tipo: 'ingreso' | 'egreso') => void;
 }
 
 const OpenCajaModal: React.FC<{ onClose: () => void; onOpen: (saldo: number) => void; }> = ({ onClose, onOpen }) => {
@@ -108,11 +102,19 @@ const MovimientoCajaModal: React.FC<{
     );
 };
 
-const CajaView: React.FC<CajaViewProps> = ({ orders, retiroOrdersToPay, paidOrders, onInitiatePayment, cajaSession, onOpenCaja, onCloseCaja, onAddMovimiento }) => {
+const CajaView: React.FC<CajaViewProps> = ({ orders, retiroOrdersToPay, paidOrders }) => {
+    const { state, dispatch } = useAppContext();
+    const { cajaSession } = state;
+    
     const [isOpeningModalOpen, setIsOpeningModalOpen] = useState(false);
     const [isClosingModalOpen, setIsClosingModalOpen] = useState(false);
     const [movimientoModal, setMovimientoModal] = useState<'ingreso' | 'egreso' | null>(null);
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+
+    const onInitiatePayment = (order: Pedido) => dispatch({ type: 'INITIATE_PAYMENT', payload: order });
+    const onOpenCaja = (saldo: number) => dispatch({ type: 'OPEN_CAJA', payload: saldo });
+    const onCloseCaja = (efectivo: number) => dispatch({ type: 'CLOSE_CAJA', payload: efectivo });
+    const onAddMovimiento = (monto: number, descripcion: string, tipo: 'ingreso' | 'egreso') => dispatch({ type: 'ADD_MOVIMIENTO_CAJA', payload: { monto, descripcion, tipo } });
 
     const cuentasPorCobrarSalon = useMemo(() => orders, [orders]);
     

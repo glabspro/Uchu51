@@ -1,11 +1,10 @@
-
 import React from 'react';
 import type { Mesa, EstadoPedido } from '../types';
+import { useAppContext } from '../store';
 import { CreditCardIcon, ClockIcon, CheckCircleIcon, FireIcon, AdjustmentsHorizontalIcon, BellIcon, UserIcon } from './icons';
 
 interface LocalBoardProps {
     mesas: Mesa[];
-    onSelectMesa: (mesa: Mesa) => void;
 }
 
 const statusConfig: { [key in EstadoPedido]?: { label: string; icon: React.ReactNode; progress: number; className: string; pulse?: boolean; pulseColor?: string; } } = {
@@ -18,7 +17,13 @@ const statusConfig: { [key in EstadoPedido]?: { label: string; icon: React.React
     'cuenta solicitada': { label: 'Pidiendo Cuenta', icon: <CreditCardIcon className="h-4 w-4" />, progress: 100, className: 'bg-blue-500', pulse: true, pulseColor: '59, 130, 246' }, // blue
 };
 
-const LocalBoard: React.FC<LocalBoardProps> = ({ mesas, onSelectMesa }) => {
+const LocalBoard: React.FC<LocalBoardProps> = ({ mesas }) => {
+    const { dispatch } = useAppContext();
+
+    const onSelectMesa = (mesa: Mesa) => {
+        dispatch({ type: 'SELECT_MESA', payload: mesa });
+    };
+
     return (
         <div>
             <h1 className="text-3xl font-heading font-bold mb-8 text-text-primary dark:text-slate-100">Gestión de Salón</h1>

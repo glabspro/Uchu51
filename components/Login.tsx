@@ -1,21 +1,29 @@
 import React, { useState } from 'react';
+import { useAppContext } from '../store';
 import { LockClosedIcon } from './icons';
 import { Logo } from './Logo';
-import type { Theme } from '../types';
+import type { UserRole } from '../types';
 
 interface LoginProps {
-    onLogin: (password: string) => void;
     error: string | null;
-    onNavigateToCustomerView: () => void;
-    theme: Theme;
 }
 
-const Login: React.FC<LoginProps> = ({ onLogin, error, onNavigateToCustomerView, theme }) => {
+const Login: React.FC<LoginProps> = ({ error }) => {
+    const { dispatch } = useAppContext();
     const [password, setPassword] = useState('');
+
+    const onLogin = (role: UserRole) => dispatch({ type: 'LOGIN', payload: role });
+    const onLoginFailed = (message: string) => dispatch({ type: 'LOGIN_FAILED', payload: message });
+    const onNavigateToCustomerView = () => dispatch({ type: 'LOGOUT' });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onLogin(password);
+        if (password === 'admin123') {
+            onLogin('admin');
+        } else {
+            onLoginFailed('Contraseña incorrecta. Inténtalo de nuevo.');
+            setPassword('');
+        }
     };
 
     return (
@@ -27,6 +35,11 @@ const Login: React.FC<LoginProps> = ({ onLogin, error, onNavigateToCustomerView,
                         <p className="text-white/70 mt-3 font-semibold">Acceso al panel de administración</p>
                     </div>
                     <form onSubmit={handleSubmit} className="px-8 pt-6 pb-8">
+                        {error && (
+                            <div className="bg-danger/10 text-danger text-sm font-semibold p-3 rounded-lg mb-4 text-center animate-fade-in-up">
+                                {error}
+                            </div>
+                        )}
                         <div className="mb-4">
                             <label className="block text-text-primary dark:text-slate-200 text-sm font-bold mb-2" htmlFor="password">
                                 Contraseña
@@ -43,7 +56,6 @@ const Login: React.FC<LoginProps> = ({ onLogin, error, onNavigateToCustomerView,
                                 />
                             </div>
                         </div>
-                        {error && <p className="text-danger text-xs italic mb-4">{error}</p>}
                         <div className="flex items-center justify-between mt-6">
                             <button
                                 type="submit"

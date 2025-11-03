@@ -1,13 +1,10 @@
-
-
 import React, { useState, useMemo } from 'react';
 import type { Pedido, MetodoPago } from '../types';
+import { useAppContext } from '../store';
 import { CashIcon, CreditCardIcon, DevicePhoneMobileIcon } from './icons';
 
 interface DeliveryPaymentModalProps {
     order: Pedido;
-    onClose: () => void;
-    onConfirmPayment: (orderId: string, details: { metodo: MetodoPago; montoPagado?: number }) => void;
 }
 
 const PaymentMethodButton: React.FC<{
@@ -30,9 +27,15 @@ const PaymentMethodButton: React.FC<{
     </button>
 );
 
-const DeliveryPaymentModal: React.FC<DeliveryPaymentModalProps> = ({ order, onClose, onConfirmPayment }) => {
+const DeliveryPaymentModal: React.FC<DeliveryPaymentModalProps> = ({ order }) => {
+    const { dispatch } = useAppContext();
     const [selectedMethod, setSelectedMethod] = useState<MetodoPago>(order.metodoPago);
     const [amountReceived, setAmountReceived] = useState<string>(order.pagoConEfectivo?.toString() || '');
+
+    const onClose = () => dispatch({ type: 'CLOSE_MODALS' });
+    const onConfirmPayment = (orderId: string, details: { metodo: MetodoPago; montoPagado?: number }) => {
+        dispatch({ type: 'CONFIRM_DELIVERY_PAYMENT', payload: { orderId, details } });
+    };
 
     const quickCashOptions = [order.total, 20, 50, 100, 200].filter((v, i, a) => a.indexOf(v) === i && v >= order.total).sort((a,b) => a-b);
 

@@ -56,7 +56,7 @@ const CloseCajaModal: React.FC<CloseCajaModalProps> = ({ onClose, onCloseCaja, s
         Object.entries(session.ventasPorMetodo).forEach(([metodo, monto]) => {
             // FIX: Explicitly cast `monto` to a number. `Object.entries` can sometimes infer value types as `unknown`.
             // Corrected a runtime error where `Number(undefined) || 0` would result in `NaN`.
-            message += `- ${metodo.charAt(0).toUpperCase() + metodo.slice(1)}: S/.${(Number(monto || 0)).toFixed(2)}\n`;
+            message += `- ${metodo.charAt(0).toUpperCase() + metodo.slice(1)}: S/.${(Number(monto) || 0).toFixed(2)}\n`;
         });
         message += `\n*Movimientos de Caja:*\n`;
         movimientos.forEach(mov => {

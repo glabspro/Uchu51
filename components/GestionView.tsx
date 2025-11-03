@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { Producto, ClienteLeal, LoyaltyProgram, Promocion } from '../types';
+import { useAppContext } from '../store';
 import ProductManager from './ProductManager';
 import InventoryManager from './InventoryManager';
 import CustomerManager from './CustomerManager';
@@ -8,13 +9,6 @@ import PromotionsManager from './PromotionsManager';
 import { ShoppingBagIcon, ArchiveBoxIcon, SparklesIcon, UserGroupIcon, StarIcon } from './icons';
 
 interface GestionViewProps {
-    products: Producto[];
-    setProducts: React.Dispatch<React.SetStateAction<Producto[]>>;
-    customers: ClienteLeal[];
-    programs: LoyaltyProgram[];
-    setPrograms: React.Dispatch<React.SetStateAction<LoyaltyProgram[]>>;
-    promotions: Promocion[];
-    setPromotions: React.Dispatch<React.SetStateAction<Promocion[]>>;
 }
 
 type GestionTab = 'productos' | 'inventario' | 'promociones' | 'clientes' | 'lealtad';
@@ -38,7 +32,34 @@ const TabButton: React.FC<{
     </button>
 );
 
-const GestionView: React.FC<GestionViewProps> = ({ products, setProducts, customers, programs, setPrograms, promotions, setPromotions }) => {
+const GestionView: React.FC<GestionViewProps> = () => {
+    const { state, dispatch } = useAppContext();
+    const { products, customers, loyaltyPrograms, promotions } = state;
+
+    const setProducts = (payload: Producto[] | ((prev: Producto[]) => Producto[])) => {
+        if (typeof payload === 'function') {
+            dispatch({ type: 'SET_PRODUCTS', payload: payload(products) });
+        } else {
+            dispatch({ type: 'SET_PRODUCTS', payload });
+        }
+    };
+    
+    const setPromotions = (payload: Promocion[] | ((prev: Promocion[]) => Promocion[])) => {
+        if (typeof payload === 'function') {
+            dispatch({ type: 'SET_PROMOTIONS', payload: payload(promotions) });
+        } else {
+            dispatch({ type: 'SET_PROMOTIONS', payload });
+        }
+    };
+
+    const setPrograms = (payload: LoyaltyProgram[] | ((prev: LoyaltyProgram[]) => LoyaltyProgram[])) => {
+        if (typeof payload === 'function') {
+            dispatch({ type: 'SET_LOYALTY_PROGRAMS', payload: payload(loyaltyPrograms) });
+        } else {
+            dispatch({ type: 'SET_LOYALTY_PROGRAMS', payload });
+        }
+    };
+
     const [activeTab, setActiveTab] = useState<GestionTab>('productos');
 
     const renderContent = () => {
@@ -52,7 +73,7 @@ const GestionView: React.FC<GestionViewProps> = ({ products, setProducts, custom
             case 'clientes':
                 return <CustomerManager customers={customers} />;
             case 'lealtad':
-                return <LoyaltyProgramManager programs={programs} setPrograms={setPrograms} products={products} />;
+                return <LoyaltyProgramManager programs={loyaltyPrograms} setPrograms={setPrograms} products={products} />;
             default:
                 return null;
         }

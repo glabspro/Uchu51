@@ -1,14 +1,10 @@
-
-
 import React, { useState, useEffect } from 'react';
 import type { Pedido, EstadoPedido, UserRole, AreaPreparacion } from '../types';
+import { useAppContext } from '../store';
 import OrderCard from './OrderCard';
 import { HomeIcon, TruckIcon, ShoppingBagIcon, CheckCircleIcon } from './icons';
 
-interface KitchenBoardProps {
-    orders: Pedido[];
-    updateOrderStatus: (orderId: string, newStatus: EstadoPedido, user: UserRole) => void;
-}
+interface KitchenBoardProps {}
 
 const KitchenColumn: React.FC<{ 
     title: string; 
@@ -57,10 +53,18 @@ const TabButton: React.FC<{
 );
 
 
-const KitchenBoard: React.FC<KitchenBoardProps> = ({ orders, updateOrderStatus }) => {
+const KitchenBoard: React.FC<KitchenBoardProps> = () => {
+    const { state, dispatch } = useAppContext();
+    const { orders, turno } = state;
     const [draggedOrderId, setDraggedOrderId] = useState<string | null>(null);
     const [announcedOrders, setAnnouncedOrders] = useState<Set<string>>(new Set());
     const [activeTab, setActiveTab] = useState<AreaPreparacion>('delivery');
+
+    const updateOrderStatus = (orderId: string, newStatus: EstadoPedido, user: UserRole) => {
+        dispatch({ type: 'UPDATE_ORDER_STATUS', payload: { orderId, newStatus, user } });
+    };
+
+    const componentOrders = orders.filter(o => ['pendiente confirmar pago', 'en preparación', 'en armado', 'listo para armado'].includes(o.estado) && o.turno === turno);
 
     const speak = (text: string) => {
         if ('speechSynthesis' in window) {
@@ -73,7 +77,7 @@ const KitchenBoard: React.FC<KitchenBoardProps> = ({ orders, updateOrderStatus }
     };
     
     useEffect(() => {
-        const allKitchenOrders = orders.filter(o => ['en preparación', 'pendiente confirmar pago'].includes(o.estado));
+        const allKitchenOrders = componentOrders.filter(o => ['en preparación', 'pendiente confirmar pago'].includes(o.estado));
         
         const newDeliveryOrders = allKitchenOrders.filter(o => o.areaPreparacion === 'delivery' && !announcedOrders.has(o.id));
         const newRetiroOrders = allKitchenOrders.filter(o => o.areaPreparacion === 'retiro' && o.estado === 'en preparación' && !announcedOrders.has(o.id));
@@ -90,7 +94,7 @@ const KitchenBoard: React.FC<KitchenBoardProps> = ({ orders, updateOrderStatus }
                 return newSet;
             });
         }
-    }, [orders, announcedOrders]);
+    }, [componentOrders, announcedOrders]);
 
     const handleDragStart = (e: React.DragEvent<HTMLDivElement>, orderId: string) => {
         setDraggedOrderId(orderId);
@@ -108,9 +112,9 @@ const KitchenBoard: React.FC<KitchenBoardProps> = ({ orders, updateOrderStatus }
         e.preventDefault();
     };
 
-    const deliveryOrders = orders.filter(o => o.areaPreparacion === 'delivery');
-    const retiroOrders = orders.filter(o => o.areaPreparacion === 'retiro');
-    const salonOrders = orders.filter(o => o.areaPreparacion === 'salon');
+    const deliveryOrders = componentOrders.filter(o => o.areaPreparacion === 'delivery');
+    const retiroOrders = componentOrders.filter(o => o.areaPreparacion === 'retiro');
+    const salonOrders = componentOrders.filter(o => o.areaPreparacion === 'salon');
     
     const getFilteredOrders = () => {
         switch(activeTab) {

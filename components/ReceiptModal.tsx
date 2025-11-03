@@ -1,17 +1,23 @@
 import React, { useState } from 'react';
-import type { Pedido, Theme } from '../types';
+import type { Pedido } from '../types';
+import { useAppContext } from '../store';
 import { Logo } from './Logo';
 import { WhatsAppIcon, CheckCircleIcon } from './icons';
 
 interface ReceiptModalProps {
     order: Pedido;
-    onClose: () => void;
-    theme: Theme;
-    showToast: (message: string, type: 'success' | 'info' | 'danger') => void;
 }
 
-const ReceiptModal: React.FC<ReceiptModalProps> = ({ order, onClose, theme, showToast }) => {
+const ReceiptModal: React.FC<ReceiptModalProps> = ({ order }) => {
+    const { state, dispatch } = useAppContext();
+    const { theme } = state;
     const [whatsAppStatus, setWhatsAppStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+
+    const showToast = (message: string, type: 'success' | 'info' | 'danger') => {
+        dispatch({ type: 'ADD_TOAST', payload: { message, type } });
+    };
+
+    const onClose = () => dispatch({ type: 'CLOSE_MODALS' });
 
     const handlePrint = () => {
         const handleAfterPrint = () => {

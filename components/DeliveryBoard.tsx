@@ -1,17 +1,11 @@
-
-
 import React, { useState, useEffect } from 'react';
 import type { Pedido, EstadoPedido, UserRole } from '../types';
+import { useAppContext } from '../store';
+import { deliveryDrivers } from '../constants';
 import OrderCard from './OrderCard';
 import { UserIcon, TruckIcon, CashIcon } from './icons';
 
-interface DeliveryBoardProps {
-    orders: Pedido[];
-    updateOrderStatus: (orderId: string, newStatus: EstadoPedido, user: UserRole) => void;
-    assignDriver: (orderId: string, driverName: string) => void;
-    deliveryDrivers: string[];
-    onInitiateDeliveryPayment: (order: Pedido) => void;
-}
+interface DeliveryBoardProps {}
 
 const DeliveryColumn: React.FC<{ title: string; children: React.ReactNode; count: number; }> = ({ title, children, count }) => (
     <div className="bg-background dark:bg-slate-800/50 rounded-2xl w-full md:w-1/3 flex-shrink-0 shadow-sm flex flex-col border border-text-primary/5 dark:border-slate-700">
@@ -25,8 +19,24 @@ const DeliveryColumn: React.FC<{ title: string; children: React.ReactNode; count
     </div>
 );
 
-const DeliveryBoard: React.FC<DeliveryBoardProps> = ({ orders, updateOrderStatus, assignDriver, deliveryDrivers, onInitiateDeliveryPayment }) => {
+const DeliveryBoard: React.FC<DeliveryBoardProps> = () => {
+    const { state, dispatch } = useAppContext();
+    const { orders, turno } = state;
     const [announcedOrders, setAnnouncedOrders] = useState<Set<string>>(new Set());
+
+    const updateOrderStatus = (orderId: string, newStatus: EstadoPedido, user: UserRole) => {
+        dispatch({ type: 'UPDATE_ORDER_STATUS', payload: { orderId, newStatus, user } });
+    };
+
+    const assignDriver = (orderId: string, driverName: string) => {
+        dispatch({ type: 'ASSIGN_DRIVER', payload: { orderId, driverName } });
+    };
+
+    const onInitiateDeliveryPayment = (order: Pedido) => {
+        dispatch({ type: 'INITIATE_DELIVERY_PAYMENT', payload: order });
+    };
+
+    const componentOrders = orders.filter(o => o.tipo === 'delivery' && ['listo', 'en camino', 'entregado', 'pagado'].includes(o.estado) && o.turno === turno);
 
     const speak = (text: string) => {
         if ('speechSynthesis' in window) {
@@ -39,7 +49,7 @@ const DeliveryBoard: React.FC<DeliveryBoardProps> = ({ orders, updateOrderStatus
     };
 
     useEffect(() => {
-        const readyOrders = orders.filter(o => o.estado === 'listo');
+        const readyOrders = componentOrders.filter(o => o.estado === 'listo');
         const newOrdersToAnnounce = readyOrders.filter(order => !announcedOrders.has(order.id));
 
         if (newOrdersToAnnounce.length > 0) {
@@ -50,11 +60,11 @@ const DeliveryBoard: React.FC<DeliveryBoardProps> = ({ orders, updateOrderStatus
                 return newSet;
             });
         }
-    }, [orders, announcedOrders]);
+    }, [componentOrders, announcedOrders]);
 
-    const readyOrders = orders.filter(o => o.estado === 'listo');
-    const onTheWayOrders = orders.filter(o => o.estado === 'en camino');
-    const deliveredOrders = orders.filter(o => o.estado === 'entregado' || o.estado === 'pagado');
+    const readyOrders = componentOrders.filter(o => o.estado === 'listo');
+    const onTheWayOrders = componentOrders.filter(o => o.estado === 'en camino');
+    const deliveredOrders = componentOrders.filter(o => o.estado === 'entregado' || o.estado === 'pagado');
 
     return (
         <div className="flex flex-col md:flex-row gap-6">
