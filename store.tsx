@@ -14,6 +14,7 @@ interface AppState {
     customers: ClienteLeal[];
     loyaltyPrograms: LoyaltyProgram[];
     cajaSession: CajaSession;
+    cajaHistory: CajaSession[];
     view: View;
     turno: Turno;
     theme: 'light' | 'dark';
@@ -50,6 +51,7 @@ const initialState: AppState = {
         }
     ],
     cajaSession: { estado: 'cerrada', saldoInicial: 0, ventasPorMetodo: {}, totalVentas: 0, totalEfectivoEsperado: 0, fechaApertura: '', gananciaTotal: 0, movimientos: [] },
+    cajaHistory: [],
     view: 'dashboard',
     turno: 'tarde',
     theme: 'light',
@@ -206,9 +208,22 @@ function appReducer(state: AppState, action: Action): AppState {
         case 'CLOSE_CAJA': {
             if (state.cajaSession.estado !== 'abierta') return state;
             const diferencia = action.payload - state.cajaSession.totalEfectivoEsperado;
-            const closedSession: CajaSession = { ...state.cajaSession, estado: 'cerrada', fechaCierre: new Date().toISOString(), efectivoContadoAlCierre: action.payload, diferencia };
+            const closedSession: CajaSession = { 
+                ...state.cajaSession, 
+                id: `caja-${Date.now()}`,
+                estado: 'cerrada', 
+                fechaCierre: new Date().toISOString(), 
+                efectivoContadoAlCierre: action.payload, 
+                diferencia 
+            };
+            const newCajaHistory = [...(state.cajaHistory || []), closedSession];
             const toastMessage = `Caja cerrada. ${diferencia === 0 ? 'Cuadre perfecto.' : (diferencia > 0 ? `Sobrante: S/.${diferencia.toFixed(2)}` : `Faltante: S/.${Math.abs(diferencia).toFixed(2)}`)}`;
-            return { ...state, cajaSession: closedSession, toasts: [...state.toasts, { id: Date.now(), message: toastMessage, type: 'info' }] };
+            return { 
+                ...state, 
+                cajaSession: closedSession,
+                cajaHistory: newCajaHistory,
+                toasts: [...state.toasts, { id: Date.now(), message: toastMessage, type: 'info' }] 
+            };
         }
         case 'ADD_MOVIMIENTO_CAJA': {
              if (state.cajaSession.estado !== 'abierta') return state;

@@ -7,12 +7,13 @@ import CustomerManager from './CustomerManager';
 import LoyaltyProgramManager from './LoyaltyProgramManager';
 import PromotionsManager from './PromotionsManager';
 import SauceManager from './SauceManager';
-import { ShoppingBagIcon, ArchiveBoxIcon, SparklesIcon, UserGroupIcon, StarIcon } from './icons';
+import ReportesView from './ReportesView';
+import { ShoppingBagIcon, ArchiveBoxIcon, SparklesIcon, UserGroupIcon, StarIcon, DocumentMagnifyingGlassIcon } from './icons';
 
 interface GestionViewProps {
 }
 
-type GestionTab = 'productos' | 'inventario' | 'promociones' | 'clientes' | 'lealtad' | 'cremas';
+type GestionTab = 'productos' | 'inventario' | 'promociones' | 'clientes' | 'lealtad' | 'cremas' | 'reportes';
 
 const TabButton: React.FC<{
     isActive: boolean;
@@ -81,6 +82,8 @@ const GestionView: React.FC<GestionViewProps> = () => {
                 return <CustomerManager customers={customers} />;
             case 'lealtad':
                 return <LoyaltyProgramManager programs={loyaltyPrograms} setPrograms={setPrograms} products={products} />;
+            case 'reportes':
+                return <ReportesView />;
             default:
                 return null;
         }
@@ -97,6 +100,7 @@ const GestionView: React.FC<GestionViewProps> = () => {
                     <TabButton isActive={activeTab === 'promociones'} onClick={() => setActiveTab('promociones')} icon={<SparklesIcon className="h-6 w-6" />} label="Promociones" />
                     <TabButton isActive={activeTab === 'lealtad'} onClick={() => setActiveTab('lealtad')} icon={<StarIcon className="h-6 w-6" />} label="Lealtad" />
                     <TabButton isActive={activeTab === 'clientes'} onClick={() => setActiveTab('clientes')} icon={<UserGroupIcon className="h-6 w-6" />} label="Clientes" />
+                    <TabButton isActive={activeTab === 'reportes'} onClick={() => setActiveTab('reportes')} icon={<DocumentMagnifyingGlassIcon className="h-6 w-6" />} label="Reportes" />
                 </div>
             </div>
             <div className="flex-grow bg-surface dark:bg-slate-800 p-6 rounded-b-lg shadow-sm">

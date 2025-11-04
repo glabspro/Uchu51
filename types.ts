@@ -105,6 +105,7 @@ export interface MovimientoCaja {
 }
 
 export interface CajaSession {
+    id?: string;
     estado: 'abierta' | 'cerrada';
     fechaApertura: string;
     fechaCierre?: string;
