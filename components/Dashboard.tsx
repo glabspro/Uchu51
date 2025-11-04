@@ -214,7 +214,7 @@ const OrderHistory: React.FC<{ orders: Pedido[] }> = ({ orders }) => {
                                     <td className="p-3 text-text-secondary dark:text-slate-400">{new Date(order.fecha).toLocaleString('es-PE')}</td>
                                     <td className="p-3">
                                         <div className="font-medium text-text-primary dark:text-slate-200">{order.cliente.nombre}</div>
-                                        <div className="text-xs text-text-secondary dark:text-slate-500">{order.cliente.telefono}</div>
+                                        <div className="text-xs text-text-secondary dark:text-slate-500">{order.cliente.telefono.slice(-9)}</div>
                                     </td>
                                     <td className="p-3 text-right font-mono font-semibold text-text-primary dark:text-slate-200">S/.{order.total.toFixed(2)}</td>
                                     <td className="p-3 text-center">{getStatusBadge(order.estado)}</td>

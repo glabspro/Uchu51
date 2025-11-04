@@ -83,7 +83,7 @@ const AssignCustomerModal: React.FC<AssignCustomerModalProps> = ({ customers, on
                                 </div>
                                 <div>
                                     <p className="font-bold text-text-primary dark:text-slate-200">{customer.nombre}</p>
-                                    <p className="text-sm text-text-secondary dark:text-slate-400">{customer.telefono}</p>
+                                    <p className="text-sm text-text-secondary dark:text-slate-400">{customer.telefono.slice(-9)}</p>
                                 </div>
                                 <p className="ml-auto text-lg font-bold text-primary dark:text-orange-400">{customer.puntos} pts</p>
                             </button>

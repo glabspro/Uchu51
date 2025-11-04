@@ -458,7 +458,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                             <div className="p-3 bg-background dark:bg-slate-900/50 rounded-lg flex justify-between items-center">
                                 <div>
                                     <p className="font-bold text-text-primary dark:text-slate-200">{assignedCustomer.nombre}</p>
-                                    <p className="text-sm text-text-secondary dark:text-slate-400">{assignedCustomer.telefono}</p>
+                                    <p className="text-sm text-text-secondary dark:text-slate-400">{assignedCustomer.telefono.slice(-9)}</p>
                                     <p className="text-sm font-bold text-primary dark:text-orange-400">{assignedCustomer.puntos} Puntos</p>
                                 </div>
                                 <button onClick={handleRemoveCustomer} className="text-xs font-semibold text-danger hover:underline">Quitar</button>

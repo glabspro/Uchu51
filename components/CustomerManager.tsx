@@ -54,7 +54,7 @@ const CustomerManager: React.FC<CustomerManagerProps> = ({ customers }) => {
                                     return (
                                         <tr key={customer.telefono} className="hover:bg-text-primary/5 dark:hover:bg-slate-700/30">
                                             <td className="p-4 font-medium text-text-primary dark:text-slate-200">{customer.nombre}</td>
-                                            <td className="p-4 text-text-secondary dark:text-slate-400 font-mono">{customer.telefono}</td>
+                                            <td className="p-4 text-text-secondary dark:text-slate-400 font-mono">{customer.telefono.slice(-9)}</td>
                                             <td className="p-4 text-center font-bold text-lg text-primary dark:text-orange-400">{customer.puntos}</td>
                                             <td className="p-4 text-center font-mono text-text-secondary dark:text-slate-400">S/.{totalSpent.toFixed(2)}</td>
                                         </tr>

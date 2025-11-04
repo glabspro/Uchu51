@@ -123,7 +123,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, children, style }) => {
                     </div>
                     <div className="flex items-center">
                         <PhoneIcon className="h-4 w-4 mr-2.5 text-text-primary/40 dark:text-slate-500" />
-                        <span>{order.cliente.telefono}</span>
+                        <span>{order.cliente.telefono.slice(-9)}</span>
                     </div>
                     {order.tipo === 'delivery' && order.cliente.direccion && (
                          <div className="flex items-start">

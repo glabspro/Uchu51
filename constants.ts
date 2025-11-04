@@ -108,7 +108,7 @@ export const initialOrders: Pedido[] = [
         turno: 'tarde',
         cliente: {
             nombre: 'Luis Quispe',
-            telefono: '+51999888777',
+            telefono: '999888777',
             direccion: 'Urb. El Pinar, Comas',
         },
         productos: [
@@ -135,7 +135,7 @@ export const initialOrders: Pedido[] = [
         turno: 'tarde',
         cliente: {
             nombre: 'Mariela Torres',
-            telefono: '+51987654321',
+            telefono: '987654321',
             mesa: 8
         },
         productos: [
@@ -162,7 +162,7 @@ export const initialOrders: Pedido[] = [
         turno: 'tarde',
         cliente: {
             nombre: 'Jorge Chavez',
-            telefono: '+51912345678',
+            telefono: '912345678',
             direccion: 'Av. Universitaria 123, Los Olivos',
         },
         productos: [
@@ -189,7 +189,7 @@ export const initialOrders: Pedido[] = [
         turno: 'tarde',
         cliente: {
             nombre: 'Sofia Solano',
-            telefono: '+51911223344',
+            telefono: '911223344',
         },
         productos: [
             { id: 'prod-301', nombre: 'Alitas BBQ x4', cantidad: 2, precio: 18.00, imagenUrl: 'https://images.unsplash.com/photo-1543339308-43e59d6b70a6?q=80&w=600&h=400&auto=format&fit=crop' },
@@ -211,7 +211,7 @@ export const initialOrders: Pedido[] = [
         turno: 'tarde',
         cliente: {
             nombre: 'Carlos Mendoza',
-            telefono: '+51955667788',
+            telefono: '955667788',
             direccion: 'Jr. Las Palmeras 456, SMP',
         },
         productos: [
