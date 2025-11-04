@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import type { Producto, Salsa } from '../types';
-import { listaDeSalsas } from '../constants';
+import { useAppContext } from '../store';
 
 interface SauceModalProps {
     product: Producto | null;
@@ -10,7 +10,11 @@ interface SauceModalProps {
 }
 
 const SauceModal: React.FC<SauceModalProps> = ({ product, onClose, onConfirm, initialSalsas = [] }) => {
+    const { state } = useAppContext();
+    const { salsas: listaDeSalsas } = state;
     const [selectedSalsas, setSelectedSalsas] = useState<Salsa[]>(initialSalsas);
+    
+    const availableSalsas = listaDeSalsas.filter(s => s.isAvailable);
 
     if (!product) return null;
 
@@ -34,7 +38,7 @@ const SauceModal: React.FC<SauceModalProps> = ({ product, onClose, onConfirm, in
                 <div className="p-6 space-y-4 overflow-y-auto">
                     <h3 className="font-semibold text-text-secondary dark:text-slate-400">Elige tus favoritas:</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {listaDeSalsas.map(sauce => (
+                        {availableSalsas.map(sauce => (
                             <label key={sauce.nombre} className="flex items-center space-x-3 bg-background dark:bg-slate-700/50 p-3 rounded-lg cursor-pointer hover:bg-text-primary/5 dark:hover:bg-slate-700 transition-colors border border-text-primary/10 dark:border-slate-600 has-[:checked]:bg-primary/10 has-[:checked]:border-primary/50">
                                 <input
                                     type="checkbox"

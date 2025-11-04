@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
-import type { Producto, ClienteLeal, LoyaltyProgram, Promocion } from '../types';
+import type { Producto, Salsa, ClienteLeal, LoyaltyProgram, Promocion } from '../types';
 import { useAppContext } from '../store';
 import ProductManager from './ProductManager';
 import InventoryManager from './InventoryManager';
 import CustomerManager from './CustomerManager';
 import LoyaltyProgramManager from './LoyaltyProgramManager';
 import PromotionsManager from './PromotionsManager';
+import SauceManager from './SauceManager';
 import { ShoppingBagIcon, ArchiveBoxIcon, SparklesIcon, UserGroupIcon, StarIcon } from './icons';
 
 interface GestionViewProps {
 }
 
-type GestionTab = 'productos' | 'inventario' | 'promociones' | 'clientes' | 'lealtad';
+type GestionTab = 'productos' | 'inventario' | 'promociones' | 'clientes' | 'lealtad' | 'cremas';
 
 const TabButton: React.FC<{
     isActive: boolean;
@@ -34,7 +35,7 @@ const TabButton: React.FC<{
 
 const GestionView: React.FC<GestionViewProps> = () => {
     const { state, dispatch } = useAppContext();
-    const { products, customers, loyaltyPrograms, promotions } = state;
+    const { products, salsas, customers, loyaltyPrograms, promotions } = state;
 
     const setProducts = (payload: Producto[] | ((prev: Producto[]) => Producto[])) => {
         if (typeof payload === 'function') {
@@ -42,6 +43,10 @@ const GestionView: React.FC<GestionViewProps> = () => {
         } else {
             dispatch({ type: 'SET_PRODUCTS', payload });
         }
+    };
+
+    const setSalsas = (payload: Salsa[]) => {
+        dispatch({ type: 'SET_SAUCES', payload });
     };
     
     const setPromotions = (payload: Promocion[] | ((prev: Promocion[]) => Promocion[])) => {
@@ -68,6 +73,8 @@ const GestionView: React.FC<GestionViewProps> = () => {
                 return <ProductManager products={products} setProducts={setProducts} />;
             case 'inventario':
                 return <InventoryManager products={products} setProducts={setProducts} />;
+            case 'cremas':
+                return <SauceManager salsas={salsas} setSalsas={setSalsas} />;
             case 'promociones':
                 return <PromotionsManager promotions={promotions} setPromotions={setPromotions} products={products} />;
             case 'clientes':
@@ -86,6 +93,7 @@ const GestionView: React.FC<GestionViewProps> = () => {
                 <div className="flex space-x-1 border-b border-text-primary/5 dark:border-slate-700">
                     <TabButton isActive={activeTab === 'productos'} onClick={() => setActiveTab('productos')} icon={<ShoppingBagIcon className="h-6 w-6" />} label="Productos" />
                     <TabButton isActive={activeTab === 'inventario'} onClick={() => setActiveTab('inventario')} icon={<ArchiveBoxIcon className="h-6 w-6" />} label="Inventario" />
+                    <TabButton isActive={activeTab === 'cremas'} onClick={() => setActiveTab('cremas')} icon={<SparklesIcon className="h-6 w-6" />} label="Cremas" />
                     <TabButton isActive={activeTab === 'promociones'} onClick={() => setActiveTab('promociones')} icon={<SparklesIcon className="h-6 w-6" />} label="Promociones" />
                     <TabButton isActive={activeTab === 'lealtad'} onClick={() => setActiveTab('lealtad')} icon={<StarIcon className="h-6 w-6" />} label="Lealtad" />
                     <TabButton isActive={activeTab === 'clientes'} onClick={() => setActiveTab('clientes')} icon={<UserGroupIcon className="h-6 w-6" />} label="Clientes" />

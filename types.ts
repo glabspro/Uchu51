@@ -17,6 +17,7 @@ export interface Cliente {
 export interface Salsa {
     nombre: string;
     precio: number;
+    isAvailable: boolean;
 }
 
 export interface ProductoPedido {
@@ -204,6 +205,7 @@ export type Action =
   | { type: 'INITIATE_ASSIGN_CUSTOMER_TO_MESA', payload: Mesa }
   | { type: 'CANCEL_ASSIGN_CUSTOMER' }
   | { type: 'SET_PRODUCTS'; payload: Producto[] }
+  | { type: 'SET_SAUCES'; payload: Salsa[] }
   | { type: 'SET_PROMOTIONS'; payload: Promocion[] }
   | { type: 'SET_LOYALTY_PROGRAMS'; payload: LoyaltyProgram[] }
   | { type: 'ADD_NEW_CUSTOMER'; payload: { telefono: string; nombre: string } }

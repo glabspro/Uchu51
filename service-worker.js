@@ -43,6 +43,8 @@ const URLS_TO_CACHE = [
   'components/PromotionModal.tsx',
   'components/ApplyPromotionModal.tsx',
   'components/ProductDetailModal.tsx',
+  'components/SauceManager.tsx',
+  'components/SauceEditorModal.tsx',
   'icon-192x192.png',
   'icon-512x512.png'
 ];

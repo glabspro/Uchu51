@@ -10,20 +10,20 @@ export const yapePlinInfo = {
 };
 
 export const listaDeSalsas: Salsa[] = [
-    { nombre: 'Mayonesa', precio: 0.00 },
-    { nombre: 'Kétchup', precio: 0.00 },
-    { nombre: 'Mostaza', precio: 0.00 },
-    { nombre: 'Crema de ají amarillo', precio: 1.00 },
-    { nombre: 'Crema de rocoto', precio: 1.50 },
-    { nombre: 'Crema huancaína', precio: 2.00 },
-    { nombre: 'Salsa BBQ', precio: 1.50 },
-    { nombre: 'Salsa tártara', precio: 1.00 },
-    { nombre: 'Salsa de ajo', precio: 0.50 },
-    { nombre: 'Salsa de maracuyá picante', precio: 2.00 },
-    { nombre: 'Ají pollero (ají verde)', precio: 1.00 },
-    { nombre: 'Salsa de culantro o guacamole', precio: 2.00 },
-    { nombre: 'Salsa de queso cheddar', precio: 2.00 },
-    { nombre: 'Miel de mostaza', precio: 1.50 },
+    { nombre: 'Mayonesa', precio: 0.00, isAvailable: true },
+    { nombre: 'Kétchup', precio: 0.00, isAvailable: true },
+    { nombre: 'Mostaza', precio: 0.00, isAvailable: true },
+    { nombre: 'Crema de ají amarillo', precio: 1.00, isAvailable: true },
+    { nombre: 'Crema de rocoto', precio: 1.50, isAvailable: true },
+    { nombre: 'Crema huancaína', precio: 2.00, isAvailable: true },
+    { nombre: 'Salsa BBQ', precio: 1.50, isAvailable: true },
+    { nombre: 'Salsa tártara', precio: 1.00, isAvailable: true },
+    { nombre: 'Salsa de ajo', precio: 0.50, isAvailable: true },
+    { nombre: 'Salsa de maracuyá picante', precio: 2.00, isAvailable: true },
+    { nombre: 'Ají pollero (ají verde)', precio: 1.00, isAvailable: true },
+    { nombre: 'Salsa de culantro o guacamole', precio: 2.00, isAvailable: true },
+    { nombre: 'Salsa de queso cheddar', precio: 2.00, isAvailable: true },
+    { nombre: 'Miel de mostaza', precio: 1.50, isAvailable: true },
 ];
 
 export const initialProducts: Producto[] = [
@@ -112,7 +112,7 @@ export const initialOrders: Pedido[] = [
             direccion: 'Urb. El Pinar, Comas',
         },
         productos: [
-            { id: 'prod-103', nombre: 'Doble Norteña', cantidad: 1, precio: 16.00, especificaciones: 'Sin ají', salsas: [{ nombre: 'Mayonesa', precio: 0.00 }, { nombre: 'Kétchup', precio: 0.00 }], imagenUrl: 'https://images.unsplash.com/photo-1607013251379-e6eecfffe234?q=80&w=600&h=400&auto=format&fit=crop' },
+            { id: 'prod-103', nombre: 'Doble Norteña', cantidad: 1, precio: 16.00, especificaciones: 'Sin ají', salsas: [{ nombre: 'Mayonesa', precio: 0.00, isAvailable: true }, { nombre: 'Kétchup', precio: 0.00, isAvailable: true }], imagenUrl: 'https://images.unsplash.com/photo-1607013251379-e6eecfffe234?q=80&w=600&h=400&auto=format&fit=crop' },
             { id: 'prod-502', nombre: 'Papas Fritas Personales', cantidad: 1, precio: 6.00, imagenUrl: 'https://images.unsplash.com/photo-1541592106381-b31e9677c0e5?q=80&w=600&h=400&auto=format&fit=crop' },
             { id: 'prod-601', nombre: 'Gaseosa Personal', cantidad: 1, precio: 4.00, imagenUrl: 'https://images.unsplash.com/photo-1554866585-cd94860890b7?q=80&w=600&h=400&auto=format&fit=crop' },
         ],
@@ -139,7 +139,7 @@ export const initialOrders: Pedido[] = [
             mesa: 8
         },
         productos: [
-            { id: 'prod-404', nombre: 'Mostrito Clásico', cantidad: 1, precio: 20.00, salsas: [{ nombre: 'Ají pollero (ají verde)', precio: 1.00 }, { nombre: 'Crema de rocoto', precio: 1.50 }], imagenUrl: 'https://images.unsplash.com/photo-1615634289452-bd82ad38a7a8?q=80&w=600&h=400&auto=format&fit=crop' },
+            { id: 'prod-404', nombre: 'Mostrito Clásico', cantidad: 1, precio: 20.00, salsas: [{ nombre: 'Ají pollero (ají verde)', precio: 1.00, isAvailable: true }, { nombre: 'Crema de rocoto', precio: 1.50, isAvailable: true }], imagenUrl: 'https://images.unsplash.com/photo-1615634289452-bd82ad38a7a8?q=80&w=600&h=400&auto=format&fit=crop' },
             { id: 'prod-603', nombre: 'Chicha Morada 500ml', cantidad: 1, precio: 6.00, imagenUrl: 'https://images.unsplash.com/photo-1623932371904-7ab79e8a0ada?q=80&w=600&h=400&auto=format&fit=crop' },
         ],
         total: 28.50,
@@ -166,7 +166,7 @@ export const initialOrders: Pedido[] = [
             direccion: 'Av. Universitaria 123, Los Olivos',
         },
         productos: [
-            { id: 'prod-204', nombre: 'Combo Familiar Broaster', cantidad: 1, precio: 52.00, salsas: [{ nombre: 'Salsa de ajo', precio: 0.50 }, { nombre: 'Salsa de ajo', precio: 0.50 }, { nombre: 'Salsa BBQ', precio: 1.50 }], imagenUrl: 'https://images.unsplash.com/photo-1585550259798-86013a34a994?q=80&w=600&h=400&auto=format&fit=crop' },
+            { id: 'prod-204', nombre: 'Combo Familiar Broaster', cantidad: 1, precio: 52.00, salsas: [{ nombre: 'Salsa de ajo', precio: 0.50, isAvailable: true }, { nombre: 'Salsa de ajo', precio: 0.50, isAvailable: true }, { nombre: 'Salsa BBQ', precio: 1.50, isAvailable: true }], imagenUrl: 'https://images.unsplash.com/photo-1585550259798-86013a34a994?q=80&w=600&h=400&auto=format&fit=crop' },
         ],
         total: 54.50,
         metodoPago: 'online',

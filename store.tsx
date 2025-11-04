@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
-import { initialOrders, initialProducts, initialPromotions, deliveryDrivers, mesasDisponibles } from './constants';
+import { initialOrders, initialProducts, initialPromotions, listaDeSalsas, deliveryDrivers, mesasDisponibles } from './constants';
 import type {
-    Pedido, Producto, Promocion, ClienteLeal, LoyaltyProgram, Recompensa, Mesa,
+    Pedido, Producto, Promocion, Salsa, ClienteLeal, LoyaltyProgram, Recompensa, Mesa,
     CajaSession, MovimientoCaja, EstadoPedido, UserRole, View, Turno, Toast, MetodoPago, Action,
     AreaPreparacion
 } from './types';
@@ -10,6 +10,7 @@ interface AppState {
     orders: Pedido[];
     products: Producto[];
     promotions: Promocion[];
+    salsas: Salsa[];
     customers: ClienteLeal[];
     loyaltyPrograms: LoyaltyProgram[];
     cajaSession: CajaSession;
@@ -35,6 +36,7 @@ const initialState: AppState = {
     orders: initialOrders,
     products: initialProducts,
     promotions: initialPromotions,
+    salsas: listaDeSalsas,
     customers: [],
     loyaltyPrograms: [
         {
@@ -298,6 +300,7 @@ function appReducer(state: AppState, action: Action): AppState {
         case 'CANCEL_ASSIGN_CUSTOMER':
             return { ...state, mesaParaAsignarCliente: null };
         case 'SET_PRODUCTS': return { ...state, products: action.payload };
+        case 'SET_SAUCES': return { ...state, salsas: action.payload };
         case 'SET_PROMOTIONS': return { ...state, promotions: action.payload };
         case 'SET_LOYALTY_PROGRAMS': return { ...state, loyaltyPrograms: action.payload };
         case 'ADD_NEW_CUSTOMER': {
