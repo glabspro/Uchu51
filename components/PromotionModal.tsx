@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { Promocion, Producto, TipoPromocion } from '../types';
 import { PlusIcon, TrashIcon } from './icons';
+import { useAppContext } from '../store';
 
 interface PromotionModalProps {
     promotion: Promocion | null;
@@ -10,6 +11,8 @@ interface PromotionModalProps {
 }
 
 const PromotionModal: React.FC<PromotionModalProps> = ({ promotion, onSave, onClose, products }) => {
+    const { state } = useAppContext();
+    // FIX: Add missing 'restaurant_id' property.
     const [formData, setFormData] = useState<Omit<Promocion, 'id'>>({
         nombre: promotion?.nombre || '',
         descripcion: promotion?.descripcion || '',
@@ -17,6 +20,7 @@ const PromotionModal: React.FC<PromotionModalProps> = ({ promotion, onSave, onCl
         tipo: promotion?.tipo || 'combo_fijo',
         isActive: promotion?.isActive || false,
         condiciones: promotion?.condiciones || {},
+        restaurant_id: promotion?.restaurant_id || state.restaurantId || ''
     });
 
     const handleTypeChange = (tipo: TipoPromocion) => {

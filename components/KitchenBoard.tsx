@@ -64,7 +64,7 @@ const KitchenBoard: React.FC<KitchenBoardProps> = () => {
         dispatch({ type: 'UPDATE_ORDER_STATUS', payload: { orderId, newStatus, user } });
     };
 
-    const componentOrders = orders.filter(o => ['pendiente confirmar pago', 'en preparación', 'en armado', 'listo para armado'].includes(o.estado) && o.turno === turno);
+    const componentOrders = orders.filter(o => ['en preparación', 'en armado', 'listo para armado'].includes(o.estado) && o.turno === turno);
 
     const speak = (text: string) => {
         if ('speechSynthesis' in window) {
@@ -77,11 +77,11 @@ const KitchenBoard: React.FC<KitchenBoardProps> = () => {
     };
     
     useEffect(() => {
-        const allKitchenOrders = componentOrders.filter(o => ['en preparación', 'pendiente confirmar pago'].includes(o.estado));
+        const allKitchenOrders = componentOrders.filter(o => ['en preparación'].includes(o.estado));
         
         const newDeliveryOrders = allKitchenOrders.filter(o => o.areaPreparacion === 'delivery' && !announcedOrders.has(o.id));
-        const newRetiroOrders = allKitchenOrders.filter(o => o.areaPreparacion === 'retiro' && o.estado === 'en preparación' && !announcedOrders.has(o.id));
-        const newSalonOrders = allKitchenOrders.filter(o => o.areaPreparacion === 'salon' && o.estado === 'en preparación' && !announcedOrders.has(o.id));
+        const newRetiroOrders = allKitchenOrders.filter(o => o.areaPreparacion === 'retiro' && !announcedOrders.has(o.id));
+        const newSalonOrders = allKitchenOrders.filter(o => o.areaPreparacion === 'salon' && !announcedOrders.has(o.id));
 
         if (newDeliveryOrders.length > 0) speak('Nuevo pedido para Delivery');
         if (newRetiroOrders.length > 0) speak('Nuevo pedido para llevar');
@@ -127,11 +127,10 @@ const KitchenBoard: React.FC<KitchenBoardProps> = () => {
 
     const filteredOrders = getFilteredOrders();
     
-    const paymentConfirmationOrders = activeTab === 'delivery' ? filteredOrders.filter(o => o.estado === 'pendiente confirmar pago') : [];
     const preparingOrders = filteredOrders.filter(o => o.estado === 'en preparación');
     const assemblingOrders = filteredOrders.filter(o => o.estado === 'en armado' || o.estado === 'listo para armado');
     
-    const columnClass = activeTab === 'delivery' ? 'w-1/4' : 'flex-1';
+    const columnClass = activeTab === 'delivery' ? 'w-1/3' : 'flex-1';
 
     return (
         <div className="flex flex-col h-full">
@@ -161,21 +160,6 @@ const KitchenBoard: React.FC<KitchenBoardProps> = () => {
                 </div>
             </div>
             <div className="flex flex-col md:flex-row gap-6 pt-4 flex-grow bg-background dark:bg-slate-900 p-4 rounded-b-lg">
-                 {activeTab === 'delivery' && (
-                    <KitchenColumn title="Pagos por Confirmar" count={paymentConfirmationOrders.length} className={columnClass}>
-                        {paymentConfirmationOrders.map((order, i) => (
-                           <OrderCard key={order.id} order={order} style={{ '--delay': `${i * 50}ms` } as React.CSSProperties}>
-                               <button 
-                                   onClick={() => updateOrderStatus(order.id, 'en preparación', 'recepcionista')}
-                                   className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-purple-500/30 hover:-translate-y-0.5 active:scale-95"
-                               >
-                                   <CheckCircleIcon className="h-5 w-5 mr-2" /> Validar Pago
-                               </button>
-                           </OrderCard>
-                        ))}
-                    </KitchenColumn>
-                )}
-
                 <KitchenColumn title="En Preparación" count={preparingOrders.length} onDrop={handleDrop('en preparación')} onDragOver={handleDragOver} className={columnClass}>
                     {preparingOrders.map((order, i) => (
                         <div key={order.id} draggable onDragStart={(e) => handleDragStart(e, order.id)} className="animate-fade-in-up" style={{ '--delay': `${i * 50}ms` } as React.CSSProperties}>

@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import type { ClienteLeal } from '../types';
 import { SearchIcon, UserIcon } from './icons';
+import { useAppContext } from '../store';
 
 interface AssignCustomerModalProps {
     customers: ClienteLeal[];
@@ -10,6 +11,7 @@ interface AssignCustomerModalProps {
 }
 
 const AssignCustomerModal: React.FC<AssignCustomerModalProps> = ({ customers, onAssign, onClose, onAddNewCustomer }) => {
+    const { state } = useAppContext();
     const [searchTerm, setSearchTerm] = useState('');
     const [newCustomerName, setNewCustomerName] = useState('');
 
@@ -25,11 +27,13 @@ const AssignCustomerModal: React.FC<AssignCustomerModalProps> = ({ customers, on
     const handleCreateAndAssign = () => {
         if (!newCustomerName.trim() || !isNewCustomer) return;
         onAddNewCustomer(searchTerm, newCustomerName.trim());
+        // FIX: Add missing 'restaurant_id' property.
         const newCustomer: ClienteLeal = {
             telefono: searchTerm,
             nombre: newCustomerName.trim(),
             puntos: 0,
             historialPedidos: [],
+            restaurant_id: state.restaurantId || '',
         };
         onAssign(newCustomer);
     };

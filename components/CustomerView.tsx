@@ -4,7 +4,6 @@ import { useAppContext } from '../store';
 import { ShoppingBagIcon, TrashIcon, CheckCircleIcon, TruckIcon, UserIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon, MapPinIcon, SearchIcon, AdjustmentsHorizontalIcon, MinusIcon, PlusIcon, StarIcon, SunIcon, MoonIcon, ChevronLeftIcon, ChevronRightIcon, WhatsAppIcon, ArrowDownOnSquareIcon, ArrowUpOnSquareIcon, EllipsisVerticalIcon, XMarkIcon, SparklesIcon } from './icons';
 import SauceModal from './SauceModal';
 import ProductDetailModal from './ProductDetailModal';
-import { yapePlinInfo } from '../constants';
 import { Logo } from './Logo';
 
 
@@ -23,7 +22,7 @@ type PaymentChoice = 'payNow' | 'payLater';
 // FIX: Change to named export to fix import issue
 export const CustomerView: React.FC<CustomerViewProps> = () => {
     const { state, dispatch } = useAppContext();
-    const { products, customers, loyaltyPrograms, promotions, theme, installPrompt } = state;
+    const { products, customers, loyaltyPrograms, promotions, theme, installPrompt, restaurantSettings } = state;
 
     const [cart, setCart] = useState<CartItem[]>([]);
     const [orderType, setOrderType] = useState<TipoPedido | null>(null);
@@ -63,6 +62,12 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
     const onPlaceOrder = (order: Omit<Pedido, 'id' | 'fecha' | 'turno' | 'historial' | 'areaPreparacion' | 'estado' | 'gananciaEstimada'>) => dispatch({ type: 'SAVE_ORDER', payload: order });
     const onToggleTheme = () => dispatch({ type: 'TOGGLE_THEME' });
     const onInstallClick = () => { if (installPrompt) { installPrompt.prompt(); /* Can't reset prompt from here easily */ }};
+
+    const yapePlinInfo = useMemo(() => restaurantSettings?.paymentInfo || {
+        nombre: "Restaurante UCHU51",
+        telefono: "987654321",
+        qrUrl: "https://placehold.co/200x200/png?text=QR+Yape/Plin",
+    }, [restaurantSettings]);
 
     const handleLogoClick = () => {
         if (logoClickTimer) {
@@ -361,6 +366,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
         
         const effectivePaymentMethod = paymentChoice === 'payNow' ? 'yape' : paymentMethod;
 
+// FIX: Add missing 'restaurant_id' property.
         const newOrder: Omit<Pedido, 'id' | 'fecha' | 'turno' | 'historial' | 'areaPreparacion' | 'estado' | 'gananciaEstimada'> = {
             tipo: orderType,
             cliente: customerInfo,
@@ -371,6 +377,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
             pagoExacto: (paymentChoice === 'payLater' && paymentMethod === 'efectivo' && isExactCash) ? true : undefined,
             notas: orderNotes,
             tiempoEstimado: orderType === 'delivery' ? 30 : 15,
+            restaurant_id: state.restaurantId!,
         };
         
         onPlaceOrder(newOrder);

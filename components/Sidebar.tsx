@@ -1,6 +1,6 @@
 import React from 'react';
 import type { View, Theme } from '../types';
-import { ChartBarIcon, FireIcon, HomeIcon, TruckIcon, LogoutIcon, ShoppingBagIcon, CreditCardIcon, ChevronDoubleLeftIcon, ChevronDoubleRightIcon, AdjustmentsHorizontalIcon, StarIcon } from './icons';
+import { ChartBarIcon, FireIcon, HomeIcon, TruckIcon, LogoutIcon, ShoppingBagIcon, CreditCardIcon, ChevronDoubleLeftIcon, ChevronDoubleRightIcon, AdjustmentsHorizontalIcon, DocumentTextIcon } from './icons';
 import { Logo } from './Logo';
 import { LogoIcon } from './LogoIcon';
 import { useAppContext } from '../store';
@@ -29,14 +29,15 @@ const NavButton: React.FC<{
 
 const Sidebar: React.FC<SidebarProps> = () => {
     const { state, dispatch } = useAppContext();
-    const { view, theme, isSidebarCollapsed } = state;
+    const { view, theme, isSidebarCollapsed, restaurantSettings } = state;
 
     const onNavigate = (view: View) => dispatch({ type: 'SET_VIEW', payload: view });
     const onLogout = () => dispatch({ type: 'LOGOUT' });
     const onToggle = () => dispatch({ type: 'TOGGLE_SIDEBAR' });
     
-    const navItems = [
+    const allNavItems = [
         { id: 'dashboard' as View, label: 'Dashboard', icon: <ChartBarIcon className="h-6 w-6" /> },
+        { id: 'recepcion' as View, label: 'Recepción', icon: <DocumentTextIcon className="h-6 w-6" /> },
         { id: 'local' as View, label: 'Salón', icon: <HomeIcon className="h-6 w-6" /> },
         { id: 'cocina' as View, label: 'Cocina', icon: <FireIcon className="h-6 w-6" /> },
         { id: 'retiro' as View, label: 'Retiro', icon: <ShoppingBagIcon className="h-6 w-6" /> },
@@ -44,14 +45,27 @@ const Sidebar: React.FC<SidebarProps> = () => {
         { id: 'gestion' as View, label: 'Gestión', icon: <AdjustmentsHorizontalIcon className="h-6 w-6" /> },
         { id: 'caja' as View, label: 'Caja', icon: <CreditCardIcon className="h-6 w-6" /> },
     ];
+
+    const enabledModules = restaurantSettings?.modules;
+
+    const visibleNavItems = enabledModules 
+        ? allNavItems.filter(item => {
+            if (item.id === 'local') return enabledModules.local !== false;
+            if (item.id === 'delivery') return enabledModules.delivery !== false;
+            if (item.id === 'retiro') return enabledModules.retiro !== false;
+            return true;
+        })
+        : allNavItems;
     
     return (
         <aside className={`${isSidebarCollapsed ? 'w-20' : 'w-64'} bg-surface dark:bg-slate-800 flex flex-col flex-shrink-0 border-r border-text-primary/5 dark:border-slate-700 transition-all duration-300 ease-in-out`}>
-            <div className={`h-16 flex items-center border-b border-text-primary/5 dark:border-slate-700 transition-all duration-300 ${isSidebarCollapsed ? 'justify-center' : 'px-6'}`}>
-                 {isSidebarCollapsed ? <LogoIcon className="h-9 w-auto"/> : <Logo className="h-9 w-auto" variant={theme === 'dark' ? 'light' : 'default'} />}
+            <div className={`h-16 flex items-center border-b border-text-primary/5 dark:border-slate-700 transition-all duration-300 ${isSidebarCollapsed ? 'justify-center px-2' : 'px-6'}`}>
+                 {isSidebarCollapsed 
+                    ? <LogoIcon className="h-9 w-auto"/> 
+                    : <Logo logoUrl={restaurantSettings?.branding?.logoUrl} className="h-9 w-auto" variant={theme === 'dark' ? 'light' : 'default'} />}
             </div>
             <nav className="flex-grow p-4 space-y-2">
-                {navItems.map(item => (
+                {visibleNavItems.map(item => (
                     <NavButton 
                         key={item.id}
                         isActive={view === item.id}

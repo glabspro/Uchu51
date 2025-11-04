@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useCallback } from 'react';
 // FIX: Import necessary types for POSView props
 import type { Pedido, Mesa, EstadoPedido, UserRole, Recompensa, ClienteLeal } from './types';
-import { mesasDisponibles } from './constants';
 import { useAppContext } from './store';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
@@ -10,6 +9,7 @@ import DeliveryBoard from './components/DeliveryBoard';
 import LocalBoard from './components/LocalBoard';
 import RetiroBoard from './components/RetiroBoard';
 import Dashboard from './components/Dashboard';
+import WaitingBoard from './components/WaitingBoard';
 import POSView from './components/POSView';
 // FIX: Changed to named import for CustomerView as it doesn't have a default export
 import { CustomerView } from './components/CustomerView';
@@ -22,7 +22,40 @@ import PreBillModal from './components/PreBillModal';
 import DeliveryPaymentModal from './components/DeliveryPaymentModal';
 import GestionView from './components/GestionView';
 import AssignCustomerModal from './components/AssignCustomerModal';
+import { LogoIcon } from './components/LogoIcon';
 
+const hexToHsl = (hex: string): { h: number; s: number; l: number } | null => {
+    if (!hex || !/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(hex)) {
+      return null;
+    }
+    let r, g, b;
+    hex = hex.substring(1);
+    if (hex.length === 3) {
+      r = parseInt(hex.charAt(0) + hex.charAt(0), 16);
+      g = parseInt(hex.charAt(1) + hex.charAt(1), 16);
+      b = parseInt(hex.charAt(2) + hex.charAt(2), 16);
+    } else {
+      r = parseInt(hex.substring(0, 2), 16);
+      g = parseInt(hex.substring(2, 4), 16);
+      b = parseInt(hex.substring(4, 6), 16);
+    }
+
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h = 0, s = 0, l = (max + min) / 2;
+
+    if (max !== min) {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+        case g: h = (b - r) / d + 2; break;
+        case b: h = (r - g) / d + 4; break;
+      }
+      h /= 6;
+    }
+    return { h: h * 360, s: s * 100, l: l * 100 };
+};
 
 const App: React.FC = () => {
     const { state, dispatch } = useAppContext();
@@ -47,6 +80,8 @@ const App: React.FC = () => {
         orderForReceipt,
         installPrompt,
         mesaParaAsignarCliente,
+        isLoading,
+        restaurantSettings,
     } = state;
 
     useEffect(() => {
@@ -57,6 +92,18 @@ const App: React.FC = () => {
             root.classList.remove('dark');
         }
     }, [theme]);
+
+    useEffect(() => {
+        const root = window.document.documentElement;
+        const primaryColor = restaurantSettings?.branding?.primaryColor || '#F97316';
+        
+        const hsl = hexToHsl(primaryColor);
+        if (hsl) {
+            root.style.setProperty('--color-primary-h', `${hsl.h}`);
+            root.style.setProperty('--color-primary-s', `${hsl.s}%`);
+            root.style.setProperty('--color-primary-l', `${hsl.l}%`);
+        }
+    }, [restaurantSettings]);
 
     useEffect(() => {
         const handleBeforeInstallPrompt = (e: Event) => {
@@ -70,11 +117,12 @@ const App: React.FC = () => {
     }, [dispatch]);
 
     const mesas = useMemo<Mesa[]>(() => {
+        const mesasDisponibles = restaurantSettings?.tables || [];
         return mesasDisponibles.map(n => {
             const activeOrder = orders.find(o => o.tipo === 'local' && o.cliente.mesa === n && !['cancelado', 'pagado'].includes(o.estado));
             return { numero: n, ocupada: !!activeOrder, pedidoId: activeOrder ? activeOrder.id : null, estadoPedido: activeOrder ? activeOrder.estado : undefined };
         });
-    }, [orders]);
+    }, [orders, restaurantSettings]);
 
     const filteredOrders = useMemo(() => orders.filter(order => order.turno === turno), [orders, turno]);
     const openOrders = useMemo(() => orders.filter(o => !['pagado', 'cancelado'].includes(o.estado)), [orders]);
@@ -111,17 +159,27 @@ const App: React.FC = () => {
     }, [dispatch]);
 
     const renderView = () => {
+        const modules = restaurantSettings?.modules;
         switch (view) {
+            case 'recepcion': return <WaitingBoard />;
             case 'cocina': return <KitchenBoard />;
-            case 'delivery': return <DeliveryBoard />;
-            case 'retiro': return <RetiroBoard />;
-            case 'local': return <LocalBoard mesas={mesas} />;
+            case 'delivery': return modules?.delivery !== false ? <DeliveryBoard /> : null;
+            case 'retiro': return modules?.retiro !== false ? <RetiroBoard /> : null;
+            case 'local': return modules?.local !== false ? <LocalBoard mesas={mesas} /> : null;
             case 'gestion': return <GestionView />;
             case 'caja': return <CajaView orders={openOrders.filter(o => o.estado === 'cuenta solicitada')} retiroOrdersToPay={retiroOrdersToPay} paidOrders={paidOrdersInSession} />;
             case 'dashboard': return <Dashboard orders={orders} products={products} />;
-            default: return <Dashboard orders={orders} products={products} />;
+            default: return <WaitingBoard />;
         }
     };
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-background dark:bg-slate-900">
+                <LogoIcon className="h-16 w-16 animate-pulse" />
+            </div>
+        );
+    }
 
     if (appView === 'customer') return <CustomerView />;
     if (appView === 'login') return <Login error={loginError} />;

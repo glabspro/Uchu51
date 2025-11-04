@@ -7,7 +7,7 @@ import { CheckCircleIcon } from './icons';
 interface RetiroBoardProps {}
 
 const RetiroColumn: React.FC<{ title: string; children: React.ReactNode; count: number; }> = ({ title, children, count }) => (
-    <div className="bg-background dark:bg-slate-800/50 rounded-2xl w-full md:w-1/4 flex-shrink-0 shadow-sm flex flex-col border border-text-primary/5 dark:border-slate-700">
+    <div className="bg-background dark:bg-slate-800/50 rounded-2xl w-full md:w-1/2 flex-shrink-0 shadow-sm flex flex-col border border-text-primary/5 dark:border-slate-700">
         <h2 className="text-lg font-heading font-bold text-text-primary dark:text-slate-200 bg-text-primary/10 dark:bg-slate-700/50 px-4 py-3 rounded-t-2xl flex items-center justify-between">
             {title}
             <span className="bg-black/10 text-xs font-bold rounded-full px-2.5 py-1">{count}</span>
@@ -26,39 +26,13 @@ const RetiroBoard: React.FC<RetiroBoardProps> = () => {
         dispatch({ type: 'UPDATE_ORDER_STATUS', payload: { orderId, newStatus, user } });
     };
 
-    const componentOrders = orders.filter(o => o.tipo === 'retiro' && ['pendiente confirmar pago', 'pendiente de confirmación', 'listo', 'recogido', 'pagado'].includes(o.estado) && o.turno === turno);
+    const componentOrders = orders.filter(o => o.tipo === 'retiro' && ['listo', 'recogido', 'pagado'].includes(o.estado) && o.turno === turno);
 
-    const paymentConfirmationOrders = componentOrders.filter(o => o.estado === 'pendiente confirmar pago');
-    const pendingConfirmationOrders = componentOrders.filter(o => o.estado === 'pendiente de confirmación');
     const readyOrders = componentOrders.filter(o => o.estado === 'listo');
     const pickedUpOrders = componentOrders.filter(o => ['recogido', 'pagado'].includes(o.estado));
 
     return (
         <div className="flex flex-col md:flex-row gap-6">
-            <RetiroColumn title="Pagos por Confirmar" count={paymentConfirmationOrders.length}>
-                {paymentConfirmationOrders.map((order, i) => (
-                    <OrderCard key={order.id} order={order} style={{ '--delay': `${i * 50}ms` } as React.CSSProperties}>
-                        <button 
-                            onClick={() => updateOrderStatus(order.id, 'en preparación', 'recepcionista')}
-                            className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-purple-500/30 hover:-translate-y-0.5 active:scale-95"
-                        >
-                            <CheckCircleIcon className="h-5 w-5 mr-2" /> Validar Pago
-                        </button>
-                    </OrderCard>
-                ))}
-            </RetiroColumn>
-            <RetiroColumn title="Pendiente de Confirmación" count={pendingConfirmationOrders.length}>
-                {pendingConfirmationOrders.map((order, i) => (
-                    <OrderCard key={order.id} order={order} style={{ '--delay': `${i * 50}ms` } as React.CSSProperties}>
-                        <button 
-                            onClick={() => updateOrderStatus(order.id, 'en preparación', 'recepcionista')}
-                            className="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-yellow-500/30 hover:-translate-y-0.5 active:scale-95"
-                        >
-                            <CheckCircleIcon className="h-5 w-5 mr-2" /> Validar Pedido
-                        </button>
-                    </OrderCard>
-                ))}
-            </RetiroColumn>
             <RetiroColumn title="Listos para Retirar" count={readyOrders.length}>
                 {readyOrders.map((order, i) => (
                     <OrderCard key={order.id} order={order} style={{ '--delay': `${i * 50}ms` } as React.CSSProperties}>

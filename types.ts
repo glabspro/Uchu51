@@ -1,11 +1,30 @@
 export type EstadoPedido = 'pendiente confirmar pago' | 'pendiente de confirmación' | 'nuevo' | 'confirmado' | 'en preparación' | 'en armado' | 'listo para armado' | 'listo' | 'en camino' | 'entregado' | 'cancelado' | 'recogido' | 'pagado' | 'cuenta solicitada';
 export type TipoPedido = 'delivery' | 'local' | 'retiro';
 export type Turno = 'mañana' | 'tarde' | 'noche';
-export type View = 'dashboard' | 'local' | 'cocina' | 'retiro' | 'delivery' | 'gestion' | 'caja';
+export type View = 'dashboard' | 'local' | 'cocina' | 'retiro' | 'delivery' | 'gestion' | 'caja' | 'recepcion';
 export type UserRole = 'admin' | 'cocinero' | 'repartidor' | 'recepcionista' | 'cliente';
 export type MetodoPago = 'efectivo' | 'tarjeta' | 'yape' | 'plin' | 'online';
 export type Theme = 'light' | 'dark';
 
+export interface RestaurantSettings {
+    cooks: string[];
+    drivers: string[];
+    paymentInfo: {
+        nombre: string;
+        telefono: string;
+        qrUrl: string;
+    };
+    tables: number[];
+    branding?: {
+        primaryColor?: string;
+        logoUrl?: string;
+    };
+    modules?: {
+        delivery?: boolean;
+        local?: boolean;
+        retiro?: boolean;
+    };
+}
 
 export interface Cliente {
     nombre: string;
@@ -18,6 +37,7 @@ export interface Salsa {
     nombre: string;
     precio: number;
     isAvailable: boolean;
+    restaurant_id: string;
 }
 
 export interface ProductoPedido {
@@ -43,6 +63,7 @@ export interface Producto {
     stock: number;
     descripcion?: string;
     imagenUrl?: string;
+    restaurant_id: string;
 }
 
 
@@ -82,6 +103,7 @@ export interface Pedido {
         vuelto?: number;
         fecha: string;
     };
+    restaurant_id: string;
 }
 
 export interface Toast {
@@ -119,13 +141,16 @@ export interface CajaSession {
     efectivoContadoAlCierre?: number;
     diferencia?: number;
     movimientos?: MovimientoCaja[];
+    restaurant_id: string;
 }
 
 export interface ClienteLeal {
     telefono: string;
     nombre: string;
     puntos: number;
-    historialPedidos: Pedido[];
+    // FIX: Changed Pedido[] to any[] to break a circular dependency in Supabase types.
+    historialPedidos: any[];
+    restaurant_id: string;
 }
 
 export interface Recompensa {
@@ -149,6 +174,7 @@ export interface LoyaltyProgram {
     isActive: boolean;
     config: LoyaltyConfig;
     rewards: Recompensa[];
+    restaurant_id: string;
 }
 
 export type TipoPromocion = 'combo_fijo' | 'descuento_porcentaje' | 'dos_por_uno';
@@ -176,6 +202,7 @@ export interface Promocion {
     condiciones: CondicionesPromocion;
     diasActivos?: ('lunes' | 'martes' | 'miercoles' | 'jueves' | 'viernes' | 'sabado' | 'domingo')[];
     horarioActivo?: { desde: string; hasta: string };
+    restaurant_id: string;
 }
 
 export type Action =
@@ -191,7 +218,7 @@ export type Action =
   | { type: 'REMOVE_TOAST'; payload: number }
   | { type: 'UPDATE_ORDER_STATUS'; payload: { orderId: string; newStatus: EstadoPedido; user: UserRole } }
   | { type: 'ASSIGN_DRIVER'; payload: { orderId: string; driverName: string } }
-  | { type: 'SAVE_ORDER'; payload: Omit<Pedido, 'id' | 'fecha' | 'turno' | 'historial' | 'areaPreparacion' | 'estado' | 'gananciaEstimada'> }
+  | { type: 'SAVE_ORDER'; payload: Omit<Pedido, 'id' | 'fecha' | 'turno' | 'historial' | 'areaPreparacion' | 'estado' | 'gananciaEstimada' | 'restaurant_id'> }
   | { type: 'SAVE_POS_ORDER'; payload: { orderData: Pedido; mesaNumero: number } }
   | { type: 'OPEN_CAJA'; payload: number }
   | { type: 'CLOSE_CAJA'; payload: number }

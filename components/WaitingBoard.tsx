@@ -1,15 +1,10 @@
-
-
-
 import React from 'react';
 import type { Pedido, EstadoPedido, UserRole } from '../types';
+import { useAppContext } from '../store';
 import OrderCard from './OrderCard';
 import { CheckCircleIcon } from './icons';
 
-interface WaitingBoardProps {
-    orders: Pedido[];
-    updateOrderStatus: (orderId: string, newStatus: EstadoPedido, user: UserRole) => void;
-}
+interface WaitingBoardProps {}
 
 const BoardColumn: React.FC<{ title: string; children: React.ReactNode; count: number; bgColor: string; textColor: string; widthClass?: string; }> = ({ title, children, count, bgColor, textColor, widthClass = 'md:w-1/4' }) => (
     <div className={`bg-background dark:bg-slate-800/50 rounded-2xl w-full ${widthClass} flex-shrink-0 shadow-sm flex flex-col border border-text-primary/5 dark:border-slate-700`}>
@@ -23,11 +18,20 @@ const BoardColumn: React.FC<{ title: string; children: React.ReactNode; count: n
     </div>
 );
 
-const WaitingBoard: React.FC<WaitingBoardProps> = ({ orders, updateOrderStatus }) => {
-    const paymentConfirmationOrders = orders.filter(o => o.estado === 'pendiente confirmar pago');
-    const pendingConfirmationOrders = orders.filter(o => o.estado === 'pendiente de confirmación');
-    const newOrders = orders.filter(o => o.estado === 'nuevo');
-    const confirmedOrders = orders.filter(o => o.estado === 'confirmado');
+const WaitingBoard: React.FC<WaitingBoardProps> = () => {
+    const { state, dispatch } = useAppContext();
+    const { orders, turno } = state;
+
+    const updateOrderStatus = (orderId: string, newStatus: EstadoPedido, user: UserRole) => {
+        dispatch({ type: 'UPDATE_ORDER_STATUS', payload: { orderId, newStatus, user } });
+    };
+    
+    const componentOrders = orders.filter(o => ['pendiente confirmar pago', 'pendiente de confirmación', 'nuevo', 'confirmado'].includes(o.estado) && o.turno === turno);
+
+    const paymentConfirmationOrders = componentOrders.filter(o => o.estado === 'pendiente confirmar pago');
+    const pendingConfirmationOrders = componentOrders.filter(o => o.estado === 'pendiente de confirmación');
+    const newOrders = componentOrders.filter(o => o.estado === 'nuevo');
+    const confirmedOrders = componentOrders.filter(o => o.estado === 'confirmado');
 
     return (
         <div className="flex flex-col md:flex-row gap-6">
@@ -35,7 +39,7 @@ const WaitingBoard: React.FC<WaitingBoardProps> = ({ orders, updateOrderStatus }
                 {paymentConfirmationOrders.map((order, i) => (
                     <OrderCard key={order.id} order={order} style={{ '--delay': `${i * 50}ms` } as React.CSSProperties}>
                         <button 
-                            onClick={() => updateOrderStatus(order.id, 'confirmado', 'recepcionista')}
+                            onClick={() => updateOrderStatus(order.id, 'en preparación', 'recepcionista')}
                             className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-purple-500/30 hover:-translate-y-0.5 active:scale-95"
                         >
                             <CheckCircleIcon className="h-5 w-5 mr-2" /> Validar Pago
@@ -47,7 +51,7 @@ const WaitingBoard: React.FC<WaitingBoardProps> = ({ orders, updateOrderStatus }
                 {pendingConfirmationOrders.map((order, i) => (
                     <OrderCard key={order.id} order={order} style={{ '--delay': `${i * 50}ms` } as React.CSSProperties}>
                         <button 
-                            onClick={() => updateOrderStatus(order.id, 'nuevo', 'recepcionista')}
+                            onClick={() => updateOrderStatus(order.id, 'en preparación', 'recepcionista')}
                             className="w-full bg-text-primary dark:bg-slate-700 hover:bg-text-primary/90 dark:hover:bg-slate-600 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-text-primary/20 hover:-translate-y-0.5 active:scale-95"
                         >
                             <CheckCircleIcon className="h-5 w-5 mr-2" /> Validar Pedido

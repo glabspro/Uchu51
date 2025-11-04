@@ -64,6 +64,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
         // If it's a new order AND a customer was pre-selected from the modal
         } else if (preselectedCustomerForPOS) {
             setAssignedCustomer(preselectedCustomerForPOS);
+            // FIX: Add missing 'restaurant_id' property.
             const newOrderShell: Pedido = {
                 id: '', fecha: new Date().toISOString(), tipo: 'local', estado: 'nuevo', turno: 'tarde',
                 cliente: {
@@ -72,6 +73,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                     mesa: mesa.numero
                 },
                 productos: [], total: 0, metodoPago: 'efectivo', tiempoEstimado: 15, historial: [], areaPreparacion: 'salon', notas: '',
+                restaurant_id: state.restaurantId!,
              };
              setCurrentOrder(newOrderShell);
         } else {
@@ -113,6 +115,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
         if (currentOrder) {
             setCurrentOrder({ ...currentOrder, productos: updatedProductos, total: newTotal });
         } else {
+            // FIX: Add missing 'restaurant_id' property.
              const newOrderShell: Pedido = {
                 id: '',
                 fecha: new Date().toISOString(),
@@ -131,6 +134,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                 historial: [],
                 areaPreparacion: 'salon',
                 notas: '',
+                restaurant_id: state.restaurantId!,
              };
              setCurrentOrder(newOrderShell);
         }
@@ -208,10 +212,12 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
         if (currentOrder) {
             setCurrentOrder({ ...currentOrder, notas: e.target.value });
         } else {
+            // FIX: Add missing 'restaurant_id' property.
              const newOrderShell: Pedido = {
                 id: '', fecha: new Date().toISOString(), tipo: 'local', estado: 'nuevo', turno: 'tarde',
                 cliente: { nombre: `Mesa ${mesa.numero}`, telefono: '', mesa: mesa.numero },
-                productos: [], total: 0, metodoPago: 'efectivo', tiempoEstimado: 15, historial: [], areaPreparacion: 'salon', notas: e.target.value
+                productos: [], total: 0, metodoPago: 'efectivo', tiempoEstimado: 15, historial: [], areaPreparacion: 'salon', notas: e.target.value,
+                restaurant_id: state.restaurantId!
              };
              setCurrentOrder(newOrderShell);
         }
@@ -249,6 +255,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
         setAssignedCustomer(customer);
         setIsAssignCustomerModalOpen(false);
         setCurrentOrder(prevOrder => {
+            // FIX: Add missing 'restaurant_id' property to the base order shell.
             const baseOrder = prevOrder || {
                 id: '',
                 fecha: new Date().toISOString(),
@@ -261,6 +268,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                     mesa: mesa.numero
                 },
                 productos: [], total: 0, metodoPago: 'efectivo', tiempoEstimado: 15, historial: [], areaPreparacion: 'salon', notas: '',
+                restaurant_id: state.restaurantId!,
             };
             return {
                 ...baseOrder,

@@ -10,7 +10,7 @@ interface ReceiptModalProps {
 
 const ReceiptModal: React.FC<ReceiptModalProps> = ({ order }) => {
     const { state, dispatch } = useAppContext();
-    const { theme } = state;
+    const { theme, restaurantSettings } = state;
     const [whatsAppStatus, setWhatsAppStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
 
     const showToast = (message: string, type: 'success' | 'info' | 'danger') => {
@@ -115,7 +115,7 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ order }) => {
             <div className="bg-surface dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-sm" onClick={e => e.stopPropagation()}>
                 <div className="p-6 text-sm text-text-primary dark:text-slate-200 printable-modal-content">
                     <div className="text-center mb-6">
-                        <Logo className="h-10 w-auto mx-auto mb-2" variant={theme === 'dark' ? 'light' : 'default'} />
+                        <Logo logoUrl={restaurantSettings?.branding?.logoUrl} className="h-10 w-auto mx-auto mb-2" variant={theme === 'dark' ? 'light' : 'default'} />
                         <p className="text-xs text-text-secondary dark:text-slate-400">Av. Ejemplo 123, Lima, Perú</p>
                         <p className="text-lg font-bold mt-2">COMPROBANTE DE PAGO</p>
                     </div>

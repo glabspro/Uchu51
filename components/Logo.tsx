@@ -3,11 +3,23 @@ import React from 'react';
 interface LogoProps {
     className?: string;
     variant?: 'default' | 'light';
+    logoUrl?: string | null;
 }
 
-export const Logo: React.FC<LogoProps> = ({ className, variant = 'default' }) => {
+export const Logo: React.FC<LogoProps> = ({ className, variant = 'default', logoUrl }) => {
+    if (logoUrl) {
+        return (
+            <img 
+                src={logoUrl} 
+                alt="Restaurant Logo" 
+                className={className}
+                style={{ objectFit: 'contain', maxHeight: '100%' }}
+            />
+        );
+    }
+    
     const textColor = variant === 'light' ? '#FDFCFB' : '#44281D';
-    const fiftyOneColor = variant === 'light' ? '#FFFFFF' : '#F97316';
+    const fiftyOneColor = variant === 'light' ? '#FFFFFF' : 'hsl(var(--color-primary-h), var(--color-primary-s), var(--color-primary-l))';
 
     return (
         <svg
@@ -19,7 +31,7 @@ export const Logo: React.FC<LogoProps> = ({ className, variant = 'default' }) =>
             <defs>
                 <linearGradient id="chili-gradient-new" x1="50%" y1="0%" x2="50%" y2="100%">
                     <stop offset="0%" stopColor="#FDBA74" />
-                    <stop offset="100%" stopColor="#F97316" />
+                    <stop offset="100%" stop-color="hsl(var(--color-primary-h), var(--color-primary-s), var(--color-primary-l))" />
                 </linearGradient>
             </defs>
 

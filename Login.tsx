@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useAppContext } from '../store';
 import { LockClosedIcon } from './icons';
 import { Logo } from './Logo';
-import type { UserRole } from '../types';
 import { getSupabase } from '../utils/supabase';
 
 interface LoginProps {
@@ -14,26 +13,29 @@ const Login: React.FC<LoginProps> = ({ error }) => {
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
-    const onLogin = (role: UserRole) => dispatch({ type: 'LOGIN', payload: role });
-    const onLoginFailed = (message: string) => dispatch({ type: 'LOGIN_FAILED', payload: message });
     const onNavigateToCustomerView = () => dispatch({ type: 'LOGOUT' });
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
-        const supabase = getSupabase();
-        const { error } = await supabase.auth.signInWithPassword({
-            email: 'admin@uchu51.com', // Asumimos un email fijo para el admin del demo
-            password: password,
-        });
+        dispatch({ type: 'LOGIN_FAILED', payload: '' }); // Clear previous error
+        try {
+            const supabase = getSupabase();
+            const { error } = await supabase.auth.signInWithPassword({
+                email: 'admin@uchu51.com', // Asumimos un email fijo para el admin del demo
+                password: password,
+            });
 
-        if (error) {
-            onLoginFailed(error.message || 'Contraseña incorrecta. Inténtalo de nuevo.');
+            if (error) {
+                dispatch({ type: 'LOGIN_FAILED', payload: error.message || 'Contraseña incorrecta. Inténtalo de nuevo.' });
+            }
+            // On success, the onAuthStateChange listener in store.tsx will handle the rest.
+        } catch(e: any) {
+            dispatch({ type: 'LOGIN_FAILED', payload: e.message || 'Error de configuración.' });
+        } finally {
+            setIsLoading(false);
             setPassword('');
-        } else {
-            onLogin('admin');
         }
-        setIsLoading(false);
     };
 
     return (

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { Pedido, EstadoPedido, UserRole } from '../types';
 import { useAppContext } from '../store';
-import { deliveryDrivers } from '../constants';
 import OrderCard from './OrderCard';
 import { UserIcon, TruckIcon, CashIcon } from './icons';
 
@@ -21,8 +20,10 @@ const DeliveryColumn: React.FC<{ title: string; children: React.ReactNode; count
 
 const DeliveryBoard: React.FC<DeliveryBoardProps> = () => {
     const { state, dispatch } = useAppContext();
-    const { orders, turno } = state;
+    const { orders, turno, restaurantSettings } = state;
     const [announcedOrders, setAnnouncedOrders] = useState<Set<string>>(new Set());
+
+    const deliveryDrivers = restaurantSettings?.drivers || [];
 
     const updateOrderStatus = (orderId: string, newStatus: EstadoPedido, user: UserRole) => {
         dispatch({ type: 'UPDATE_ORDER_STATUS', payload: { orderId, newStatus, user } });

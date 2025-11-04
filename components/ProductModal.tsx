@@ -1,5 +1,6 @@
 import React, { useState, ChangeEvent } from 'react';
 import type { Producto } from '../types';
+import { useAppContext } from '../store';
 
 interface ProductModalProps {
     product: Producto | null;
@@ -8,6 +9,8 @@ interface ProductModalProps {
 }
 
 const ProductModal: React.FC<ProductModalProps> = ({ product, onSave, onClose }) => {
+    const { state } = useAppContext();
+    // FIX: Add missing 'restaurant_id' property.
     const [formData, setFormData] = useState<Producto>({
         id: product?.id || '',
         nombre: product?.nombre || '',
@@ -17,6 +20,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, onSave, onClose })
         stock: product?.stock || 0,
         descripcion: product?.descripcion || '',
         imagenUrl: product?.imagenUrl || '',
+        restaurant_id: product?.restaurant_id || state.restaurantId || ''
     });
 
     const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {

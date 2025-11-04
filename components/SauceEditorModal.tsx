@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { Salsa } from '../types';
+import { useAppContext } from '../store';
 
 interface SauceEditorModalProps {
     sauce: Salsa | null;
@@ -9,6 +10,7 @@ interface SauceEditorModalProps {
 }
 
 const SauceEditorModal: React.FC<SauceEditorModalProps> = ({ sauce, onSave, onClose, allSalsas }) => {
+    const { state } = useAppContext();
     const [nombre, setNombre] = useState(sauce?.nombre || '');
     const [precio, setPrecio] = useState(sauce?.precio || 0);
     const [error, setError] = useState('');
@@ -35,7 +37,8 @@ const SauceEditorModal: React.FC<SauceEditorModalProps> = ({ sauce, onSave, onCl
             }
         }
         
-        onSave({ nombre: nombre.trim(), precio });
+        // FIX: Add missing 'restaurant_id' property.
+        onSave({ nombre: nombre.trim(), precio, restaurant_id: sauce?.restaurant_id || state.restaurantId! });
     };
 
     return (

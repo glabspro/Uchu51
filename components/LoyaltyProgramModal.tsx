@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type { LoyaltyProgram, Recompensa, Producto } from '../types';
 import RewardModal from './RewardModal';
 import { PlusIcon, TrashIcon, AdjustmentsHorizontalIcon as PencilIcon } from './icons';
+import { useAppContext } from '../store';
 
 interface LoyaltyProgramModalProps {
     program: LoyaltyProgram | null;
@@ -11,6 +12,8 @@ interface LoyaltyProgramModalProps {
 }
 
 const LoyaltyProgramModal: React.FC<LoyaltyProgramModalProps> = ({ program, onSave, onClose, products }) => {
+    const { state } = useAppContext();
+    // FIX: Add missing 'restaurant_id' property.
     const [formData, setFormData] = useState<LoyaltyProgram>({
         id: program?.id || '',
         name: program?.name || '',
@@ -23,6 +26,7 @@ const LoyaltyProgramModal: React.FC<LoyaltyProgramModalProps> = ({ program, onSa
             pointsPerCompra: 5,
         },
         rewards: program?.rewards || [],
+        restaurant_id: program?.restaurant_id || state.restaurantId || ''
     });
 
     const [isRewardModalOpen, setIsRewardModalOpen] = useState(false);
