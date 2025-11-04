@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import type { Pedido, Producto, EstadoPedido, Turno, TipoPedido } from '../types';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import * as XLSX from 'xlsx';
 import {
     ShoppingBagIcon,
     DocumentMagnifyingGlassIcon,
@@ -300,24 +301,47 @@ const Dashboard: React.FC<DashboardProps> = ({ orders, products }) => {
         return Object.entries(productCounts).sort(([, a], [, b]) => b - a).slice(0, 5).map(([name, value]) => ({ name, value }));
     }, [filteredOrders]);
 
-    const exportToCSV = () => {
-        let csvContent = "data:text/csv;charset=utf-8,";
-        const headers = ["ID", "Fecha", "Cliente", "Telefono", "Tipo", "Turno", "Total", "Productos"];
-        csvContent += headers.join(",") + "\r\n";
+    const exportToExcel = () => {
+        const dataToExport = filteredOrders.map(order => ({
+            'ID Pedido': order.id,
+            'Fecha': new Date(order.fecha).toLocaleString('es-PE'),
+            'Cliente': order.cliente.nombre,
+            'Teléfono': order.cliente.telefono,
+            'Tipo': order.tipo,
+            'Turno': order.turno,
+            'Total (S/.)': order.total,
+            'Productos': order.productos.map(p => `${p.cantidad}x ${p.nombre}`).join('; '),
+        }));
 
-        filteredOrders.forEach(order => {
-            const productString = `"${order.productos.map(p => `${p.cantidad}x ${p.nombre}`).join('; ')}"`;
-            const row = [order.id, new Date(order.fecha).toLocaleString('es-PE'), order.cliente.nombre, order.cliente.telefono, order.tipo, order.turno, order.total.toFixed(2), productString];
-            csvContent += row.join(",") + "\r\n";
-        });
+        const ws = XLSX.utils.json_to_sheet(dataToExport);
         
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `reporte_uchu51_${startDate}_a_${endDate}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // FIX: Add type guard to check for string before accessing .length to resolve 'unknown' type error.
+        // Auto-fit columns
+        const objectMaxLength: number[] = [];
+        for (let i = 0; i < dataToExport.length; i++) {
+            let value = Object.values(dataToExport[i]);
+            for (let j = 0; j < value.length; j++) {
+                if (typeof value[j] == "number") {
+                    objectMaxLength[j] = 10;
+                } else if (typeof value[j] === 'string') {
+                    objectMaxLength[j] =
+                    (objectMaxLength[j] || 0) >= value[j].length
+                        ? objectMaxLength[j]
+                        : value[j].length;
+                }
+            }
+        }
+        
+        const colWidths = objectMaxLength.map((w, i) => ({
+            wch: Math.max(w, Object.keys(dataToExport[0])[i].length) + 2
+        }));
+
+        ws['!cols'] = colWidths;
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Reporte de Ventas");
+        
+        XLSX.writeFile(wb, `reporte_uchu51_${startDate}_a_${endDate}.xlsx`);
     };
 
     return (
@@ -325,8 +349,8 @@ const Dashboard: React.FC<DashboardProps> = ({ orders, products }) => {
             <div className="bg-surface dark:bg-slate-800 p-4 rounded-2xl shadow-lg border border-text-primary/5 dark:border-slate-700 space-y-4">
                 <div className="flex flex-wrap items-end justify-between gap-4">
                      <h2 className="text-xl font-heading font-bold text-text-primary dark:text-slate-100">Análisis de Ventas</h2>
-                    <button onClick={exportToCSV} className="flex items-center gap-2 bg-text-primary/10 dark:bg-slate-700 hover:bg-text-primary/20 dark:hover:bg-slate-600 text-text-primary dark:text-slate-200 font-semibold py-2 px-3 rounded-lg transition-colors text-sm">
-                        <DocumentArrowDownIcon className="h-5 w-5"/> Exportar a CSV
+                    <button onClick={exportToExcel} className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-3 rounded-lg transition-colors text-sm shadow-md hover:shadow-lg">
+                        <DocumentArrowDownIcon className="h-5 w-5"/> Exportar a Excel
                     </button>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
