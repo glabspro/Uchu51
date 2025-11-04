@@ -124,9 +124,10 @@ const OrderHistory: React.FC<{ orders: Pedido[] }> = ({ orders }) => {
             .filter(order => {
                 if (!searchTerm) return true;
                 const lowerSearchTerm = searchTerm.toLowerCase();
+                const cleanPhoneNumber = order.cliente.telefono.slice(-9); // Get last 9 digits
                 return (
                     order.cliente.nombre.toLowerCase().includes(lowerSearchTerm) ||
-                    order.cliente.telefono.includes(lowerSearchTerm)
+                    cleanPhoneNumber.includes(lowerSearchTerm)
                 );
             })
             .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
@@ -174,7 +175,7 @@ const OrderHistory: React.FC<{ orders: Pedido[] }> = ({ orders }) => {
                         <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-text-secondary/50 dark:text-slate-500" />
                         <input
                             type="search"
-                            placeholder="Nombre o teléfono..."
+                            placeholder="Nombre o 9 dígitos del teléfono..."
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                             className="w-full bg-background dark:bg-slate-700/50 border border-text-primary/10 dark:border-slate-700 rounded-lg py-2 pl-10 pr-4 focus:ring-2 focus:ring-primary focus:border-primary transition"
