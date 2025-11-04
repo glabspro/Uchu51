@@ -82,27 +82,10 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
     }, [order, customers, preselectedCustomerForPOS, mesa.numero]);
 
 
-    const hasUnsavedChanges = useMemo(() => {
+    const hasUnsentItems = useMemo(() => {
         if (!currentOrder) return false;
-
-        if (currentOrder.productos.some(p => !p.sentToKitchen)) {
-            return true;
-        }
-
-        if (!order) {
-            return currentOrder.productos.length > 0 || !!currentOrder.cliente.telefono || !!currentOrder.notas;
-        }
-
-        if (order.cliente.telefono !== currentOrder.cliente.telefono || order.cliente.nombre !== currentOrder.cliente.nombre) {
-            return true;
-        }
-        
-        if (order.notas !== currentOrder.notas) {
-            return true;
-        }
-
-        return false;
-    }, [currentOrder, order]);
+        return currentOrder.productos.some(p => !p.sentToKitchen);
+    }, [currentOrder]);
     
     const groupedProducts = useMemo(() => {
         return products.reduce((acc, product) => {
@@ -216,7 +199,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
         if (newQuantity <= 0) {
             updatedProductos = currentOrder.productos.filter(p => p !== itemToUpdate);
         } else {
-            updatedProductos = currentOrder.productos.map(p => p === itemToUpdate ? { ...p, cantidad: newQuantity, sentToKitchen: false } : p);
+            updatedProductos = currentOrder.productos.map(p => p === itemToUpdate ? { ...p, cantidad: newQuantity, sentToKitchen: itemToUpdate.sentToKitchen ? p.sentToKitchen : false } : p);
         }
         updateCurrentOrder(updatedProductos);
     };
@@ -234,6 +217,12 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
         }
     };
     
+    const handleSaveChanges = () => {
+        if (!currentOrder) return;
+        // This save does not change the status or send to kitchen
+        onSaveOrder(currentOrder, mesa.numero);
+    };
+
     const handleSendToKitchen = () => {
         if(isSubmitting || !currentOrder || currentOrder.productos.length === 0) {
             return;
@@ -241,7 +230,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
         setIsSubmitting(true);
 
         const productosEnviados = currentOrder.productos.map(p => ({...p, sentToKitchen: true}));
-        const newStatus: EstadoPedido = 'en preparación';
+        const newStatus: EstadoPedido = currentOrder.estado === 'nuevo' ? 'confirmado' : currentOrder.estado;
         
         const orderToSend: Pedido = { 
             ...currentOrder, 
@@ -408,7 +397,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
     };
     
     const handleExitClick = () => {
-        if (hasUnsavedChanges) {
+        if (hasUnsentItems) {
             setShowExitConfirm(true);
         } else {
             onExit();
@@ -425,7 +414,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
             {showExitConfirm && (
                  <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[101] p-4">
                     <div className="bg-surface dark:bg-slate-800 rounded-2xl shadow-xl p-6 max-w-sm w-full text-center animate-fade-in-scale">
-                        <h3 className="text-xl font-heading font-bold text-text-primary dark:text-white">Cambios sin guardar</h3>
+                        <h3 className="text-xl font-heading font-bold text-text-primary dark:text-white">Items sin enviar</h3>
                         <p className="text-text-secondary dark:text-slate-400 my-3">Tienes items sin enviar a cocina. Si sales, se perderán. ¿Deseas salir de todas formas?</p>
                         <div className="grid grid-cols-2 gap-3 mt-6">
                             <button onClick={() => setShowExitConfirm(false)} className="bg-text-primary/10 dark:bg-slate-700 hover:bg-text-primary/20 dark:hover:bg-slate-600 text-text-primary dark:text-slate-200 font-bold py-2 px-4 rounded-lg transition-colors active:scale-95">Cancelar</button>
@@ -497,12 +486,16 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                     <div className="flex-grow overflow-y-auto pr-2">
                         {currentOrder && currentOrder.productos.length > 0 ? (
                             currentOrder.productos.map((item, index) => (
-                                <div key={index} onClick={() => setSelectedItem(item)} className={`p-3 rounded-lg cursor-pointer mb-2 relative ${selectedItem === item ? 'bg-primary/10' : 'hover:bg-background dark:hover:bg-slate-700/50'}`}>
+                                <div key={index} onClick={() => setSelectedItem(item)} className={`p-3 rounded-lg cursor-pointer mb-2 relative transition-all ${item.sentToKitchen ? 'bg-background/50 dark:bg-slate-900/50 opacity-70' : ''} ${selectedItem === item ? 'bg-primary/10' : 'hover:bg-background dark:hover:bg-slate-700/50'}`}>
                                     <div className="flex justify-between items-start">
                                         <div className="flex-grow">
                                             <div className="flex items-center flex-wrap">
                                                 <p className="font-semibold text-text-primary dark:text-slate-200 pr-2">{item.nombre}</p>
-                                                {item.sentToKitchen && <span className="text-xs font-bold bg-success/20 text-success dark:bg-green-500/20 dark:text-green-300 rounded-full px-2 py-0.5 mr-2">Enviado</span>}
+                                                {item.sentToKitchen ? (
+                                                     <span className="text-xs font-bold bg-success/20 text-success dark:bg-green-500/20 dark:text-green-300 rounded-full px-2 py-0.5 mr-2 flex items-center gap-1"><CheckCircleIcon className="h-3 w-3"/>Enviado</span>
+                                                ) : (
+                                                     <span className="text-xs font-bold bg-amber-500/20 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300 rounded-full px-2 py-0.5 mr-2">Nuevo</span>
+                                                )}
                                                 {item.isReward && <span className="text-xs font-bold bg-primary/20 text-primary dark:bg-orange-500/20 dark:text-orange-300 rounded-full px-2 py-0.5">Canje</span>}
                                                 {item.promocionId && <span className="text-xs font-bold bg-teal-500/20 text-teal-600 dark:bg-teal-500/20 dark:text-teal-300 rounded-full px-2 py-0.5">Promo</span>}
                                             </div>
@@ -566,23 +559,32 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                         )}
                         <div className="space-y-3">
                              {currentOrder?.id ? (
-                                <div className="grid grid-cols-2 gap-3">
-                                    <button
-                                        onClick={() => onGeneratePreBill(currentOrder!.id)}
-                                        disabled={hasUnsavedChanges}
-                                        className="w-full bg-text-primary/80 dark:bg-slate-600 text-white font-bold py-3 rounded-xl text-base hover:bg-text-primary/90 dark:hover:bg-slate-500 transition-all duration-300 shadow-lg hover:shadow-text-primary/20 hover:-translate-y-0.5 active:scale-95 disabled:bg-gray-400/50 dark:disabled:bg-slate-700 disabled:text-text-secondary dark:disabled:text-slate-400 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0"
-                                        aria-label="Ver o imprimir la pre-cuenta del pedido"
-                                    >
-                                        Ver Cuenta
-                                    </button>
+                                <>
                                     <button
                                         onClick={handleSendToKitchen}
                                         className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl text-base transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:scale-95 disabled:bg-gray-400 dark:disabled:bg-slate-700 disabled:shadow-none disabled:translate-y-0 disabled:cursor-not-allowed"
-                                        disabled={isSubmitting || !hasUnsavedChanges}
+                                        disabled={isSubmitting || !hasUnsentItems}
                                     >
-                                        {isSubmitting ? 'Enviando...' : 'Adicionar y Enviar'}
+                                        {isSubmitting ? 'Enviando...' : 'Adicionar y Enviar a Cocina'}
                                     </button>
-                                </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <button
+                                            onClick={handleSaveChanges}
+                                            disabled={!hasUnsentItems}
+                                            className="w-full bg-text-primary/10 dark:bg-slate-700 hover:bg-text-primary/20 dark:hover:bg-slate-600 text-text-primary dark:text-slate-200 font-bold py-3 rounded-xl text-base transition-colors active:scale-95 disabled:bg-gray-400/20 dark:disabled:bg-slate-800 disabled:text-text-secondary/50 disabled:cursor-not-allowed"
+                                        >
+                                            Guardar Cambios
+                                        </button>
+                                        <button
+                                            onClick={() => onGeneratePreBill(currentOrder!.id)}
+                                            disabled={hasUnsentItems}
+                                            className="w-full bg-text-primary/80 dark:bg-slate-600 text-white font-bold py-3 rounded-xl text-base hover:bg-text-primary/90 dark:hover:bg-slate-500 transition-all duration-300 shadow-lg hover:shadow-text-primary/20 hover:-translate-y-0.5 active:scale-95 disabled:bg-gray-400/50 dark:disabled:bg-slate-700 disabled:text-text-secondary dark:disabled:text-slate-400 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0"
+                                            aria-label="Ver o imprimir la pre-cuenta del pedido"
+                                        >
+                                            Ver Cuenta
+                                        </button>
+                                    </div>
+                                </>
                              ) : (
                                 <button
                                     onClick={handleSendToKitchen}
@@ -592,11 +594,6 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                                     {isSubmitting ? 'Enviando...' : 'Enviar a Cocina'}
                                 </button>
                              )}
-                              {hasUnsavedChanges && (
-                                <p className="text-xs text-center text-warning dark:text-yellow-400 mt-2 animate-fade-in-up">
-                                    Tienes cambios sin guardar. Haz clic en "Adicionar y Enviar".
-                                </p>
-                            )}
                         </div>
                     </div>
                 </div>
