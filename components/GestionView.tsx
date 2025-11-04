@@ -36,7 +36,7 @@ const TabButton: React.FC<{
 
 const GestionView: React.FC<GestionViewProps> = () => {
     const { state, dispatch } = useAppContext();
-    const { products, salsas, customers, loyaltyPrograms, promotions } = state;
+    const { products, salsas, customers, loyaltyPrograms, promotions, orders, cajaHistory } = state;
 
     const setProducts = (payload: Producto[] | ((prev: Producto[]) => Producto[])) => {
         if (typeof payload === 'function') {
@@ -83,7 +83,7 @@ const GestionView: React.FC<GestionViewProps> = () => {
             case 'lealtad':
                 return <LoyaltyProgramManager programs={loyaltyPrograms} setPrograms={setPrograms} products={products} />;
             case 'reportes':
-                return <ReportesView />;
+                return <ReportesView orders={orders} products={products} cajaHistory={cajaHistory} />;
             default:
                 return null;
         }

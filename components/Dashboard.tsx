@@ -321,13 +321,11 @@ const Dashboard: React.FC<DashboardProps> = ({ orders, products }) => {
         for (let i = 0; i < dataToExport.length; i++) {
             let value = Object.values(dataToExport[i]);
             for (let j = 0; j < value.length; j++) {
-                if (typeof value[j] == "number") {
-                    objectMaxLength[j] = 10;
-                } else if (typeof value[j] === 'string') {
-                    objectMaxLength[j] =
-                    (objectMaxLength[j] || 0) >= value[j].length
-                        ? objectMaxLength[j]
-                        : value[j].length;
+                const cellValue = value[j];
+                if (typeof cellValue === "number") {
+                    objectMaxLength[j] = Math.max(objectMaxLength[j] || 0, 10);
+                } else if (typeof cellValue === 'string') {
+                    objectMaxLength[j] = Math.max(objectMaxLength[j] || 0, cellValue.length);
                 }
             }
         }
