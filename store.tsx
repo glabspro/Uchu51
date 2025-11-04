@@ -6,7 +6,8 @@ import type {
     CajaSession, MovimientoCaja, EstadoPedido, UserRole, View, Turno, Toast, MetodoPago, Action,
     AreaPreparacion,
     HistorialEstado,
-    RestaurantSettings
+    RestaurantSettings,
+    AppView
 } from './types';
 
 interface AppState {
@@ -21,7 +22,7 @@ interface AppState {
     view: View;
     turno: Turno;
     theme: 'light' | 'dark';
-    appView: 'customer' | 'login' | 'admin';
+    appView: AppView;
     currentUserRole: UserRole;
     loginError: string | null;
     toasts: Toast[];
@@ -71,9 +72,8 @@ const initialState: AppState = {
     isLoading: true,
 };
 
-// Add new action types for auth
 type AppAction = Action | 
-    { type: 'SET_SESSION'; payload: { user: User | null } } |
+    { type: 'SET_SESSION'; payload: { user: User | null; restaurantId?: string | null; currentUserRole?: UserRole, appView?: AppView } } |
     { type: 'SET_LOADING'; payload: boolean };
 
 
@@ -82,73 +82,17 @@ const AppContext = createContext<{ state: AppState; dispatch: React.Dispatch<App
     dispatch: () => null
 });
 
-// Helper pure function
-function registrarVenta(order: Pedido, allProducts: Producto[], allCustomers: ClienteLeal[], allPrograms: LoyaltyProgram[]): {
-    updatedOrder: Pedido;
-    updatedProducts: Producto[];
-    updatedCustomers: ClienteLeal[];
-} {
-    const { total: monto } = order;
-    const costoTotal = order.productos.reduce((acc, p) => acc + (allProducts.find(pm => pm.id === p.id)?.costo || 0) * p.cantidad, 0);
-
-    let pointsToAdd = 0;
-    const customerPhone = order.cliente.telefono;
-    const activeProgram = allPrograms.find(p => p.isActive);
-
-    let updatedCustomers = [...allCustomers];
-    if (customerPhone && /^\d{9}$/.test(customerPhone) && activeProgram) {
-        const existingCustomerIndex = updatedCustomers.findIndex(c => c.telefono === customerPhone);
-        const { config } = activeProgram;
-        if (config.pointEarningMethod === 'monto') {
-            const safeMontoForPoints = config.montoForPoints > 0 ? config.montoForPoints : 1;
-            pointsToAdd = Math.floor(order.total / safeMontoForPoints) * (config.pointsPerMonto || 0);
-        } else {
-            pointsToAdd = config.pointsPerCompra || 0;
-        }
-
-        if (existingCustomerIndex > -1) {
-            const existingCustomer = {...updatedCustomers[existingCustomerIndex]};
-            existingCustomer.puntos += pointsToAdd;
-            existingCustomer.historialPedidos = [...existingCustomer.historialPedidos, order];
-            updatedCustomers[existingCustomerIndex] = existingCustomer;
-        } else {
-            const newCustomer: ClienteLeal = {
-                telefono: customerPhone, nombre: order.cliente.nombre, puntos: pointsToAdd, historialPedidos: [order], restaurant_id: order.restaurant_id,
-            };
-            updatedCustomers.push(newCustomer);
-        }
-    }
-
-    const updatedProducts = [...allProducts];
-    order.productos.forEach(p => {
-         if (p.isReward && !p.id.startsWith('recompensa-')) {
-            const index = updatedProducts.findIndex(prod => prod.id === p.id);
-            if (index > -1) updatedProducts[index].stock = Math.max(0, updatedProducts[index].stock - p.cantidad);
-        } else if (!p.isReward) {
-            const index = updatedProducts.findIndex(prod => prod.id === p.id);
-            if (index > -1) updatedProducts[index].stock = Math.max(0, updatedProducts[index].stock - p.cantidad);
-        }
-    });
-
-    return {
-        updatedOrder: { ...order, puntosGanados: pointsToAdd > 0 ? pointsToAdd : undefined, gananciaEstimada: monto - costoTotal },
-        updatedProducts,
-        updatedCustomers,
-    };
-}
-
-
 function appReducer(state: AppState, action: AppAction): AppState {
     switch (action.type) {
         case 'SET_LOADING': return { ...state, isLoading: action.payload };
         case 'SET_SESSION': {
-            const { user } = action.payload;
-            const restaurantId = user?.user_metadata?.restaurant_id || null;
+            const { user, restaurantId, currentUserRole, appView } = action.payload;
             return {
                 ...state,
                 user,
-                restaurantId,
-                appView: user ? 'admin' : 'login',
+                restaurantId: restaurantId !== undefined ? restaurantId : state.restaurantId,
+                currentUserRole: currentUserRole !== undefined ? currentUserRole : state.currentUserRole,
+                appView: appView || (user ? 'admin' : 'login'),
                 isLoading: false,
             };
         }
@@ -157,10 +101,10 @@ function appReducer(state: AppState, action: AppAction): AppState {
                 const supabase = getSupabase();
                 supabase.auth.signOut().catch(console.error);
                 return {
-                    ...initialState, // Reset to initial state
+                    ...initialState,
                     isLoading: false,
                     appView: 'login',
-                    theme: state.theme, // Persist theme preference
+                    theme: state.theme,
                 };
             } catch (error) {
                 return state;
@@ -171,9 +115,8 @@ function appReducer(state: AppState, action: AppAction): AppState {
         case 'SET_TURNO': return { ...state, turno: action.payload };
         case 'TOGGLE_THEME': return { ...state, theme: state.theme === 'light' ? 'dark' : 'light' };
         case 'TOGGLE_SIDEBAR': return { ...state, isSidebarCollapsed: !state.isSidebarCollapsed };
-        case 'LOGIN': return { ...state, appView: 'admin', currentUserRole: action.payload, loginError: null };
         case 'LOGIN_FAILED': return { ...state, loginError: action.payload };
-        case 'GO_TO_LOGIN': return { ...state, appView: 'login' };
+        case 'GO_TO_LOGIN': return { ...state, appView: 'login', loginError: null };
         case 'ADD_TOAST': return { ...state, toasts: [...state.toasts, { ...action.payload, id: Date.now() }] };
         case 'REMOVE_TOAST': return { ...state, toasts: state.toasts.filter(t => t.id !== action.payload) };
         case 'SET_INSTALL_PROMPT': return { ...state, installPrompt: action.payload };
@@ -184,7 +127,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
         case 'INITIATE_ASSIGN_CUSTOMER_TO_MESA': return { ...state, mesaParaAsignarCliente: action.payload };
         case 'CANCEL_ASSIGN_CUSTOMER': return { ...state, mesaParaAsignarCliente: null };
 
-        // Actions that use Supabase
         case 'UPDATE_ORDER_STATUS': {
             try {
                 const supabase = getSupabase();
@@ -193,24 +135,24 @@ function appReducer(state: AppState, action: AppAction): AppState {
                 if (!order) return state;
 
                 const newHistory: HistorialEstado = { estado: newStatus, fecha: new Date().toISOString(), usuario: user };
-                // FIX: Define payload with explicit type to resolve Supabase type inference issue.
                 const updatePayload: Partial<Pedido> = { estado: newHistory.estado, historial: [...order.historial, newHistory] };
                 supabase
                     .from('orders')
+                    // FIX: Removed 'as any' cast after fixing Supabase type definitions in utils/supabase.ts
                     .update(updatePayload)
                     .eq('id', orderId)
                     .then(({ error }) => {
                         if (error) console.error("Error updating order status:", error);
                     });
-                return state; // State will be updated by real-time subscription
+                return state;
             } catch (error) { return state; }
         }
         case 'ASSIGN_DRIVER': {
             try {
                 const supabase = getSupabase();
                 const { orderId, driverName } = action.payload;
-                // FIX: Define payload with explicit type to resolve Supabase type inference issue.
                 const updatePayload: Partial<Pedido> = { repartidorAsignado: driverName };
+                // FIX: Removed 'as any' cast after fixing Supabase type definitions in utils/supabase.ts
                 supabase.from('orders').update(updatePayload).eq('id', orderId).then(({ error }) => { if (error) console.error(error); });
                 return state;
             } catch (error) { return state; }
@@ -231,14 +173,13 @@ function appReducer(state: AppState, action: AppAction): AppState {
                     fecha: new Date().toISOString(), 
                     estado: initialState, 
                     turno: state.turno, 
-                    historial: [{ estado: initialState, fecha: new Date().toISOString(), usuario: state.currentUserRole }], 
+                    historial: [{ estado: initialState, fecha: new Date().toISOString(), usuario: 'cliente' }], 
                     areaPreparacion: getAreaPreparacion(orderData.tipo),
                     restaurant_id: state.restaurantId,
                 };
-                delete newOrder.id; // Let Supabase generate ID
                 
-// FIX: Cast the insert payload to 'any' to resolve a 'never' type error due to a type mismatch.
-                supabase.from('orders').insert([newOrder] as any).then(({ error }) => { if (error) console.error(error); });
+                // FIX: Removed 'as any' cast after fixing Supabase type definitions in utils/supabase.ts
+                supabase.from('orders').insert([newOrder]).then(({ error }) => { if (error) console.error(error); });
 
                 let toastMessage = `Nuevo pedido enviado a cocina.`;
                 if (isPayNow) toastMessage = `Pedido recibido. Esperando confirmación de pago.`;
@@ -247,7 +188,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
                 return { ...state, toasts: [...state.toasts, { id: Date.now(), message: toastMessage, type: 'success' }] };
             } catch (error) { return state; }
         }
-        // ... (other cases need similar multi-tenant updates) ...
         default:
             return state;
     }
@@ -257,21 +197,17 @@ function appReducer(state: AppState, action: AppAction): AppState {
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     
     const [state, dispatch] = useReducer(appReducer, initialState);
-
+    
     const fetchDataForTenant = async (restaurantId: string) => {
         if (!restaurantId) return;
         dispatch({ type: 'SET_LOADING', payload: true });
         try {
             const supabase = getSupabase();
             const [
-                { data: products, error: productsError },
-                { data: salsas, error: salsasError },
-                { data: promotions, error: promotionsError },
-                { data: orders, error: ordersError },
-                { data: loyaltyPrograms, error: loyaltyProgramsError },
-                { data: customers, error: customersError },
-                { data: cajaHistory, error: cajaHistoryError },
-                { data: restaurantData, error: restaurantError },
+                { data: products, error: productsError }, { data: salsas, error: salsasError },
+                { data: promotions, error: promotionsError }, { data: orders, error: ordersError },
+                { data: loyaltyPrograms, error: loyaltyProgramsError }, { data: customers, error: customersError },
+                { data: cajaHistory, error: cajaHistoryError }, { data: restaurantData, error: restaurantError },
             ] = await Promise.all([
                 supabase.from('products').select('*').eq('restaurant_id', restaurantId),
                 supabase.from('salsas').select('*').eq('restaurant_id', restaurantId),
@@ -287,8 +223,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
             dispatch({
                 type: 'SET_STATE',
-// FIX: Add optional chaining to safely access 'settings' from 'restaurantData', which can be null.
-                payload: { products, salsas, promotions, orders, loyaltyPrograms, customers, cajaHistory, restaurantSettings: restaurantData?.settings || null }
+                // FIX: Used explicit ternary to resolve 'possibly null' error.
+                payload: { products: products || [], salsas: salsas || [], promotions: promotions || [], orders: orders || [], loyaltyPrograms: loyaltyPrograms || [], customers: customers || [], cajaHistory: cajaHistory || [], restaurantSettings: restaurantData ? (restaurantData.settings as RestaurantSettings) : null }
             });
         } catch (error) {
             console.error("Error fetching tenant data:", error);
@@ -298,54 +234,96 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
     };
 
+    const fetchUserSessionData = async (user: User) => {
+        try {
+            if (user.email === 'superadmin@uchu51.com') {
+                dispatch({ type: 'SET_SESSION', payload: { user, appView: 'super_admin' }});
+                dispatch({ type: 'SET_LOADING', payload: false });
+                return;
+            }
+
+            const supabase = getSupabase();
+            const { data: userRole, error } = await supabase
+                .from('user_roles')
+                .select('restaurant_id, role')
+                .eq('user_id', user.id)
+                .single();
+
+            if (error || !userRole) {
+                throw new Error(error?.message || "No se encontró el rol del usuario. Es posible que el registro no se haya completado.");
+            }
+
+            const { restaurant_id, role } = userRole;
+
+            dispatch({
+                type: 'SET_SESSION',
+                payload: { user, restaurantId: restaurant_id, currentUserRole: role as UserRole, appView: 'admin' },
+            });
+
+            await fetchDataForTenant(restaurant_id);
+
+        } catch (e: any) {
+            dispatch({ type: 'ADD_TOAST', payload: { message: e.message, type: 'danger' } });
+            getSupabase().auth.signOut();
+        }
+    };
+
     useEffect(() => {
         let channel: any = null;
-        try {
-            const supabase = getSupabase();
-            
-            supabase.auth.getSession().then(({ data: { session } }) => {
+
+        const initializeSession = async () => {
+            try {
+                const supabase = getSupabase();
+                const { data: { session } } = await supabase.auth.getSession();
                 const user = session?.user ?? null;
-                dispatch({ type: 'SET_SESSION', payload: { user } });
-                if(user?.user_metadata?.restaurant_id) {
-                    fetchDataForTenant(user.user_metadata.restaurant_id);
+
+                if (user) {
+                    await fetchUserSessionData(user);
                 } else {
+                    dispatch({ type: 'SET_SESSION', payload: { user: null } });
                     dispatch({ type: 'SET_LOADING', payload: false });
                 }
-            });
+            } catch (e: any) {
+                 dispatch({ type: 'ADD_TOAST', payload: { message: e.message, type: 'danger' } });
+                 dispatch({ type: 'SET_LOADING', payload: false });
+            }
+        };
 
-            const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-                const user = session?.user ?? null;
-                dispatch({ type: 'SET_SESSION', payload: { user } });
+        initializeSession();
 
-                if (_event === 'SIGNED_IN' && user?.user_metadata?.restaurant_id) {
-                    fetchDataForTenant(user.user_metadata.restaurant_id);
-                } else if (_event === 'SIGNED_OUT') {
-                    // State is reset by the reducer's LOGOUT case
-                }
-            });
-            
-            // Setup realtime channel
+        const supabase = getSupabase();
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+            const user = session?.user ?? null;
+            if ((_event === 'SIGNED_IN' || _event === 'INITIAL_SESSION') && user) {
+                await fetchUserSessionData(user);
+            } else if (_event === 'SIGNED_OUT') {
+                dispatch({ type: 'LOGOUT' });
+            } else if (!session) {
+                dispatch({ type: 'SET_SESSION', payload: { user: null }});
+            }
+        });
+
+        return () => {
+            subscription?.unsubscribe();
+        };
+    }, []);
+
+    useEffect(() => {
+        let channel: any = null;
+        if (state.restaurantId && state.appView === 'admin') {
+            const supabase = getSupabase();
             channel = supabase
-                .channel('public-tenant-channel')
-                .on('postgres_changes', { event: '*', schema: 'public' }, (payload) => {
-                    console.log('Realtime change received!', payload);
-                    if (state.restaurantId) {
-                         fetchDataForTenant(state.restaurantId);
-                    }
-                })
-                .subscribe();
-
-            return () => {
-                subscription.unsubscribe();
-                if(channel) {
-                    supabase.removeChannel(channel).catch(console.error);
-                }
-            };
-        } catch (e: any) {
-             dispatch({ type: 'ADD_TOAST', payload: { message: e.message, type: 'danger' } });
-             dispatch({ type: 'SET_LOADING', payload: false });
+                .channel(`public:orders:restaurant_id=eq.${state.restaurantId}`)
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, 
+                    () => fetchDataForTenant(state.restaurantId!)
+                ).subscribe();
         }
-    }, [state.restaurantId]);
+        return () => {
+            if (channel) {
+                getSupabase().removeChannel(channel).catch(console.error);
+            }
+        }
+    }, [state.restaurantId, state.appView]);
 
 
     return (

@@ -10,6 +10,7 @@ interface LoginProps {
 
 const Login: React.FC<LoginProps> = ({ error }) => {
     const { dispatch } = useAppContext();
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
@@ -22,19 +23,19 @@ const Login: React.FC<LoginProps> = ({ error }) => {
         try {
             const supabase = getSupabase();
             const { error } = await supabase.auth.signInWithPassword({
-                email: 'admin@uchu51.com', // Asumimos un email fijo para el admin del demo
-                password: password,
+                email,
+                password,
             });
 
             if (error) {
-                dispatch({ type: 'LOGIN_FAILED', payload: error.message || 'Contraseña incorrecta. Inténtalo de nuevo.' });
+                dispatch({ type: 'LOGIN_FAILED', payload: error.message || 'Credenciales incorrectas. Inténtalo de nuevo.' });
+                setPassword('');
             }
             // On success, the onAuthStateChange listener in store.tsx will handle the rest.
         } catch(e: any) {
             dispatch({ type: 'LOGIN_FAILED', payload: e.message || 'Error de configuración.' });
         } finally {
             setIsLoading(false);
-            setPassword('');
         }
     };
 
@@ -53,6 +54,20 @@ const Login: React.FC<LoginProps> = ({ error }) => {
                             </div>
                         )}
                         <div className="mb-4">
+                            <label className="block text-text-primary dark:text-slate-200 text-sm font-bold mb-2" htmlFor="email">
+                                Correo Electrónico
+                            </label>
+                             <input
+                                id="email"
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="tu@email.com"
+                                className="bg-background dark:bg-slate-700 shadow-inner appearance-none border border-text-primary/10 dark:border-slate-600 rounded-lg w-full py-3 px-4 text-text-primary dark:text-slate-200 leading-tight focus:outline-none focus:ring-2 focus:ring-primary"
+                                required
+                            />
+                        </div>
+                        <div className="mb-4">
                             <label className="block text-text-primary dark:text-slate-200 text-sm font-bold mb-2" htmlFor="password">
                                 Contraseña
                             </label>
@@ -65,6 +80,7 @@ const Login: React.FC<LoginProps> = ({ error }) => {
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="******************"
                                     className="bg-background dark:bg-slate-700 shadow-inner appearance-none border border-text-primary/10 dark:border-slate-600 rounded-lg w-full py-3 px-12 text-text-primary dark:text-slate-200 leading-tight focus:outline-none focus:ring-2 focus:ring-primary"
+                                    required
                                 />
                             </div>
                         </div>

@@ -2,9 +2,10 @@ export type EstadoPedido = 'pendiente confirmar pago' | 'pendiente de confirmaci
 export type TipoPedido = 'delivery' | 'local' | 'retiro';
 export type Turno = 'mañana' | 'tarde' | 'noche';
 export type View = 'dashboard' | 'local' | 'cocina' | 'retiro' | 'delivery' | 'gestion' | 'caja' | 'recepcion';
-export type UserRole = 'admin' | 'cocinero' | 'repartidor' | 'recepcionista' | 'cliente';
+export type UserRole = 'owner' | 'admin' | 'cocinero' | 'repartidor' | 'recepcionista' | 'cliente';
 export type MetodoPago = 'efectivo' | 'tarjeta' | 'yape' | 'plin' | 'online';
 export type Theme = 'light' | 'dark';
+export type AppView = 'customer' | 'login' | 'admin' | 'super_admin';
 
 export interface RestaurantSettings {
     cooks: string[];
@@ -210,6 +211,7 @@ export type Action =
   | { type: 'SET_TURNO'; payload: Turno }
   | { type: 'TOGGLE_THEME' }
   | { type: 'TOGGLE_SIDEBAR' }
+  // FIX: Add payload to 'LOGIN' action type to fix typing error in Login.tsx
   | { type: 'LOGIN'; payload: UserRole }
   | { type: 'LOGIN_FAILED'; payload: string }
   | { type: 'LOGOUT' }

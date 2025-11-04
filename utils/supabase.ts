@@ -58,6 +58,7 @@ export type Database = {
       };
       orders: {
         Row: Pedido;
+        // FIX: Replaced `any` with specific types to resolve "not assignable to never" TS error.
         Insert: Omit<Pedido, 'id'>;
         Update: Partial<Pedido>;
       };
@@ -83,12 +84,14 @@ export type Database = {
       };
       restaurants: {
         Row: Restaurant;
+        // FIX: Replaced `any` with specific types to resolve "not assignable to never" TS error.
         Insert: Omit<Restaurant, 'id' | 'created_at'>;
         Update: Partial<Restaurant>;
       };
       user_roles: {
         Row: UserRoleLink;
-        Insert: UserRoleLink;
+        // FIX: Omitted `created_at` from Insert type as it's handled by the database.
+        Insert: Omit<UserRoleLink, 'created_at'>;
         Update: Partial<UserRoleLink>;
       };
     };

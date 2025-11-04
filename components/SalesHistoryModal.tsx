@@ -1,7 +1,3 @@
-
-
-
-
 import React, { useState, useMemo } from 'react';
 import type { Pedido, MetodoPago } from '../types';
 import { ChevronDownIcon, ChevronUpIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon, DocumentMagnifyingGlassIcon } from './icons';

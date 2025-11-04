@@ -35,6 +35,13 @@ export const BellIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" /></svg>
 );
 
+// FIX: Added missing BuildingStorefrontIcon
+export const BuildingStorefrontIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 21v-7.5A.75.75 0 0114.25 12h.75c.414 0 .75.336.75.75v7.5m0 0H18A2.25 2.25 0 0020.25 18v-7.5a2.25 2.25 0 00-2.25-2.25H15M13.5 21H3.75A2.25 2.25 0 011.5 18.75v-7.5A2.25 2.25 0 013.75 9h7.5a2.25 2.25 0 012.25 2.25v7.5m0 0h-.375c-.621 0-1.125.504-1.125 1.125s.504 1.125 1.125 1.125h.375m-8.25 0c.621 0 1.125-.504 1.125-1.125s-.504-1.125-1.125-1.125H9M7.5 12h3.75m-3.75 3h3.75m-3.75 3h3.75m3-9v3.75m-3.75-3.75h3.75m-3.75 0h3.75M9 3.75h6a2.25 2.25 0 012.25 2.25v.75m-8.25-.75a2.25 2.25 0 012.25-2.25h3.75a2.25 2.25 0 012.25 2.25v.75m-8.25.75h8.25" />
+    </svg>
+);
+
 export const CalculatorIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 15.75V18m-7.5-6.75h.008v.008H8.25v-.008zm0 3h.008v.008H8.25v-.008zm0 3h.008v.008H8.25v-.008zm3-6h.008v.008H11.25v-.008zm0 3h.008v.008H11.25v-.008zm0 3h.008v.008H11.25v-.008zm3-6h.008v.008H14.25v-.008zm0 3h.008v.008H14.25v-.008zm0 3h.008v.008H14.25v-.008zM4.5 21V5.25A2.25 2.25 0 016.75 3h10.5a2.25 2.25 0 012.25 2.25v12.75A2.25 2.25 0 0117.25 21H6.75a2.25 2.25 0 01-2.25-2.25z" /></svg>
 );

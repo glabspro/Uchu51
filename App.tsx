@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useCallback } from 'react';
 // FIX: Import necessary types for POSView props
-import type { Pedido, Mesa, EstadoPedido, UserRole, Recompensa, ClienteLeal } from './types';
+import type { Pedido, Mesa, EstadoPedido, UserRole, Recompensa, ClienteLeal, AppView } from './types';
 import { useAppContext } from './store';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
@@ -14,6 +14,7 @@ import POSView from './components/POSView';
 // FIX: Changed to named import for CustomerView as it doesn't have a default export
 import { CustomerView } from './components/CustomerView';
 import Login from './components/Login';
+import SuperAdminView from './components/SuperAdminView';
 import Toast from './components/Toast';
 import CajaView from './components/CajaView';
 import PaymentModal from './components/PaymentModal';
@@ -180,65 +181,70 @@ const App: React.FC = () => {
             </div>
         );
     }
-
+    
+    if (appView === 'super_admin') return <SuperAdminView />;
     if (appView === 'customer') return <CustomerView />;
     if (appView === 'login') return <Login error={loginError} />;
     
-    if (posMesaActiva !== null) {
-        const activeOrder = orders.find(o => o.id === posMesaActiva.pedidoId) || null;
+    if (appView === 'admin') {
+        if (posMesaActiva !== null) {
+            const activeOrder = orders.find(o => o.id === posMesaActiva.pedidoId) || null;
+            return (
+                <>
+                    {orderForPreBill && <PreBillModal order={orderForPreBill} />}
+                    {orderToPay && <PaymentModal order={orderToPay} />}
+                    {orderForReceipt && <ReceiptModal order={orderForReceipt} />}
+                    <POSView
+                        mesa={posMesaActiva}
+                        order={activeOrder}
+                        products={products}
+                        customers={customers}
+                        loyaltyPrograms={loyaltyPrograms}
+                        promotions={promotions}
+                        // FIX: Passing missing props to POSView
+                        onExit={onExitPOS}
+                        onSaveOrder={onSavePOSOrder}
+                        onGeneratePreBill={onGeneratePreBill}
+                        updateOrderStatus={updateOrderStatus}
+                        redeemReward={redeemReward}
+                        onAddNewCustomer={onAddNewCustomer}
+                    />
+                    <div className="fixed top-4 right-4 z-[100] space-y-2 w-full max-w-sm">{toasts.map(t => <Toast key={t.id} message={t.message} type={t.type} onClose={() => removeToast(t.id)} />)}</div>
+                </>
+            );
+        }
+
         return (
-            <>
+            <div className="min-h-screen flex bg-background dark:bg-slate-900">
                 {orderForPreBill && <PreBillModal order={orderForPreBill} />}
                 {orderToPay && <PaymentModal order={orderToPay} />}
+                {orderForDeliveryPayment && <DeliveryPaymentModal order={orderForDeliveryPayment} />}
                 {orderForReceipt && <ReceiptModal order={orderForReceipt} />}
-                <POSView
-                    mesa={posMesaActiva}
-                    order={activeOrder}
-                    products={products}
-                    customers={customers}
-                    loyaltyPrograms={loyaltyPrograms}
-                    promotions={promotions}
-                    // FIX: Passing missing props to POSView
-                    onExit={onExitPOS}
-                    onSaveOrder={onSavePOSOrder}
-                    onGeneratePreBill={onGeneratePreBill}
-                    updateOrderStatus={updateOrderStatus}
-                    redeemReward={redeemReward}
-                    onAddNewCustomer={onAddNewCustomer}
-                />
+                {mesaParaAsignarCliente && (
+                    <AssignCustomerModal
+                        customers={customers}
+                        onAssign={(customer: ClienteLeal) => {
+                            dispatch({ type: 'SELECT_MESA', payload: { mesa: mesaParaAsignarCliente, customer } });
+                        }}
+                        onClose={() => {
+                            dispatch({ type: 'SELECT_MESA', payload: { mesa: mesaParaAsignarCliente, customer: null } });
+                        }}
+                        onAddNewCustomer={onAddNewCustomer}
+                    />
+                )}
+                <Sidebar />
+                <div className="flex-1 flex flex-col">
+                    <Header />
+                    <main className="flex-grow p-4 md:p-6 lg:p-8 overflow-y-auto">
+                        <div key={view} className="animate-fade-in-scale">{renderView()}</div>
+                    </main>
+                </div>
                 <div className="fixed top-4 right-4 z-[100] space-y-2 w-full max-w-sm">{toasts.map(t => <Toast key={t.id} message={t.message} type={t.type} onClose={() => removeToast(t.id)} />)}</div>
-            </>
+            </div>
         );
     }
 
-    return (
-        <div className="min-h-screen flex bg-background dark:bg-slate-900">
-            {orderForPreBill && <PreBillModal order={orderForPreBill} />}
-            {orderToPay && <PaymentModal order={orderToPay} />}
-            {orderForDeliveryPayment && <DeliveryPaymentModal order={orderForDeliveryPayment} />}
-            {orderForReceipt && <ReceiptModal order={orderForReceipt} />}
-            {mesaParaAsignarCliente && (
-                <AssignCustomerModal
-                    customers={customers}
-                    onAssign={(customer: ClienteLeal) => {
-                        dispatch({ type: 'SELECT_MESA', payload: { mesa: mesaParaAsignarCliente, customer } });
-                    }}
-                    onClose={() => {
-                        dispatch({ type: 'SELECT_MESA', payload: { mesa: mesaParaAsignarCliente, customer: null } });
-                    }}
-                    onAddNewCustomer={onAddNewCustomer}
-                />
-            )}
-            <Sidebar />
-            <div className="flex-1 flex flex-col">
-                <Header />
-                <main className="flex-grow p-4 md:p-6 lg:p-8 overflow-y-auto">
-                    <div key={view} className="animate-fade-in-scale">{renderView()}</div>
-                </main>
-            </div>
-            <div className="fixed top-4 right-4 z-[100] space-y-2 w-full max-w-sm">{toasts.map(t => <Toast key={t.id} message={t.message} type={t.type} onClose={() => removeToast(t.id)} />)}</div>
-        </div>
-    );
+    return <Login error={loginError} />; // Fallback
 };
 
 export default App;
