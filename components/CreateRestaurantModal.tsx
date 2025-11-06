@@ -24,23 +24,17 @@ const CreateRestaurantModal: React.FC<CreateRestaurantModalProps> = ({ onClose, 
         try {
             const supabase = getSupabase();
             
-            // In a real production app, this entire logic should be an atomic transaction 
-            // handled by a Supabase Edge Function to ensure data integrity and security.
-            // The function would use the Supabase Admin Client.
-            // We are calling a placeholder function here to demonstrate the correct architecture.
-            const { error: functionError } = await supabase.functions.invoke('create-new-tenant', {
-                body: { 
-                    restaurantName, 
-                    ownerName,
-                    ownerEmail, 
-                    password 
-                },
+            const { error: functionError } = await supabase.rpc('create_new_tenant', {
+                restaurant_name: restaurantName,
+                owner_name: ownerName,
+                owner_email: ownerEmail,
+                owner_password: password
             });
 
             if (functionError) {
                 // Provide a more helpful error if the function doesn't exist.
-                if (functionError.message.includes("Function not found")) {
-                    throw new Error("La función 'create-new-tenant' no existe en Supabase. Debes crearla para registrar nuevos negocios.");
+                if (functionError.message.includes("function public.create_new_tenant")) {
+                    throw new Error("La función 'create_new_tenant' no se encontró en la base de datos. Por favor, ejecuta el script SQL correspondiente en el editor de Supabase.");
                 }
                 throw functionError;
             }
