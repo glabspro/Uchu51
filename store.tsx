@@ -245,12 +245,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             }
     
             const supabase = getSupabase();
+            const { data: { session } } = await supabase.auth.getSession();
+
+            if (!session) {
+                throw new Error("Sesión de usuario no encontrada. Por favor, intenta ingresar de nuevo.");
+            }
             
-            // Invoke edge function to get role data securely, bypassing RLS issues for new users.
-            const { data: functionData, error: functionError } = await supabase.functions.invoke('get-user-session-data');
+            // Invoke edge function to get role data securely, including the auth token.
+            const { data: functionData, error: functionError } = await supabase.functions.invoke('get-user-session-data', {
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`
+                }
+            });
     
             if (functionError) {
-                 throw new Error(functionError.message || "Error al obtener datos de la sesión.");
+                 const errorMessage = functionError.context?.msg ? JSON.parse(functionError.context.msg).error : functionError.message;
+                 throw new Error(errorMessage || "Error al obtener datos de la sesión del servidor.");
             }
     
             if (functionData.error || !functionData.restaurant_id || !functionData.role) {
