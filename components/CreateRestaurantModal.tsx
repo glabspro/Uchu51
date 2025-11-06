@@ -10,7 +10,10 @@ interface CreateRestaurantModalProps {
 const CreateRestaurantModal: React.FC<CreateRestaurantModalProps> = ({ onClose, onCreated }) => {
     const { dispatch } = useAppContext();
     const [restaurantName, setRestaurantName] = useState('');
-    const [ownerUserId, setOwnerUserId] = useState('');
+    const [ownerName, setOwnerName] = useState('');
+    const [ownerEmail, setOwnerEmail] = useState('');
+    const [ownerPassword, setOwnerPassword] = useState('');
+
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -21,14 +24,42 @@ const CreateRestaurantModal: React.FC<CreateRestaurantModalProps> = ({ onClose, 
 
         try {
             const supabase = getSupabase();
-            
-            // Step 1: Create the restaurant
+
+            // 1. Preserve current super admin session
+            const { data: { session: adminSession } } = await supabase.auth.getSession();
+            if (!adminSession) {
+                throw new Error("La sesión del super admin ha expirado. Por favor, inicia sesión de nuevo.");
+            }
+
+            // 2. Create the new tenant's user account
+            const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+                email: ownerEmail,
+                password: ownerPassword,
+                options: {
+                    data: {
+                        full_name: ownerName, // Pass owner's name to metadata
+                    }
+                }
+            });
+
+            if (signUpError) throw signUpError;
+            if (!signUpData.user) throw new Error("No se pudo crear el usuario. El correo podría ya estar en uso.");
+
+            const newUserId = signUpData.user.id;
+
+            // 3. IMPORTANT: Restore super admin session to continue operations
+            await supabase.auth.setSession({
+                access_token: adminSession.access_token,
+                refresh_token: adminSession.refresh_token,
+            });
+
+            // 4. Create the new restaurant entry
             const { data: restaurantData, error: restaurantError } = await supabase
                 .from('restaurants')
                 .insert({
                     name: restaurantName,
-                    plan_id: 'default', // Assuming a default plan
-                    settings: { // Provide some default settings
+                    plan_id: 'default',
+                    settings: { // Default settings for a new restaurant
                         tables: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
                         cooks: ['Cocinero 1', 'Cocinero 2'],
                         drivers: ['Driver 1', 'Driver 2'],
@@ -41,35 +72,34 @@ const CreateRestaurantModal: React.FC<CreateRestaurantModalProps> = ({ onClose, 
 
             if (restaurantError) throw restaurantError;
             
-            const newRestaurantId = restaurantData.id;
-
-            // Step 2: Link the user role
+            // 5. Link the new user to the new restaurant with an 'owner' role
             const { error: roleError } = await supabase
                 .from('user_roles')
                 .insert({
-                    user_id: ownerUserId,
-                    restaurant_id: newRestaurantId,
+                    user_id: newUserId,
+                    restaurant_id: restaurantData.id,
                     role: 'owner'
                 });
 
             if (roleError) {
-                // Attempt to clean up the created restaurant if role linking fails
-                await supabase.from('restaurants').delete().eq('id', newRestaurantId);
+                // If role linking fails, try to clean up by deleting the created restaurant.
+                await supabase.from('restaurants').delete().eq('id', restaurantData.id);
+                // Note: Deleting the user requires admin privileges and is more complex.
+                // For now, we'll throw the error.
                 throw roleError;
             }
 
             dispatch({ type: 'ADD_TOAST', payload: { message: `Negocio "${restaurantName}" creado con éxito.`, type: 'success' } });
-            onCreated(); // Refresh the list
+            onCreated(); // Refresh the list of restaurants in the parent component
             onClose();
 
         } catch (e: any) {
             setError(e.message);
-            dispatch({ type: 'ADD_TOAST', payload: { message: `Error: ${e.message}`, type: 'danger' } });
+            dispatch({ type: 'ADD_TOAST', payload: { message: `Error al crear el negocio: ${e.message}`, type: 'danger' } });
         } finally {
             setIsLoading(false);
         }
     };
-
 
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[101] p-4" onClick={onClose}>
@@ -83,20 +113,35 @@ const CreateRestaurantModal: React.FC<CreateRestaurantModalProps> = ({ onClose, 
                 )}
                 
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <input
-                        type="text" value={restaurantName} onChange={(e) => setRestaurantName(e.target.value)}
-                        placeholder="Nombre del Restaurante"
-                        className="w-full bg-background dark:bg-slate-700 border border-text-primary/10 dark:border-slate-600 rounded-md p-3" required
-                    />
                     <div>
+                        <label className="text-sm font-medium text-text-secondary dark:text-slate-400 mb-1 block">Datos del Negocio</label>
                         <input
-                            type="text" value={ownerUserId} onChange={(e) => setOwnerUserId(e.target.value)}
-                            placeholder="ID de Usuario del Dueño"
+                            type="text" value={restaurantName} onChange={(e) => setRestaurantName(e.target.value)}
+                            placeholder="Nombre del Restaurante"
                             className="w-full bg-background dark:bg-slate-700 border border-text-primary/10 dark:border-slate-600 rounded-md p-3" required
                         />
-                         <p className="text-xs text-text-secondary dark:text-slate-500 mt-2">
-                            <b>Nota:</b> Primero crea el usuario en <b>Supabase Dashboard → Authentication → Users</b>. Luego, copia y pega su UUID aquí.
-                        </p>
+                    </div>
+
+                    <div className="border-t border-text-primary/10 dark:border-slate-700 pt-4">
+                        <label className="text-sm font-medium text-text-secondary dark:text-slate-400 mb-1 block">Cuenta del Dueño (Owner)</label>
+                        <div className="space-y-3">
+                             <input
+                                type="text" value={ownerName} onChange={(e) => setOwnerName(e.target.value)}
+                                placeholder="Nombre completo del dueño"
+                                className="w-full bg-background dark:bg-slate-700 border border-text-primary/10 dark:border-slate-600 rounded-md p-3" required
+                            />
+                            <input
+                                type="email" value={ownerEmail} onChange={(e) => setOwnerEmail(e.target.value)}
+                                placeholder="Email de acceso del dueño"
+                                className="w-full bg-background dark:bg-slate-700 border border-text-primary/10 dark:border-slate-600 rounded-md p-3" required
+                            />
+                            <input
+                                type="password" value={ownerPassword} onChange={(e) => setOwnerPassword(e.target.value)}
+                                placeholder="Contraseña de acceso"
+                                className="w-full bg-background dark:bg-slate-700 border border-text-primary/10 dark:border-slate-600 rounded-md p-3" required
+                                minLength={6}
+                            />
+                        </div>
                     </div>
 
                     <div className="pt-4 grid grid-cols-2 gap-4">
