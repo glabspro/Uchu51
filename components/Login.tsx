@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useAppContext } from '../store';
 import { LockClosedIcon } from './icons';
 import { Logo } from './Logo';
-import type { UserRole } from '../types';
 import { getSupabase } from '../utils/supabase';
 
 interface LoginProps {
@@ -11,29 +10,33 @@ interface LoginProps {
 
 const Login: React.FC<LoginProps> = ({ error }) => {
     const { dispatch } = useAppContext();
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
-    const onLogin = (role: UserRole) => dispatch({ type: 'LOGIN', payload: role });
-    const onLoginFailed = (message: string) => dispatch({ type: 'LOGIN_FAILED', payload: message });
     const onNavigateToCustomerView = () => dispatch({ type: 'LOGOUT' });
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
-        const supabase = getSupabase();
-        const { error } = await supabase.auth.signInWithPassword({
-            email: 'admin@uchu51.com', // Asumimos un email fijo para el admin del demo
-            password: password,
-        });
+        dispatch({ type: 'LOGIN_FAILED', payload: '' }); // Clear previous error
+        try {
+            const supabase = getSupabase();
+            const { error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
 
-        if (error) {
-            onLoginFailed(error.message || 'Contraseña incorrecta. Inténtalo de nuevo.');
-            setPassword('');
-        } else {
-            onLogin('admin');
+            if (error) {
+                dispatch({ type: 'LOGIN_FAILED', payload: error.message || 'Credenciales incorrectas. Inténtalo de nuevo.' });
+                setPassword('');
+            }
+            // On success, the onAuthStateChange listener in store.tsx will handle the rest.
+        } catch(e: any) {
+            dispatch({ type: 'LOGIN_FAILED', payload: e.message || 'Error de configuración.' });
+        } finally {
+            setIsLoading(false);
         }
-        setIsLoading(false);
     };
 
     return (
@@ -51,6 +54,20 @@ const Login: React.FC<LoginProps> = ({ error }) => {
                             </div>
                         )}
                         <div className="mb-4">
+                            <label className="block text-text-primary dark:text-slate-200 text-sm font-bold mb-2" htmlFor="email">
+                                Correo Electrónico
+                            </label>
+                             <input
+                                id="email"
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="tu@email.com"
+                                className="bg-background dark:bg-slate-700 shadow-inner appearance-none border border-text-primary/10 dark:border-slate-600 rounded-lg w-full py-3 px-4 text-text-primary dark:text-slate-200 leading-tight focus:outline-none focus:ring-2 focus:ring-primary"
+                                required
+                            />
+                        </div>
+                        <div className="mb-4">
                             <label className="block text-text-primary dark:text-slate-200 text-sm font-bold mb-2" htmlFor="password">
                                 Contraseña
                             </label>
@@ -63,6 +80,7 @@ const Login: React.FC<LoginProps> = ({ error }) => {
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="******************"
                                     className="bg-background dark:bg-slate-700 shadow-inner appearance-none border border-text-primary/10 dark:border-slate-600 rounded-lg w-full py-3 px-12 text-text-primary dark:text-slate-200 leading-tight focus:outline-none focus:ring-2 focus:ring-primary"
+                                    required
                                 />
                             </div>
                         </div>
@@ -77,9 +95,15 @@ const Login: React.FC<LoginProps> = ({ error }) => {
                         </div>
                     </form>
                 </div>
-                <p className="text-center text-text-secondary dark:text-slate-500 text-sm mt-6">
-                    <button onClick={onNavigateToCustomerView} className="font-semibold hover:underline hover:text-primary dark:hover:text-orange-400 transition-colors">
-                        Volver a la tienda
+                 <p className="text-center text-text-secondary dark:text-slate-500 text-sm mt-6">
+                    ¿No tienes una cuenta?{' '}
+                    <button onClick={() => dispatch({ type: 'GO_TO_SIGNUP' })} className="font-semibold hover:underline hover:text-primary dark:hover:text-orange-400 transition-colors">
+                        Regístrate aquí
+                    </button>
+                </p>
+                <p className="text-center text-text-secondary dark:text-slate-500 text-sm mt-4">
+                    <button onClick={onNavigateToCustomerView} className="hover:underline">
+                        O volver a la tienda
                     </button>
                 </p>
             </div>
