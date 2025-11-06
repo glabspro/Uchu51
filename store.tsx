@@ -117,6 +117,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
         case 'TOGGLE_SIDEBAR': return { ...state, isSidebarCollapsed: !state.isSidebarCollapsed };
         case 'LOGIN_FAILED': return { ...state, loginError: action.payload };
         case 'GO_TO_LOGIN': return { ...state, appView: 'login', loginError: null };
+        case 'GO_TO_SIGNUP': return { ...state, appView: 'signup', loginError: null };
         case 'ADD_TOAST': return { ...state, toasts: [...state.toasts, { ...action.payload, id: Date.now() }] };
         case 'REMOVE_TOAST': return { ...state, toasts: state.toasts.filter(t => t.id !== action.payload) };
         case 'SET_INSTALL_PROMPT': return { ...state, installPrompt: action.payload };
@@ -236,7 +237,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     const fetchUserSessionData = async (user: User) => {
         try {
-            if (user.email === 'superadmin@uchu51.com') {
+            if (user.email === 'superadmin@example.com') {
                 dispatch({ type: 'SET_SESSION', payload: { user, appView: 'super_admin' }});
                 dispatch({ type: 'SET_LOADING', payload: false });
                 return;

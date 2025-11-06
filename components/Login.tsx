@@ -15,6 +15,7 @@ const Login: React.FC<LoginProps> = ({ error }) => {
     const [isLoading, setIsLoading] = useState(false);
 
     const onNavigateToCustomerView = () => dispatch({ type: 'LOGOUT' });
+    const onNavigateToSignup = () => dispatch({ type: 'GO_TO_SIGNUP' });
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -95,7 +96,13 @@ const Login: React.FC<LoginProps> = ({ error }) => {
                         </div>
                     </form>
                 </div>
-                <p className="text-center text-text-secondary dark:text-slate-500 text-sm mt-4">
+                <p className="text-center text-text-secondary dark:text-slate-500 text-sm mt-4 space-x-2">
+                    <span>¿Primera vez configurando?</span>
+                    <button onClick={onNavigateToSignup} className="font-semibold hover:underline text-primary dark:hover:text-orange-400 transition-colors">
+                        Crea la cuenta de Super Admin
+                    </button>
+                </p>
+                 <p className="text-center text-text-secondary dark:text-slate-500 text-sm mt-2">
                     <button onClick={onNavigateToCustomerView} className="hover:underline">
                         O volver a la tienda
                     </button>
