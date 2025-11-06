@@ -236,7 +236,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     const fetchUserSessionData = async (user: User) => {
         try {
-            if (user.email === 'admin@uchu.app') {
+            if (user.email?.toLowerCase() === 'admin@uchu.app') {
                 dispatch({ type: 'SET_SESSION', payload: { user, appView: 'super_admin' }});
                 dispatch({ type: 'SET_LOADING', payload: false });
                 return;
