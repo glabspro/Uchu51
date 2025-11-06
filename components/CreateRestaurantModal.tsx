@@ -10,9 +10,7 @@ interface CreateRestaurantModalProps {
 const CreateRestaurantModal: React.FC<CreateRestaurantModalProps> = ({ onClose, onCreated }) => {
     const { dispatch } = useAppContext();
     const [restaurantName, setRestaurantName] = useState('');
-    const [ownerName, setOwnerName] = useState('');
-    const [ownerEmail, setOwnerEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const [ownerUserId, setOwnerUserId] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -24,19 +22,40 @@ const CreateRestaurantModal: React.FC<CreateRestaurantModalProps> = ({ onClose, 
         try {
             const supabase = getSupabase();
             
-            const { error: functionError } = await supabase.rpc('create_new_tenant', {
-                restaurant_name: restaurantName,
-                owner_name: ownerName,
-                owner_email: ownerEmail,
-                owner_password: password
-            });
+            // Step 1: Create the restaurant
+            const { data: restaurantData, error: restaurantError } = await supabase
+                .from('restaurants')
+                .insert({
+                    name: restaurantName,
+                    plan_id: 'default', // Assuming a default plan
+                    settings: { // Provide some default settings
+                        tables: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                        cooks: ['Cocinero 1', 'Cocinero 2'],
+                        drivers: ['Driver 1', 'Driver 2'],
+                        paymentInfo: { nombre: 'Yape/Plin del Negocio', telefono: '987654321', qrUrl: ''},
+                        modules: { delivery: true, local: true, retiro: true }
+                    }
+                })
+                .select()
+                .single();
 
-            if (functionError) {
-                // Provide a more helpful error if the function doesn't exist.
-                if (functionError.message.includes("function public.create_new_tenant")) {
-                    throw new Error("La función 'create_new_tenant' no se encontró en la base de datos. Por favor, ejecuta el script SQL correspondiente en el editor de Supabase.");
-                }
-                throw functionError;
+            if (restaurantError) throw restaurantError;
+            
+            const newRestaurantId = restaurantData.id;
+
+            // Step 2: Link the user role
+            const { error: roleError } = await supabase
+                .from('user_roles')
+                .insert({
+                    user_id: ownerUserId,
+                    restaurant_id: newRestaurantId,
+                    role: 'owner'
+                });
+
+            if (roleError) {
+                // Attempt to clean up the created restaurant if role linking fails
+                await supabase.from('restaurants').delete().eq('id', newRestaurantId);
+                throw roleError;
             }
 
             dispatch({ type: 'ADD_TOAST', payload: { message: `Negocio "${restaurantName}" creado con éxito.`, type: 'success' } });
@@ -69,21 +88,17 @@ const CreateRestaurantModal: React.FC<CreateRestaurantModalProps> = ({ onClose, 
                         placeholder="Nombre del Restaurante"
                         className="w-full bg-background dark:bg-slate-700 border border-text-primary/10 dark:border-slate-600 rounded-md p-3" required
                     />
-                    <input
-                        type="text" value={ownerName} onChange={(e) => setOwnerName(e.target.value)}
-                        placeholder="Nombre completo del Dueño"
-                        className="w-full bg-background dark:bg-slate-700 border border-text-primary/10 dark:border-slate-600 rounded-md p-3" required
-                    />
-                    <input
-                        type="email" value={ownerEmail} onChange={(e) => setOwnerEmail(e.target.value)}
-                        placeholder="Email del Dueño (para su login)"
-                        className="w-full bg-background dark:bg-slate-700 border border-text-primary/10 dark:border-slate-600 rounded-md p-3" required
-                    />
-                    <input
-                        type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Contraseña Inicial para el Dueño"
-                        className="w-full bg-background dark:bg-slate-700 border border-text-primary/10 dark:border-slate-600 rounded-md p-3" required minLength={6}
-                    />
+                    <div>
+                        <input
+                            type="text" value={ownerUserId} onChange={(e) => setOwnerUserId(e.target.value)}
+                            placeholder="ID de Usuario del Dueño"
+                            className="w-full bg-background dark:bg-slate-700 border border-text-primary/10 dark:border-slate-600 rounded-md p-3" required
+                        />
+                         <p className="text-xs text-text-secondary dark:text-slate-500 mt-2">
+                            <b>Nota:</b> Primero crea el usuario en <b>Supabase Dashboard → Authentication → Users</b>. Luego, copia y pega su UUID aquí.
+                        </p>
+                    </div>
+
                     <div className="pt-4 grid grid-cols-2 gap-4">
                         <button type="button" onClick={onClose} disabled={isLoading} className="bg-text-primary/10 dark:bg-slate-700 hover:bg-text-primary/20 dark:hover:bg-slate-600 text-text-primary dark:text-slate-200 font-bold py-3 px-4 rounded-lg">Cancelar</button>
                         <button type="submit" disabled={isLoading} className="bg-primary hover:bg-primary-dark text-white font-bold py-3 px-4 rounded-lg shadow-md disabled:bg-gray-400 disabled:cursor-wait">
