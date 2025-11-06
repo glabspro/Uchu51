@@ -1,5 +1,3 @@
-
-
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import { getSupabase, type Database } from './utils/supabase';
 import type { SupabaseClient, User } from '@supabase/supabase-js';
@@ -236,7 +234,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
     };
 
-    const fetchUserSessionData = async (user: User, accessToken: string) => {
+    const fetchUserSessionData = async (user: User) => {
         try {
             if (user.email === 'admin@uchu.app') {
                 dispatch({ type: 'SET_SESSION', payload: { user, appView: 'super_admin' }});
@@ -246,23 +244,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     
             const supabase = getSupabase();
             
-            // Invoke edge function to get role data securely, using the passed auth token.
-            const { data: functionData, error: functionError } = await supabase.functions.invoke('get-user-session-data', {
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`
-                }
-            });
+            // Invoke the PostgreSQL function securely.
+            const { data: rpcData, error: rpcError } = await supabase.rpc('get_user_session_data');
     
-            if (functionError) {
-                 const errorMessage = functionError.context?.msg ? JSON.parse(functionError.context.msg).error : functionError.message;
-                 throw new Error(errorMessage || "Error al obtener datos de la sesión del servidor.");
+            if (rpcError) {
+                 throw new Error(rpcError.message || "Error al obtener datos de la sesión del servidor.");
             }
     
-            if (functionData.error || !functionData.restaurant_id || !functionData.role) {
-                 throw new Error(functionData.error || "No se encontró el rol del usuario. Es posible que el registro no se haya completado.");
+            if (!rpcData || rpcData.length === 0) {
+                 throw new Error("No se encontró el rol del usuario. Es posible que el registro no se haya completado.");
             }
-    
-            const { restaurant_id, role } = functionData;
+            
+            // rpcData is an array, get the first element which contains our role and restaurant_id
+            const { restaurant_id, role } = rpcData[0];
+            
+            if (!restaurant_id || !role) {
+                throw new Error("Los datos de sesión recibidos son inválidos.");
+            }
     
             dispatch({
                 type: 'SET_SESSION',
@@ -280,17 +278,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     };
 
     useEffect(() => {
-        let channel: any = null;
-
         const initializeSession = async () => {
             try {
                 const supabase = getSupabase();
                 const { data: { session } } = await supabase.auth.getSession();
                 const user = session?.user ?? null;
-                const accessToken = session?.access_token ?? null;
 
-                if (user && accessToken) {
-                    await fetchUserSessionData(user, accessToken);
+                if (user) {
+                    await fetchUserSessionData(user);
                 } else {
                     dispatch({ type: 'SET_SESSION', payload: { user: null } });
                     dispatch({ type: 'SET_LOADING', payload: false });
@@ -306,10 +301,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const supabase = getSupabase();
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
             const user = session?.user ?? null;
-            const accessToken = session?.access_token ?? null;
-
-            if ((_event === 'SIGNED_IN' || _event === 'INITIAL_SESSION') && user && accessToken) {
-                await fetchUserSessionData(user, accessToken);
+            
+            if ((_event === 'SIGNED_IN' || _event === 'INITIAL_SESSION') && user) {
+                await fetchUserSessionData(user);
             } else if (_event === 'SIGNED_OUT') {
                 dispatch({ type: 'LOGOUT' });
             } else if (!session) {
