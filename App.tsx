@@ -14,7 +14,6 @@ import POSView from './components/POSView';
 // FIX: Changed to named import for CustomerView as it doesn't have a default export
 import { CustomerView } from './components/CustomerView';
 import Login from './components/Login';
-import Signup from './components/Signup';
 import SuperAdminView from './components/SuperAdminView';
 import Toast from './components/Toast';
 import CajaView from './components/CajaView';
@@ -185,7 +184,6 @@ const App: React.FC = () => {
     
     if (appView === 'super_admin') return <SuperAdminView />;
     if (appView === 'customer') return <CustomerView />;
-    if (appView === 'signup') return <Signup />;
     if (appView === 'login') return <Login error={loginError} />;
     
     if (appView === 'admin') {

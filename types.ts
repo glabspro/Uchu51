@@ -5,7 +5,7 @@ export type View = 'dashboard' | 'local' | 'cocina' | 'retiro' | 'delivery' | 'g
 export type UserRole = 'owner' | 'admin' | 'cocinero' | 'repartidor' | 'recepcionista' | 'cliente';
 export type MetodoPago = 'efectivo' | 'tarjeta' | 'yape' | 'plin' | 'online';
 export type Theme = 'light' | 'dark';
-export type AppView = 'customer' | 'login' | 'signup' | 'admin' | 'super_admin';
+export type AppView = 'customer' | 'login' | 'admin' | 'super_admin';
 
 export interface RestaurantSettings {
     cooks: string[];
@@ -216,7 +216,6 @@ export type Action =
   | { type: 'LOGIN_FAILED'; payload: string }
   | { type: 'LOGOUT' }
   | { type: 'GO_TO_LOGIN' }
-  | { type: 'GO_TO_SIGNUP' }
   | { type: 'ADD_TOAST'; payload: Omit<Toast, 'id'> }
   | { type: 'REMOVE_TOAST'; payload: number }
   | { type: 'UPDATE_ORDER_STATUS'; payload: { orderId: string; newStatus: EstadoPedido; user: UserRole } }

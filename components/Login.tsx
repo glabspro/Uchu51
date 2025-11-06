@@ -95,12 +95,6 @@ const Login: React.FC<LoginProps> = ({ error }) => {
                         </div>
                     </form>
                 </div>
-                 <p className="text-center text-text-secondary dark:text-slate-500 text-sm mt-6">
-                    ¿No tienes una cuenta?{' '}
-                    <button onClick={() => dispatch({ type: 'GO_TO_SIGNUP' })} className="font-semibold hover:underline hover:text-primary dark:hover:text-orange-400 transition-colors">
-                        Regístrate aquí
-                    </button>
-                </p>
                 <p className="text-center text-text-secondary dark:text-slate-500 text-sm mt-4">
                     <button onClick={onNavigateToCustomerView} className="hover:underline">
                         O volver a la tienda

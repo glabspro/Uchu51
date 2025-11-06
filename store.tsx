@@ -117,7 +117,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
         case 'TOGGLE_SIDEBAR': return { ...state, isSidebarCollapsed: !state.isSidebarCollapsed };
         case 'LOGIN_FAILED': return { ...state, loginError: action.payload };
         case 'GO_TO_LOGIN': return { ...state, appView: 'login', loginError: null };
-        case 'GO_TO_SIGNUP': return { ...state, appView: 'signup', loginError: null };
         case 'ADD_TOAST': return { ...state, toasts: [...state.toasts, { ...action.payload, id: Date.now() }] };
         case 'REMOVE_TOAST': return { ...state, toasts: state.toasts.filter(t => t.id !== action.payload) };
         case 'SET_INSTALL_PROMPT': return { ...state, installPrompt: action.payload };
@@ -264,8 +263,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             await fetchDataForTenant(restaurant_id);
 
         } catch (e: any) {
-            dispatch({ type: 'ADD_TOAST', payload: { message: e.message, type: 'danger' } });
-            getSupabase().auth.signOut();
+             dispatch({ type: 'ADD_TOAST', payload: { message: e.message, type: 'danger' } });
+             getSupabase().auth.signOut();
         }
     };
 
