@@ -1,3 +1,4 @@
+
 export type EstadoPedido = 'pendiente confirmar pago' | 'pendiente de confirmación' | 'nuevo' | 'confirmado' | 'en preparación' | 'en armado' | 'listo para armado' | 'listo' | 'en camino' | 'entregado' | 'cancelado' | 'recogido' | 'pagado' | 'cuenta solicitada';
 export type TipoPedido = 'delivery' | 'local' | 'retiro';
 export type Turno = 'mañana' | 'tarde' | 'noche';
@@ -5,7 +6,7 @@ export type View = 'dashboard' | 'local' | 'cocina' | 'retiro' | 'delivery' | 'g
 export type UserRole = 'owner' | 'admin' | 'cocinero' | 'repartidor' | 'recepcionista' | 'cliente';
 export type MetodoPago = 'efectivo' | 'tarjeta' | 'yape' | 'plin' | 'online';
 export type Theme = 'light' | 'dark';
-export type AppView = 'customer' | 'login' | 'admin' | 'super_admin';
+export type AppView = 'customer' | 'login' | 'admin' | 'super_admin' | 'signup';
 
 export interface RestaurantSettings {
     cooks: string[];
@@ -216,6 +217,7 @@ export type Action =
   | { type: 'LOGIN_FAILED'; payload: string }
   | { type: 'LOGOUT' }
   | { type: 'GO_TO_LOGIN' }
+  | { type: 'GO_TO_SIGNUP' }
   | { type: 'ADD_TOAST'; payload: Omit<Toast, 'id'> }
   | { type: 'REMOVE_TOAST'; payload: number }
   | { type: 'UPDATE_ORDER_STATUS'; payload: { orderId: string; newStatus: EstadoPedido; user: UserRole } }

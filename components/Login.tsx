@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAppContext } from '../store';
 import { LockClosedIcon } from './icons';
@@ -95,11 +96,19 @@ const Login: React.FC<LoginProps> = ({ error }) => {
                         </div>
                     </form>
                 </div>
-                 <p className="text-center text-text-secondary dark:text-slate-500 text-sm mt-6">
-                    <button onClick={onNavigateToCustomerView} className="font-semibold hover:underline hover:text-primary dark:hover:text-orange-400 transition-colors">
-                        Volver a la tienda
-                    </button>
-                </p>
+                <div className="text-center text-text-secondary dark:text-slate-500 text-sm mt-6 space-y-2">
+                    <p>
+                        <button onClick={onNavigateToCustomerView} className="font-semibold hover:underline hover:text-primary dark:hover:text-orange-400 transition-colors">
+                            Volver a la tienda
+                        </button>
+                    </p>
+                    <p>
+                        ¿Primera vez configurando?{' '}
+                        <button onClick={() => dispatch({ type: 'GO_TO_SIGNUP' })} className="font-semibold hover:underline hover:text-primary dark:hover:text-orange-400 transition-colors">
+                            Crea la cuenta de Super Admin
+                        </button>
+                    </p>
+                </div>
             </div>
         </div>
     );
