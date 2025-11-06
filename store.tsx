@@ -236,7 +236,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
     };
 
-    const fetchUserSessionData = async (user: User) => {
+    const fetchUserSessionData = async (user: User, accessToken: string) => {
         try {
             if (user.email === 'admin@uchu.app') {
                 dispatch({ type: 'SET_SESSION', payload: { user, appView: 'super_admin' }});
@@ -245,16 +245,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             }
     
             const supabase = getSupabase();
-            const { data: { session } } = await supabase.auth.getSession();
-
-            if (!session) {
-                throw new Error("Sesión de usuario no encontrada. Por favor, intenta ingresar de nuevo.");
-            }
             
-            // Invoke edge function to get role data securely, including the auth token.
+            // Invoke edge function to get role data securely, using the passed auth token.
             const { data: functionData, error: functionError } = await supabase.functions.invoke('get-user-session-data', {
                 headers: {
-                    'Authorization': `Bearer ${session.access_token}`
+                    'Authorization': `Bearer ${accessToken}`
                 }
             });
     
@@ -280,6 +275,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
              dispatch({ type: 'ADD_TOAST', payload: { message: e.message, type: 'danger' } });
              // Sign out to prevent an infinite loop of failed login attempts
              getSupabase().auth.signOut();
+             dispatch({ type: 'SET_LOADING', payload: false });
         }
     };
 
@@ -291,9 +287,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 const supabase = getSupabase();
                 const { data: { session } } = await supabase.auth.getSession();
                 const user = session?.user ?? null;
+                const accessToken = session?.access_token ?? null;
 
-                if (user) {
-                    await fetchUserSessionData(user);
+                if (user && accessToken) {
+                    await fetchUserSessionData(user, accessToken);
                 } else {
                     dispatch({ type: 'SET_SESSION', payload: { user: null } });
                     dispatch({ type: 'SET_LOADING', payload: false });
@@ -309,8 +306,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const supabase = getSupabase();
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
             const user = session?.user ?? null;
-            if ((_event === 'SIGNED_IN' || _event === 'INITIAL_SESSION') && user) {
-                await fetchUserSessionData(user);
+            const accessToken = session?.access_token ?? null;
+
+            if ((_event === 'SIGNED_IN' || _event === 'INITIAL_SESSION') && user && accessToken) {
+                await fetchUserSessionData(user, accessToken);
             } else if (_event === 'SIGNED_OUT') {
                 dispatch({ type: 'LOGOUT' });
             } else if (!session) {
