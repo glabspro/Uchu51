@@ -243,29 +243,32 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 dispatch({ type: 'SET_LOADING', payload: false });
                 return;
             }
-
+    
             const supabase = getSupabase();
-            const { data: userRole, error } = await supabase
-                .from('user_roles')
-                .select('restaurant_id, role')
-                .eq('user_id', user.id)
-                .single();
-
-            if (error || !userRole) {
-                throw new Error(error?.message || "No se encontró el rol del usuario. Es posible que el registro no se haya completado.");
+            
+            // Invoke edge function to get role data securely, bypassing RLS issues for new users.
+            const { data: functionData, error: functionError } = await supabase.functions.invoke('get-user-session-data');
+    
+            if (functionError) {
+                 throw new Error(functionError.message || "Error al obtener datos de la sesión.");
             }
-
-            const { restaurant_id, role } = userRole;
-
+    
+            if (functionData.error || !functionData.restaurant_id || !functionData.role) {
+                 throw new Error(functionData.error || "No se encontró el rol del usuario. Es posible que el registro no se haya completado.");
+            }
+    
+            const { restaurant_id, role } = functionData;
+    
             dispatch({
                 type: 'SET_SESSION',
                 payload: { user, restaurantId: restaurant_id, currentUserRole: role as UserRole, appView: 'admin' },
             });
-
+    
             await fetchDataForTenant(restaurant_id);
-
+    
         } catch (e: any) {
              dispatch({ type: 'ADD_TOAST', payload: { message: e.message, type: 'danger' } });
+             // Sign out to prevent an infinite loop of failed login attempts
              getSupabase().auth.signOut();
         }
     };
