@@ -81,7 +81,7 @@ const Login: React.FC<LoginProps> = ({ error }) => {
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [showForgotPassword, setShowForgotPassword] = useState(false);
-
+    
     const onNavigateToCustomerView = () => dispatch({ type: 'LOGOUT' });
 
     const handleSubmit = async (e: React.FormEvent) => {

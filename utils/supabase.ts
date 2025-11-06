@@ -109,21 +109,17 @@ export const getSupabase = (): SupabaseClient<Database> => {
         return supabaseClient;
     }
 
-    const supabaseUrl = "https://hpyiywcnpgcnyydlsphn.supabase.co";
-    const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhweWl5d2NucGdjbnl5ZGxzcGhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyNjA5NjksImV4cCI6MjA3NzgzNjk2OX0.EHLUoqodT360fJkehaXIA5dvVe9J1RZ-Xekc1RZtuW8";
+    const supabaseUrl = "https://ubipvdzpvoffyyvitfdc.supabase.co";
+    const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InViaXB2ZHpwdm9mZnl5dml0ZmRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyNjEwMTEsImV4cCI6MjA3NzgzNzAxMX0.lYDKtDLhfLl655qRbQW256K8ixh1NSRDF8k5LeFl-NY";
 
-    if (!supabaseUrl || !supabaseAnonKey) {
-        throw new Error(`Error de Configuración: No se encontraron las credenciales de Supabase.
+    if (!supabaseUrl || !supabaseAnonKey || supabaseAnonKey.startsWith("[")) {
+        throw new Error(`Error de Configuración: Credenciales de Supabase incompletas.
 
-Por favor, ve a la configuración de tu proyecto y asegúrate de que los nombres de las variables de entorno sean EXACTAMENTE:
-
-1. Nombre: SUPABASE_URL
-   Valor: [Tu URL de Supabase]
-
-2. Nombre: SUPABASE_ANON_KEY
-   Valor: [Tu clave "anon public" de Supabase]
-
-Después de guardarlas, haz un "Redeploy".`);
+Por favor, sigue estos pasos:
+1. Abre el archivo 'utils/supabase.ts' en el editor.
+2. Ve a tu proyecto en Supabase -> Project Settings -> API.
+3. Copia la clave 'anon' 'public' y pégala reemplazando el texto "[Pega aquí tu Supabase Anon Key]".
+4. Guarda el archivo. La aplicación se recargará automáticamente.`);
     }
     
     supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKey);
