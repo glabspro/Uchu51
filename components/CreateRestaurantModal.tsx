@@ -25,68 +25,24 @@ const CreateRestaurantModal: React.FC<CreateRestaurantModalProps> = ({ onClose, 
         try {
             const supabase = getSupabase();
 
-            // 1. Preserve current super admin session
-            const { data: { session: adminSession } } = await supabase.auth.getSession();
-            if (!adminSession) {
-                throw new Error("La sesión del super admin ha expirado. Por favor, inicia sesión de nuevo.");
+            // Call the Edge Function to handle user and restaurant creation securely
+            const { data, error: functionError } = await supabase.functions.invoke('create-restaurant', {
+                body: {
+                    restaurantName,
+                    ownerName,
+                    ownerEmail,
+                    ownerPassword,
+                },
+            });
+
+            if (functionError) {
+                // Try to parse a more specific error message from the function's response
+                const errorMessage = functionError.context?.msg ? JSON.parse(functionError.context.msg).error : functionError.message;
+                throw new Error(errorMessage || "Un error desconocido ocurrió en el servidor.");
             }
 
-            // 2. Create the new tenant's user account
-            const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-                email: ownerEmail,
-                password: ownerPassword,
-                options: {
-                    data: {
-                        full_name: ownerName, // Pass owner's name to metadata
-                    }
-                }
-            });
-
-            if (signUpError) throw signUpError;
-            if (!signUpData.user) throw new Error("No se pudo crear el usuario. El correo podría ya estar en uso.");
-
-            const newUserId = signUpData.user.id;
-
-            // 3. IMPORTANT: Restore super admin session to continue operations
-            await supabase.auth.setSession({
-                access_token: adminSession.access_token,
-                refresh_token: adminSession.refresh_token,
-            });
-
-            // 4. Create the new restaurant entry
-            const { data: restaurantData, error: restaurantError } = await supabase
-                .from('restaurants')
-                .insert({
-                    name: restaurantName,
-                    plan_id: 'default',
-                    settings: { // Default settings for a new restaurant
-                        tables: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-                        cooks: ['Cocinero 1', 'Cocinero 2'],
-                        drivers: ['Driver 1', 'Driver 2'],
-                        paymentInfo: { nombre: 'Yape/Plin del Negocio', telefono: '987654321', qrUrl: ''},
-                        modules: { delivery: true, local: true, retiro: true }
-                    }
-                })
-                .select()
-                .single();
-
-            if (restaurantError) throw restaurantError;
-            
-            // 5. Link the new user to the new restaurant with an 'owner' role
-            const { error: roleError } = await supabase
-                .from('user_roles')
-                .insert({
-                    user_id: newUserId,
-                    restaurant_id: restaurantData.id,
-                    role: 'owner'
-                });
-
-            if (roleError) {
-                // If role linking fails, try to clean up by deleting the created restaurant.
-                await supabase.from('restaurants').delete().eq('id', restaurantData.id);
-                // Note: Deleting the user requires admin privileges and is more complex.
-                // For now, we'll throw the error.
-                throw roleError;
+            if (data.error) {
+                 throw new Error(data.error);
             }
 
             dispatch({ type: 'ADD_TOAST', payload: { message: `Negocio "${restaurantName}" creado con éxito.`, type: 'success' } });
