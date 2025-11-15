@@ -59,6 +59,15 @@ const getContrastRatio = (color1: string, color2: string): number => {
     return (brightest + 0.05) / (darkest + 0.05);
 };
 
+// --- Palette Definitions ---
+const palettes = [
+    { name: 'Clásico Criollo', primary: '#C81E1E', secondary: '#FBBF24', background: '#FFFBEB' },
+    { name: 'Costa Marina', primary: '#0D9488', secondary: '#FDE68A', background: '#F0F9FF' },
+    { name: 'Andino Terroso', primary: '#E85D04', secondary: '#6B7280', background: '#F5F5F4' },
+    { name: 'Nocturno Limeño', primary: '#F59E0B', secondary: '#9CA3AF', background: '#111827' },
+];
+
+
 // --- Sub-components ---
 
 const ToggleSwitch: React.FC<{
@@ -213,7 +222,7 @@ const ColorPickerSection: React.FC<{
 
 const primaryPresets = ['#F97316', '#EF4444', '#D97706', '#DC2626', '#166534', '#1E40AF'];
 const secondaryPresets = ['#F4D47C', '#84CC16', '#3B82F6', '#A855F7', '#6366F1', '#EC4899'];
-const backgroundPresets = ['#FDF6E3', '#F3F4F6', '#FEFCE8', '#EFF6FF', '#F0FDF4', '#1F2937'];
+const backgroundPresets = ['#FDF6E3', '#F3F4F6', '#FEFCE8', '#EFF6FF', '#F0FDF4', '#111827'];
 
 
 const LocalSettings: React.FC = () => {
@@ -221,6 +230,7 @@ const LocalSettings: React.FC = () => {
     const [settings, setSettings] = useState<RestaurantSettings>(state.restaurantSettings!);
     const [tablesInput, setTablesInput] = useState(state.restaurantSettings?.tables.join(', ') || '');
     const [isSaving, setIsSaving] = useState(false);
+    const [activeTab, setActiveTab] = useState<'palettes' | 'custom'>('palettes');
     
     useEffect(() => {
         setSettings(state.restaurantSettings!);
@@ -243,6 +253,18 @@ const LocalSettings: React.FC = () => {
         setSettings(prev => ({ ...prev, branding: { ...prev.branding, [field]: value } }));
     };
     
+    const handleSelectPalette = (palette: { primary: string; secondary: string; background: string }) => {
+        setSettings(prev => ({
+            ...prev,
+            branding: {
+                ...prev.branding,
+                primaryColor: palette.primary,
+                secondaryColor: palette.secondary,
+                backgroundColor: palette.background,
+            }
+        }));
+    };
+    
     const handleSave = () => {
         setIsSaving(true);
         const tables = tablesInput.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n) && n > 0);
@@ -259,42 +281,77 @@ const LocalSettings: React.FC = () => {
     };
 
     const branding = settings.branding || {};
+    
+    const isPaletteActive = (palette: typeof palettes[0]) => {
+        return branding.primaryColor === palette.primary &&
+               branding.secondaryColor === palette.secondary &&
+               branding.backgroundColor === palette.background;
+    };
 
     return (
         <div className="animate-fade-in-up space-y-8 max-h-[calc(100vh-22rem)] overflow-y-auto pr-3">
             <div>
                 <h3 className="text-xl font-bold text-text-primary dark:text-ivory-cream mb-4">Apariencia y Marca</h3>
-                <div className="bg-background dark:bg-gunmetal/50 p-4 rounded-xl border border-text-primary/5 dark:border-[#45535D] grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="space-y-6">
-                        <ColorPickerSection
-                            title="Color Principal"
-                            color={branding.primaryColor || '#F97316'}
-                            presets={primaryPresets}
-                            onChange={(color) => handleBrandingChange('primaryColor', color)}
-                            contrastCheck={{ against: '#FFFFFF', label: 'texto blanco' }}
-                        />
-                         <ColorPickerSection
-                            title="Color Secundario / Acento"
-                            color={branding.secondaryColor || '#F4D47C'}
-                            presets={secondaryPresets}
-                            onChange={(color) => handleBrandingChange('secondaryColor', color)}
-                        />
-                         <ColorPickerSection
-                            title="Color de Fondo (Modo Claro)"
-                            color={branding.backgroundColor || '#FDF6E3'}
-                            presets={backgroundPresets}
-                            onChange={(color) => handleBrandingChange('backgroundColor', color)}
-                        />
-                        <div>
-                            <label className="block text-sm font-medium text-text-secondary dark:text-light-silver mb-1">URL del Logo</label>
-                            <input type="text" placeholder="https://ejemplo.com/logo.png" value={branding.logoUrl || ''} onChange={(e) => handleBrandingChange('logoUrl', e.target.value)} className="w-full bg-surface dark:bg-[#34424D] p-2 rounded-md border border-text-primary/10 dark:border-[#45535D]"/>
-                        </div>
+                <div className="bg-background dark:bg-gunmetal/50 p-4 rounded-xl border border-text-primary/5 dark:border-[#45535D]">
+                    <div className="flex border-b border-text-primary/10 dark:border-[#45535D] mb-4">
+                        <button onClick={() => setActiveTab('palettes')} className={`py-2 px-4 font-semibold border-b-2 ${activeTab === 'palettes' ? 'text-primary border-primary' : 'text-text-secondary border-transparent'}`}>Paletas</button>
+                        <button onClick={() => setActiveTab('custom')} className={`py-2 px-4 font-semibold border-b-2 ${activeTab === 'custom' ? 'text-primary border-primary' : 'text-text-secondary border-transparent'}`}>Personalizado</button>
                     </div>
-                    <BrandingPreview 
-                        primary={branding.primaryColor || '#F97316'}
-                        secondary={branding.secondaryColor || '#F4D47C'}
-                        background={branding.backgroundColor || '#FDF6E3'}
-                    />
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {activeTab === 'palettes' ? (
+                            <div className="animate-fade-in-up">
+                                <h4 className="text-lg font-semibold text-text-primary dark:text-ivory-cream mb-3">Paletas Prediseñadas</h4>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    {palettes.map(palette => {
+                                        const isActive = isPaletteActive(palette);
+                                        return (
+                                            <button key={palette.name} onClick={() => handleSelectPalette(palette)} className={`p-3 rounded-lg border-2 text-left relative transition-all ${isActive ? 'border-primary bg-primary/10' : 'border-text-primary/10 dark:border-[#45535D] bg-surface dark:bg-[#34424D] hover:border-primary/50'}`}>
+                                                {isActive && <CheckCircleIcon className="h-6 w-6 text-primary absolute top-2 right-2" />}
+                                                <p className="font-bold text-text-primary dark:text-ivory-cream">{palette.name}</p>
+                                                <div className="flex gap-2 mt-2">
+                                                    <div style={{ backgroundColor: palette.primary }} className="h-8 flex-1 rounded"></div>
+                                                    <div style={{ backgroundColor: palette.secondary }} className="h-8 flex-1 rounded"></div>
+                                                    <div style={{ backgroundColor: palette.background }} className="h-8 flex-1 rounded border border-black/10"></div>
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        ) : (
+                             <div className="space-y-6 animate-fade-in-up">
+                                <ColorPickerSection
+                                    title="Color Principal"
+                                    color={branding.primaryColor || '#F97316'}
+                                    presets={primaryPresets}
+                                    onChange={(color) => handleBrandingChange('primaryColor', color)}
+                                    contrastCheck={{ against: '#FFFFFF', label: 'texto blanco' }}
+                                />
+                                <ColorPickerSection
+                                    title="Color Secundario / Acento"
+                                    color={branding.secondaryColor || '#F4D47C'}
+                                    presets={secondaryPresets}
+                                    onChange={(color) => handleBrandingChange('secondaryColor', color)}
+                                />
+                                <ColorPickerSection
+                                    title="Color de Fondo (Modo Claro)"
+                                    color={branding.backgroundColor || '#FDF6E3'}
+                                    presets={backgroundPresets}
+                                    onChange={(color) => handleBrandingChange('backgroundColor', color)}
+                                />
+                            </div>
+                        )}
+                        <BrandingPreview 
+                            primary={branding.primaryColor || '#F97316'}
+                            secondary={branding.secondaryColor || '#F4D47C'}
+                            background={branding.backgroundColor || '#FDF6E3'}
+                        />
+                    </div>
+                     <div className="mt-6">
+                        <label className="block text-sm font-medium text-text-secondary dark:text-light-silver mb-1">URL del Logo</label>
+                        <input type="text" placeholder="https://ejemplo.com/logo.png" value={branding.logoUrl || ''} onChange={(e) => handleBrandingChange('logoUrl', e.target.value)} className="w-full bg-surface dark:bg-[#34424D] p-2 rounded-md border border-text-primary/10 dark:border-[#45535D]"/>
+                    </div>
                 </div>
             </div>
 
