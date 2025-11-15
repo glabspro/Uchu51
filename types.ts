@@ -3,6 +3,7 @@
 
 
 
+
 export type EstadoPedido = 'pendiente confirmar pago' | 'pendiente de confirmación' | 'nuevo' | 'confirmado' | 'en preparación' | 'en armado' | 'listo para armado' | 'listo' | 'en camino' | 'entregado' | 'cancelado' | 'recogido' | 'pagado' | 'cuenta solicitada';
 export type TipoPedido = 'delivery' | 'local' | 'retiro';
 export type Turno = 'mañana' | 'tarde' | 'noche';
@@ -233,6 +234,7 @@ export type Action =
   | { type: 'INITIATE_DELIVERY_PAYMENT'; payload: Pedido }
   | { type: 'CONFIRM_PAYMENT'; payload: { orderId: string; details: { metodo: MetodoPago; montoPagado?: number } } }
   | { type: 'CONFIRM_DELIVERY_PAYMENT'; payload: { orderId: string; details: { metodo: MetodoPago; montoPagado?: number } } }
+  | { type: 'CONFIRM_CUSTOMER_PAYMENT'; payload: string }
   | { type: 'CLOSE_MODALS' }
   | { type: 'SELECT_MESA'; payload: { mesa: Mesa | null; customer?: ClienteLeal | null } }
   | { type: 'INITIATE_ASSIGN_CUSTOMER_TO_MESA', payload: Mesa }

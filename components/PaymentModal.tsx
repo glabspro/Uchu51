@@ -55,6 +55,14 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ order }) => {
         onConfirmPayment(order.id, paymentDetails);
     };
     
+    const handleSimulatePayment = () => {
+        const paymentDetails = {
+            metodo: selectedMethod,
+            montoPagado: order.total,
+        };
+        onConfirmPayment(order.id, paymentDetails);
+    };
+
     const isConfirmDisabled = selectedMethod === 'efectivo' && (parseFloat(amountReceived) < order.total || isNaN(parseFloat(amountReceived)));
 
     return (
@@ -109,16 +117,21 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ order }) => {
                     )}
                 </div>
 
-                <div className="p-6 border-t dark:border-slate-700 mt-auto bg-background dark:bg-slate-900/50 rounded-b-2xl grid grid-cols-2 gap-4">
-                    <button onClick={onClose} className="w-full bg-text-primary/10 dark:bg-slate-700 hover:bg-text-primary/20 dark:hover:bg-slate-600 text-text-primary dark:text-slate-200 font-bold py-3 px-6 rounded-xl transition-colors">
-                        Cancelar
-                    </button>
-                    <button
-                        onClick={handleConfirm}
-                        disabled={isConfirmDisabled}
-                        className="w-full bg-text-primary dark:bg-slate-600 hover:bg-text-primary/90 dark:hover:bg-slate-500 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg hover:shadow-text-primary/20 hover:-translate-y-0.5 disabled:bg-gray-400 dark:disabled:bg-slate-600/50 dark:disabled:text-slate-400 disabled:shadow-none disabled:translate-y-0"
-                    >
-                        Confirmar Pago
+                <div className="p-6 border-t dark:border-slate-700 mt-auto bg-background dark:bg-slate-900/50 rounded-b-2xl space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                        <button onClick={onClose} className="w-full bg-text-primary/10 dark:bg-slate-700 hover:bg-text-primary/20 dark:hover:bg-slate-600 text-text-primary dark:text-slate-200 font-bold py-3 px-6 rounded-xl transition-colors">
+                            Cancelar
+                        </button>
+                        <button
+                            onClick={handleConfirm}
+                            disabled={isConfirmDisabled}
+                            className="w-full bg-text-primary dark:bg-slate-600 hover:bg-text-primary/90 dark:hover:bg-slate-500 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg hover:shadow-text-primary/20 hover:-translate-y-0.5 disabled:bg-gray-400 dark:disabled:bg-slate-600/50 dark:disabled:text-slate-400 disabled:shadow-none disabled:translate-y-0"
+                        >
+                            Confirmar Pago
+                        </button>
+                    </div>
+                    <button onClick={handleSimulatePayment} className="w-full bg-transparent border-2 border-dashed border-text-secondary/50 text-text-secondary dark:text-slate-400 font-bold py-2 px-4 rounded-xl flex items-center justify-center gap-2 hover:border-primary hover:text-primary transition-colors">
+                        Simular Pago Rápido (Demo)
                     </button>
                 </div>
             </div>

@@ -3,6 +3,7 @@
 
 
 
+
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import type {
     Pedido, Producto, Promocion, Salsa, ClienteLeal, LoyaltyProgram, Recompensa, Mesa,
@@ -328,6 +329,21 @@ function appReducer(state: AppState, action: AppAction): AppState {
             return {
                 ...state,
                 customers: [...state.customers, newCustomer]
+            };
+        }
+        case 'CONFIRM_CUSTOMER_PAYMENT': {
+            const orderId = action.payload;
+            return {
+                ...state,
+                orders: state.orders.map(o => {
+                    if (o.id === orderId && o.estado === 'pendiente confirmar pago') {
+                        const newStatus: EstadoPedido = 'en preparación';
+                        const newHistory: HistorialEstado = { estado: newStatus, fecha: new Date().toISOString(), usuario: 'cliente' };
+                        return { ...o, estado: newStatus, historial: [...o.historial, newHistory] };
+                    }
+                    return o;
+                }),
+                toasts: [...state.toasts, { id: Date.now(), message: `Pago del pedido ${orderId} confirmado.`, type: 'success' }]
             };
         }
         // Simplified actions for local state

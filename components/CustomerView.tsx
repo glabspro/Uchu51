@@ -35,6 +35,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
     const [showInstallInstructions, setShowInstallInstructions] = useState(false);
     const [showPromosModal, setShowPromosModal] = useState(false);
     const [currentSlide, setCurrentSlide] = useState(0);
+    const [isPaymentSimulated, setIsPaymentSimulated] = useState(false);
 
     const [formErrors, setFormErrors] = useState<FormErrors>({});
     const [cashPaymentAmount, setCashPaymentAmount] = useState('');
@@ -384,6 +385,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
         const generatedId = `PED-${String(Date.now()).slice(-4)}`;
         setNewOrderId(generatedId);
         setStage('confirmation');
+        setIsPaymentSimulated(false);
         setCart([]);
         setCustomerInfo({ nombre: '', telefono: '' });
         setFormErrors({});
@@ -693,6 +695,68 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                     )}
                      <textarea placeholder="¿Alguna indicación especial para tu pedido?" value={orderNotes} onChange={e => setOrderNotes(e.target.value)} rows={2} className="w-full p-3 rounded-lg bg-background dark:bg-[#45535D] border border-text-primary/10 dark:border-[#56656E]"></textarea>
                 </div>
+                
+                 <div className="bg-surface dark:bg-[#34424D] p-4 rounded-2xl space-y-4">
+                    <h3 className="font-bold text-lg text-text-primary dark:text-ivory-cream">¿Cómo quieres pagar?</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                        <button
+                            onClick={() => setPaymentChoice('payNow')}
+                            className={`p-4 rounded-xl border-2 text-center transition-colors ${
+                                paymentChoice === 'payNow'
+                                    ? 'bg-primary/10 border-primary'
+                                    : 'bg-background dark:bg-gunmetal/50 border-text-primary/10 dark:border-[#45535D] hover:border-primary/50'
+                            }`}
+                        >
+                            <p className={`font-bold ${paymentChoice === 'payNow' ? 'text-primary' : 'text-text-primary dark:text-ivory-cream'}`}>Pagar ahora</p>
+                            <p className="text-xs text-text-secondary dark:text-light-silver">Online con Yape/Plin</p>
+                        </button>
+                        <button
+                            onClick={() => setPaymentChoice('payLater')}
+                            className={`p-4 rounded-xl border-2 text-center transition-colors ${
+                                paymentChoice === 'payLater'
+                                    ? 'bg-primary/10 border-primary'
+                                    : 'bg-background dark:bg-gunmetal/50 border-text-primary/10 dark:border-[#45535D] hover:border-primary/50'
+                            }`}
+                        >
+                            <p className={`font-bold ${paymentChoice === 'payLater' ? 'text-primary' : 'text-text-primary dark:text-ivory-cream'}`}>Pagar al recibir</p>
+                            <p className="text-xs text-text-secondary dark:text-light-silver">Efectivo o Tarjeta</p>
+                        </button>
+                    </div>
+
+                    {paymentChoice === 'payLater' && (
+                        <div className="animate-fade-in-up pt-4 space-y-3 border-t border-text-primary/10 dark:border-[#45535D]">
+                            <div className="grid grid-cols-2 gap-3">
+                                <button onClick={() => setPaymentMethod('efectivo')} className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'efectivo' ? 'bg-primary/10 border-primary text-primary' : 'bg-background dark:bg-gunmetal/50 border-transparent text-text-primary dark:text-ivory-cream'}`}>
+                                    <CashIcon className="h-5 w-5"/> <span>Efectivo</span>
+                                </button>
+                                <button onClick={() => setPaymentMethod('tarjeta')} className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'tarjeta' ? 'bg-primary/10 border-primary text-primary' : 'bg-background dark:bg-gunmetal/50 border-transparent text-text-primary dark:text-ivory-cream'}`}>
+                                    <CreditCardIcon className="h-5 w-5"/> <span>Tarjeta (POS)</span>
+                                </button>
+                            </div>
+
+                            {paymentMethod === 'efectivo' && (
+                                <div className="space-y-2 pt-2">
+                                    <label className="flex items-center gap-3 p-3 bg-background dark:bg-gunmetal/50 rounded-lg cursor-pointer">
+                                        <input type="checkbox" checked={isExactCash} onChange={e => setIsExactCash(e.target.checked)} className="h-5 w-5 rounded text-primary focus:ring-primary border-text-primary/20 dark:border-[#56656E] bg-surface dark:bg-gunmetal"/>
+                                        <span className="font-medium text-sm text-text-primary dark:text-ivory-cream">Pagaré con el monto exacto</span>
+                                    </label>
+                                    {!isExactCash && (
+                                        <div>
+                                            <input
+                                                type="number"
+                                                placeholder="¿Con cuánto pagarás?"
+                                                value={cashPaymentAmount}
+                                                onChange={e => setCashPaymentAmount(e.target.value)}
+                                                className={`w-full p-3 rounded-lg bg-background dark:bg-gunmetal/50 border ${formErrors.pagoConEfectivo ? 'border-danger' : 'border-text-primary/10 dark:border-[#56656E]'}`}
+                                            />
+                                            {formErrors.pagoConEfectivo && <p className="text-danger text-xs mt-1">{formErrors.pagoConEfectivo}</p>}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
             </main>
              <footer className="flex-shrink-0 p-4 border-t border-text-primary/10 dark:border-[#45535D] bg-surface/90 dark:bg-[#34424D]/90 backdrop-blur-lg sticky bottom-0 z-50">
                 <div className="flex justify-between items-center mb-3">
@@ -700,7 +764,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                     <span className="font-bold text-2xl font-mono">S/.{total.toFixed(2)}</span>
                 </div>
                 <button onClick={handlePlaceOrder} className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3 px-4 rounded-xl transition-all shadow-lg">
-                    Confirmar Pedido
+                    {paymentChoice === 'payNow' ? `Ir a Pagar S/.${total.toFixed(2)}` : 'Confirmar Pedido'}
                 </button>
             </footer>
         </div>
@@ -709,22 +773,48 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
     const renderConfirmationScreen = () => {
         const whatsappMessage = encodeURIComponent(`Hola, acabo de realizar el pedido ${newOrderId}.`);
         const whatsappLink = `https://wa.me/51${yapePlinInfo.telefono}?text=${whatsappMessage}`;
+
+        const handleSimulatePayment = () => {
+            dispatch({ type: 'CONFIRM_CUSTOMER_PAYMENT', payload: newOrderId });
+            setIsPaymentSimulated(true);
+        };
+
         return (
             <div className="flex flex-col items-center justify-center text-center h-full p-4">
-                <CheckCircleIcon className="h-20 w-20 text-success mb-4" />
-                <h2 className="text-3xl font-heading font-bold text-text-primary dark:text-white">¡Pedido Recibido!</h2>
-                <p className="text-lg text-text-secondary dark:text-light-silver mt-2">Tu pedido <span className="font-bold text-primary">{newOrderId}</span> está en camino.</p>
-
-                {(paymentMethod === 'yape' || paymentMethod === 'plin') && paymentChoice === 'payNow' && (
-                    <div className="mt-6 p-4 bg-surface dark:bg-[#34424D] rounded-2xl w-full max-w-sm">
-                        <h3 className="font-bold mb-2">Paga con Yape/Plin para confirmar</h3>
-                        <img src={yapePlinInfo.qrUrl} alt="QR Code" className="w-40 h-40 mx-auto rounded-lg" />
-                        <p className="mt-2">A nombre de: <span className="font-semibold">{yapePlinInfo.nombre}</span></p>
-                        <p>Número: <span className="font-semibold">{yapePlinInfo.telefono}</span></p>
-                        <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="mt-4 w-full bg-green-500 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2">
-                           <WhatsAppIcon className="h-6 w-6"/> Enviar voucher por WhatsApp
-                        </a>
-                    </div>
+                 {paymentChoice === 'payLater' ? (
+                    <>
+                        <CheckCircleIcon className="h-20 w-20 text-success mb-4" />
+                        <h2 className="text-3xl font-heading font-bold text-text-primary dark:text-white">¡Pedido Recibido!</h2>
+                        <p className="text-lg text-text-secondary dark:text-light-silver mt-2">Tu pedido <span className="font-bold text-primary">{newOrderId}</span> ya está en preparación.</p>
+                    </>
+                ) : (
+                    <>
+                         {isPaymentSimulated ? (
+                             <div className="text-center py-8">
+                                <CheckCircleIcon className="h-16 w-16 text-success mx-auto mb-4" />
+                                <h3 className="font-bold text-lg text-success">¡Pago Confirmado!</h3>
+                                <p className="text-sm text-text-secondary dark:text-light-silver">Tu pedido <span className="font-bold text-primary">{newOrderId}</span> ya está en preparación.</p>
+                            </div>
+                        ) : (
+                            <div className="mt-6 p-4 bg-surface dark:bg-[#34424D] rounded-2xl w-full max-w-sm">
+                                <h2 className="text-2xl font-heading font-bold text-text-primary dark:text-white">¡Pedido Recibido!</h2>
+                                <p className="text-base text-text-secondary dark:text-light-silver mt-1">Pedido <span className="font-bold text-primary">{newOrderId}</span></p>
+                                <h3 className="font-bold mt-4 mb-2">Paga S/.{total.toFixed(2)} con Yape/Plin para confirmar</h3>
+                                <img src={yapePlinInfo.qrUrl} alt="QR Code" className="w-40 h-40 mx-auto rounded-lg" />
+                                <p className="mt-2 text-sm">A nombre de: <span className="font-semibold">{yapePlinInfo.nombre}</span></p>
+                                <p className="text-sm">Número: <span className="font-semibold">{yapePlinInfo.telefono}</span></p>
+                                <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="mt-4 w-full bg-green-500 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2">
+                                   <WhatsAppIcon className="h-6 w-6"/> Enviar voucher por WhatsApp
+                                </a>
+                                <button
+                                    onClick={handleSimulatePayment}
+                                    className="mt-2 w-full bg-transparent border-2 border-dashed border-text-secondary/50 text-text-secondary dark:text-light-silver font-bold py-2 px-4 rounded-xl flex items-center justify-center gap-2 hover:border-primary hover:text-primary transition-colors"
+                                >
+                                    Simular Pago Confirmado
+                                </button>
+                            </div>
+                        )}
+                    </>
                 )}
                 
                 <button onClick={() => setStage('selection')} className="mt-8 font-semibold text-primary hover:underline">
