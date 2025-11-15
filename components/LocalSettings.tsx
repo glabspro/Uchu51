@@ -1,7 +1,65 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAppContext } from '../store';
 import type { RestaurantSettings, PaymentMethodDetail } from '../types';
-import { CheckCircleIcon } from './icons';
+import { CheckCircleIcon, ExclamationTriangleIcon } from './icons';
+
+// --- Helper Functions ---
+const hexToHsl = (hex: string): { h: number; s: number; l: number } | null => {
+    if (!hex || !/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(hex)) return null;
+    let r, g, b;
+    hex = hex.substring(1);
+    if (hex.length === 3) {
+      r = parseInt(hex.charAt(0).repeat(2), 16);
+      g = parseInt(hex.charAt(1).repeat(2), 16);
+      b = parseInt(hex.charAt(2).repeat(2), 16);
+    } else {
+      r = parseInt(hex.substring(0, 2), 16);
+      g = parseInt(hex.substring(2, 4), 16);
+      b = parseInt(hex.substring(4, 6), 16);
+    }
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h = 0, s = 0, l = (max + min) / 2;
+    if (max !== min) {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+        case g: h = (b - r) / d + 2; break;
+        case b: h = (r - g) / d + 4; break;
+      }
+      h /= 6;
+    }
+    return { h: h * 360, s: s * 100, l: l * 100 };
+};
+
+const hexToRgb = (hex: string): { r: number; g: number; b: number } | null => {
+    let shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+    hex = hex.replace(shorthandRegex, (m, r, g, b) => r + r + g + g + b + b);
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null;
+};
+
+const getLuminance = (r: number, g: number, b: number): number => {
+    const a = [r, g, b].map(v => {
+        v /= 255;
+        return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+    return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
+};
+
+const getContrastRatio = (color1: string, color2: string): number => {
+    const rgb1 = hexToRgb(color1);
+    const rgb2 = hexToRgb(color2);
+    if (!rgb1 || !rgb2) return 1;
+    const lum1 = getLuminance(rgb1.r, rgb1.g, rgb1.b);
+    const lum2 = getLuminance(rgb2.r, rgb2.g, rgb2.b);
+    const brightest = Math.max(lum1, lum2);
+    const darkest = Math.min(lum1, lum2);
+    return (brightest + 0.05) / (darkest + 0.05);
+};
+
+// --- Sub-components ---
 
 const ToggleSwitch: React.FC<{
     label: string;
@@ -71,56 +129,118 @@ const OnlinePaymentConfigurator: React.FC<{
     );
 };
 
+const BrandingPreview: React.FC<{ primary: string; secondary: string; background: string }> = ({ primary, secondary, background }) => {
+    const primaryHsl = hexToHsl(primary);
+    const secondaryHsl = hexToHsl(secondary);
+    
+    const backgroundRgb = hexToRgb(background);
+    const isDarkBg = backgroundRgb ? getLuminance(backgroundRgb.r, backgroundRgb.g, backgroundRgb.b) < 0.5 : false;
+    const textColor = isDarkBg ? 'text-ivory-cream' : 'text-text-primary';
+    const secondaryTextColor = isDarkBg ? 'text-light-silver' : 'text-text-secondary';
+
+    const style = {
+        ...(primaryHsl && {
+            '--preview-primary-h': primaryHsl.h,
+            '--preview-primary-s': `${primaryHsl.s}%`,
+            '--preview-primary-l': `${primaryHsl.l}%`,
+        }),
+        ...(secondaryHsl && {
+            '--preview-secondary-h': secondaryHsl.h,
+            '--preview-secondary-s': `${secondaryHsl.s}%`,
+            '--preview-secondary-l': `${secondaryHsl.l}%`,
+        }),
+        backgroundColor: background,
+    } as React.CSSProperties;
+
+    const primaryColorVar = 'hsl(var(--preview-primary-h), var(--preview-primary-s), var(--preview-primary-l))';
+    const secondaryColorVar = 'hsl(var(--preview-secondary-h), var(--preview-secondary-s), var(--preview-secondary-l))';
+
+    return (
+        <div style={style} className={`p-4 rounded-xl border-2 border-dashed border-text-primary/10 dark:border-[#45535D] flex flex-col items-center justify-center h-full transition-colors duration-300 ${textColor}`}>
+            <h4 className={`text-sm font-bold mb-4 ${secondaryTextColor}`}>Vista Previa</h4>
+            <div className="space-y-4 w-full max-w-[200px]">
+                <button style={{ backgroundColor: primaryColorVar }} className="w-full text-white font-bold py-2 rounded-lg shadow-md">
+                    Botón Principal
+                </button>
+                <div className="text-center">
+                    <p className="font-semibold" style={{ color: primaryColorVar }}>Texto de realce</p>
+                    <p className={`text-xs ${secondaryTextColor}`}>Un texto secundario</p>
+                </div>
+                 <div style={{ backgroundColor: `hsla(var(--preview-secondary-h), var(--preview-secondary-s), var(--preview-secondary-l), 0.1)` }} className="flex items-center gap-2 p-2 rounded-lg">
+                    <div style={{ backgroundColor: secondaryColorVar }} className="text-white p-1 rounded-md">
+                        <CheckCircleIcon className="h-4 w-4" />
+                    </div>
+                    <span className="text-sm font-semibold" style={{ color: secondaryColorVar }}>Elemento de Acento</span>
+                 </div>
+            </div>
+        </div>
+    );
+};
+
+const ColorPickerSection: React.FC<{
+    title: string;
+    color: string;
+    presets: string[];
+    onChange: (color: string) => void;
+    contrastCheck?: { against: string, label: string };
+}> = ({ title, color, presets, onChange, contrastCheck }) => {
+    const contrastRatio = useMemo(() => contrastCheck ? getContrastRatio(color, contrastCheck.against) : null, [color, contrastCheck]);
+    const isContrastLow = contrastRatio !== null && contrastRatio < 4.5;
+
+    return (
+        <div>
+            <label className="block text-sm font-medium text-text-secondary dark:text-light-silver mb-2">{title}</label>
+            <div className="flex items-center gap-3">
+                 <label className="relative h-12 w-12 rounded-md cursor-pointer border-2 border-text-primary/10 dark:border-[#56656E] overflow-hidden" style={{ backgroundColor: color }}>
+                    <input type="color" value={color} onChange={(e) => onChange(e.target.value)} className="absolute inset-0 w-full h-full opacity-0"/>
+                </label>
+                <input type="text" value={color} onChange={(e) => onChange(e.target.value)} className="w-full bg-surface dark:bg-[#34424D] p-2 rounded-md border border-text-primary/10 dark:border-[#45535D] font-mono"/>
+            </div>
+            {isContrastLow && (
+                <div className="mt-2 p-2 bg-amber-500/10 text-amber-700 dark:text-amber-300 text-xs rounded-md flex items-center gap-2">
+                    <ExclamationTriangleIcon className="h-4 w-4" />
+                    <span>Bajo contraste con {contrastCheck?.label}. Puede ser difícil de leer.</span>
+                </div>
+            )}
+            <div className="flex flex-wrap gap-2 mt-3">
+                {presets.map(presetColor => (
+                    <button key={presetColor} style={{ backgroundColor: presetColor }} onClick={() => onChange(presetColor)} className={`w-8 h-8 rounded-full transition-transform hover:scale-110 border-2 ${color === presetColor ? 'border-white dark:border-ivory-cream shadow-md' : 'border-transparent'}`}></button>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+const primaryPresets = ['#F97316', '#EF4444', '#D97706', '#DC2626', '#166534', '#1E40AF'];
+const secondaryPresets = ['#F4D47C', '#84CC16', '#3B82F6', '#A855F7', '#6366F1', '#EC4899'];
+const backgroundPresets = ['#FDF6E3', '#F3F4F6', '#FEFCE8', '#EFF6FF', '#F0FDF4', '#1F2937'];
+
 
 const LocalSettings: React.FC = () => {
     const { state, dispatch } = useAppContext();
     const [settings, setSettings] = useState<RestaurantSettings>(state.restaurantSettings!);
     const [tablesInput, setTablesInput] = useState(state.restaurantSettings?.tables.join(', ') || '');
     const [isSaving, setIsSaving] = useState(false);
-
+    
     useEffect(() => {
         setSettings(state.restaurantSettings!);
         setTablesInput(state.restaurantSettings?.tables.join(', ') || '');
     }, [state.restaurantSettings]);
 
     const handleModuleChange = (module: 'delivery' | 'local' | 'retiro', value: boolean) => {
-        setSettings(prev => ({
-            ...prev,
-            modules: {
-                ...prev.modules,
-                [module]: value,
-            }
-        }));
+        setSettings(prev => ({ ...prev, modules: { ...prev.modules, [module]: value } }));
     };
     
     const handlePaymentMethodChange = (method: 'efectivo' | 'tarjeta', value: boolean) => {
-        setSettings(prev => ({
-            ...prev,
-            paymentMethods: {
-                ...prev.paymentMethods,
-                [method]: value,
-            }
-        }));
+        setSettings(prev => ({ ...prev, paymentMethods: { ...prev.paymentMethods, [method]: value } }));
     };
 
     const handleOnlinePaymentMethodChange = (method: 'yape' | 'plin', newConfig: PaymentMethodDetail) => {
-        setSettings(prev => ({
-            ...prev,
-            paymentMethods: {
-                ...prev.paymentMethods,
-                [method]: newConfig,
-            }
-        }));
+        setSettings(prev => ({ ...prev, paymentMethods: { ...prev.paymentMethods, [method]: newConfig } }));
     };
 
-    const handleBrandingChange = (field: 'primaryColor' | 'logoUrl', value: string) => {
-        setSettings(prev => ({
-            ...prev,
-            branding: {
-                ...prev.branding,
-                [field]: value
-            }
-        }));
+    const handleBrandingChange = (field: 'primaryColor' | 'secondaryColor' | 'backgroundColor' | 'logoUrl', value: string) => {
+        setSettings(prev => ({ ...prev, branding: { ...prev.branding, [field]: value } }));
     };
     
     const handleSave = () => {
@@ -128,10 +248,7 @@ const LocalSettings: React.FC = () => {
         const tables = tablesInput.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n) && n > 0);
         const uniqueTables = [...new Set(tables)].sort((a: number, b: number) => a - b);
         
-        const finalSettings: RestaurantSettings = {
-            ...settings,
-            tables: uniqueTables
-        };
+        const finalSettings: RestaurantSettings = { ...settings, tables: uniqueTables };
 
         dispatch({ type: 'UPDATE_RESTAURANT_SETTINGS', payload: finalSettings });
         
@@ -141,8 +258,46 @@ const LocalSettings: React.FC = () => {
         }, 500);
     };
 
+    const branding = settings.branding || {};
+
     return (
         <div className="animate-fade-in-up space-y-8 max-h-[calc(100vh-22rem)] overflow-y-auto pr-3">
+            <div>
+                <h3 className="text-xl font-bold text-text-primary dark:text-ivory-cream mb-4">Apariencia y Marca</h3>
+                <div className="bg-background dark:bg-gunmetal/50 p-4 rounded-xl border border-text-primary/5 dark:border-[#45535D] grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="space-y-6">
+                        <ColorPickerSection
+                            title="Color Principal"
+                            color={branding.primaryColor || '#F97316'}
+                            presets={primaryPresets}
+                            onChange={(color) => handleBrandingChange('primaryColor', color)}
+                            contrastCheck={{ against: '#FFFFFF', label: 'texto blanco' }}
+                        />
+                         <ColorPickerSection
+                            title="Color Secundario / Acento"
+                            color={branding.secondaryColor || '#F4D47C'}
+                            presets={secondaryPresets}
+                            onChange={(color) => handleBrandingChange('secondaryColor', color)}
+                        />
+                         <ColorPickerSection
+                            title="Color de Fondo (Modo Claro)"
+                            color={branding.backgroundColor || '#FDF6E3'}
+                            presets={backgroundPresets}
+                            onChange={(color) => handleBrandingChange('backgroundColor', color)}
+                        />
+                        <div>
+                            <label className="block text-sm font-medium text-text-secondary dark:text-light-silver mb-1">URL del Logo</label>
+                            <input type="text" placeholder="https://ejemplo.com/logo.png" value={branding.logoUrl || ''} onChange={(e) => handleBrandingChange('logoUrl', e.target.value)} className="w-full bg-surface dark:bg-[#34424D] p-2 rounded-md border border-text-primary/10 dark:border-[#45535D]"/>
+                        </div>
+                    </div>
+                    <BrandingPreview 
+                        primary={branding.primaryColor || '#F97316'}
+                        secondary={branding.secondaryColor || '#F4D47C'}
+                        background={branding.backgroundColor || '#FDF6E3'}
+                    />
+                </div>
+            </div>
+
             <div>
                 <h3 className="text-xl font-bold text-text-primary dark:text-ivory-cream mb-4">Módulos de Venta</h3>
                 <div className="space-y-3">
@@ -194,26 +349,7 @@ const LocalSettings: React.FC = () => {
                     />
                 </div>
             </div>
-
-            <div>
-                 <h3 className="text-xl font-bold text-text-primary dark:text-ivory-cream mb-4">Apariencia y Marca</h3>
-                 <div className="bg-background dark:bg-gunmetal/50 p-4 rounded-xl border border-text-primary/5 dark:border-[#45535D] space-y-4">
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-text-secondary dark:text-light-silver mb-1">Color Principal</label>
-                            <div className="flex items-center gap-2">
-                                <input type="color" value={settings.branding?.primaryColor || '#F97316'} onChange={(e) => handleBrandingChange('primaryColor', e.target.value)} className="h-10 w-10 p-1 bg-transparent border-none rounded-md cursor-pointer"/>
-                                <input type="text" value={settings.branding?.primaryColor || '#F97316'} onChange={(e) => handleBrandingChange('primaryColor', e.target.value)} className="w-full bg-surface dark:bg-[#34424D] p-2 rounded-md border border-text-primary/10 dark:border-[#45535D]"/>
-                            </div>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-text-secondary dark:text-light-silver mb-1">URL del Logo</label>
-                            <input type="text" placeholder="https://ejemplo.com/logo.png" value={settings.branding?.logoUrl || ''} onChange={(e) => handleBrandingChange('logoUrl', e.target.value)} className="w-full bg-surface dark:bg-[#34424D] p-2 rounded-md border border-text-primary/10 dark:border-[#45535D]"/>
-                        </div>
-                    </div>
-                 </div>
-            </div>
-
+            
             <div>
                  <h3 className="text-xl font-bold text-text-primary dark:text-ivory-cream mb-4">Configuración del Salón</h3>
                  <div className="bg-background dark:bg-gunmetal/50 p-4 rounded-xl border border-text-primary/5 dark:border-[#45535D]">

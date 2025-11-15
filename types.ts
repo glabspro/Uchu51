@@ -8,6 +8,7 @@
 
 
 
+
 export type EstadoPedido = 'pendiente confirmar pago' | 'pendiente de confirmación' | 'nuevo' | 'confirmado' | 'en preparación' | 'en armado' | 'listo para armado' | 'listo' | 'en camino' | 'entregado' | 'cancelado' | 'recogido' | 'pagado' | 'cuenta solicitada';
 export type TipoPedido = 'delivery' | 'local' | 'retiro';
 export type Turno = 'mañana' | 'tarde' | 'noche';
@@ -30,6 +31,8 @@ export interface RestaurantSettings {
     tables: number[];
     branding?: {
         primaryColor?: string;
+        secondaryColor?: string;
+        backgroundColor?: string;
         logoUrl?: string;
     };
     modules?: {

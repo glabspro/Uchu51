@@ -95,13 +95,26 @@ const App: React.FC = () => {
 
     useEffect(() => {
         const root = window.document.documentElement;
-        const primaryColor = restaurantSettings?.branding?.primaryColor || '#FF5B04';
-        
-        const hsl = hexToHsl(primaryColor);
-        if (hsl) {
-            root.style.setProperty('--color-primary-h', `${hsl.h}`);
-            root.style.setProperty('--color-primary-s', `${hsl.s}%`);
-            root.style.setProperty('--color-primary-l', `${hsl.l}%`);
+        const branding = restaurantSettings?.branding;
+
+        const primary = hexToHsl(branding?.primaryColor || '#FF5B04');
+        const secondary = hexToHsl(branding?.secondaryColor || '#F4D47C');
+        const background = hexToHsl(branding?.backgroundColor || '#FDF6E3');
+
+        if (primary) {
+            root.style.setProperty('--color-primary-h', `${primary.h}`);
+            root.style.setProperty('--color-primary-s', `${primary.s}%`);
+            root.style.setProperty('--color-primary-l', `${primary.l}%`);
+        }
+        if (secondary) {
+            root.style.setProperty('--color-secondary-h', `${secondary.h}`);
+            root.style.setProperty('--color-secondary-s', `${secondary.s}%`);
+            root.style.setProperty('--color-secondary-l', `${secondary.l}%`);
+        }
+        if (background) {
+            root.style.setProperty('--color-background-h', `${background.h}`);
+            root.style.setProperty('--color-background-s', `${background.s}%`);
+            root.style.setProperty('--color-background-l', `${background.l}%`);
         }
     }, [restaurantSettings]);
 

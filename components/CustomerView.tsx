@@ -445,11 +445,23 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                 setCustomerInfo(prev => ({ ...prev, direccion: address }));
                 setIsLocating(false);
             },
-            () => {
-                setFormErrors(prev => ({...prev, direccion: "No se pudo obtener la ubicación. Revisa los permisos y vuelve a intentarlo."}));
+            (error: GeolocationPositionError) => {
+                let errorMessage = "No se pudo obtener la ubicación. Revisa los permisos y vuelve a intentarlo.";
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorMessage = "Permiso de ubicación denegado. Habilítalo en los ajustes de tu navegador.";
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorMessage = "La información de ubicación no está disponible.";
+                        break;
+                    case error.TIMEOUT:
+                        errorMessage = "Se agotó el tiempo para obtener la ubicación.";
+                        break;
+                }
+                setFormErrors(prev => ({...prev, direccion: errorMessage}));
                 setIsLocating(false);
             },
-            { timeout: 10000 }
+            { timeout: 10000, enableHighAccuracy: true }
         );
     };
 
