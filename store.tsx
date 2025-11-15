@@ -4,6 +4,10 @@
 
 
 
+
+
+
+
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import type {
     Pedido, Producto, Promocion, Salsa, ClienteLeal, LoyaltyProgram, Recompensa, Mesa,
@@ -20,11 +24,6 @@ const MOCK_RESTAURANT_ID = 'd290f1ee-6c54-4b01-90e6-d701748f0851';
 const MOCK_RESTAURANT_SETTINGS: RestaurantSettings = {
   cooks: ['Cocinero 1', 'Cocinero 2'],
   drivers: ['Driver A', 'Driver B'],
-  paymentInfo: {
-    nombre: 'Uchu51 Demo',
-    telefono: '987654321',
-    qrUrl: 'https://placehold.co/200x200/png?text=QR+Yape/Plin',
-  },
   tables: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
   branding: {
     primaryColor: '#F97316',
@@ -35,6 +34,22 @@ const MOCK_RESTAURANT_SETTINGS: RestaurantSettings = {
     local: true,
     retiro: true,
   },
+  paymentMethods: {
+    efectivo: true,
+    tarjeta: true,
+    yape: {
+        enabled: true,
+        holderName: 'Uchu51 Yape',
+        phoneNumber: '987654321',
+        qrUrl: 'https://i.postimg.cc/d15q6qNm/yape-qr.png'
+    },
+    plin: {
+        enabled: true,
+        holderName: 'Uchu51 Plin',
+        phoneNumber: '912345678',
+        qrUrl: 'https://i.postimg.cc/L8W2r7D2/plin-qr.png'
+    }
+  }
 };
 
 const MOCK_PRODUCTS: Producto[] = [

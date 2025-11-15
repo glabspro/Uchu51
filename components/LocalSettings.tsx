@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../store';
-import type { RestaurantSettings } from '../types';
+import type { RestaurantSettings, PaymentMethodDetail } from '../types';
 import { CheckCircleIcon } from './icons';
 
 const ToggleSwitch: React.FC<{
@@ -22,6 +22,54 @@ const ToggleSwitch: React.FC<{
         </div>
     </div>
 );
+
+const OnlinePaymentConfigurator: React.FC<{
+    label: string;
+    config: PaymentMethodDetail;
+    onChange: (config: PaymentMethodDetail) => void;
+}> = ({ label, config, onChange }) => {
+    return (
+        <div className="bg-background dark:bg-gunmetal/50 rounded-lg border border-text-primary/10 dark:border-[#45535D] p-4 space-y-4">
+            <div className="flex items-center justify-between cursor-pointer" onClick={() => onChange({ ...config, enabled: !config.enabled })}>
+                <h4 className="font-semibold text-text-primary dark:text-ivory-cream">{label}</h4>
+                <div className={`w-14 h-8 flex items-center rounded-full p-1 duration-300 ease-in-out ${config.enabled ? 'bg-primary' : 'bg-text-primary/20 dark:bg-[#56656E]'}`}>
+                    <div className={`bg-white w-6 h-6 rounded-full shadow-md transform duration-300 ease-in-out ${config.enabled ? 'translate-x-6' : ''}`}></div>
+                </div>
+            </div>
+            {config.enabled && (
+                <div className="space-y-3 pt-3 border-t border-text-primary/10 dark:border-[#45535D] animate-fade-in-up">
+                    <div>
+                        <label className="text-xs font-semibold text-text-secondary dark:text-light-silver">Nombre del Titular</label>
+                        <input
+                            type="text"
+                            value={config.holderName || ''}
+                            onChange={(e) => onChange({ ...config, holderName: e.target.value })}
+                            className="w-full bg-surface dark:bg-[#34424D] p-2 mt-1 rounded-md border border-text-primary/10 dark:border-[#45535D]"
+                        />
+                    </div>
+                    <div>
+                        <label className="text-xs font-semibold text-text-secondary dark:text-light-silver">Número de Teléfono</label>
+                        <input
+                            type="tel"
+                            value={config.phoneNumber || ''}
+                            onChange={(e) => onChange({ ...config, phoneNumber: e.target.value })}
+                            className="w-full bg-surface dark:bg-[#34424D] p-2 mt-1 rounded-md border border-text-primary/10 dark:border-[#45535D]"
+                        />
+                    </div>
+                    <div>
+                        <label className="text-xs font-semibold text-text-secondary dark:text-light-silver">URL del Código QR</label>
+                        <input
+                            type="text"
+                            value={config.qrUrl || ''}
+                            onChange={(e) => onChange({ ...config, qrUrl: e.target.value })}
+                            className="w-full bg-surface dark:bg-[#34424D] p-2 mt-1 rounded-md border border-text-primary/10 dark:border-[#45535D]"
+                        />
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
 
 
 const LocalSettings: React.FC = () => {
@@ -45,6 +93,26 @@ const LocalSettings: React.FC = () => {
         }));
     };
     
+    const handlePaymentMethodChange = (method: 'efectivo' | 'tarjeta', value: boolean) => {
+        setSettings(prev => ({
+            ...prev,
+            paymentMethods: {
+                ...prev.paymentMethods,
+                [method]: value,
+            }
+        }));
+    };
+
+    const handleOnlinePaymentMethodChange = (method: 'yape' | 'plin', newConfig: PaymentMethodDetail) => {
+        setSettings(prev => ({
+            ...prev,
+            paymentMethods: {
+                ...prev.paymentMethods,
+                [method]: newConfig,
+            }
+        }));
+    };
+
     const handleBrandingChange = (field: 'primaryColor' | 'logoUrl', value: string) => {
         setSettings(prev => ({
             ...prev,
@@ -58,7 +126,6 @@ const LocalSettings: React.FC = () => {
     const handleSave = () => {
         setIsSaving(true);
         const tables = tablesInput.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n) && n > 0);
-        // FIX: Explicitly typed the sort function parameters `a` and `b` as numbers. This resolves a TypeScript error where the type inference was failing, causing an issue with the arithmetic operation `a - b`.
         const uniqueTables = [...new Set(tables)].sort((a: number, b: number) => a - b);
         
         const finalSettings: RestaurantSettings = {
@@ -96,6 +163,34 @@ const LocalSettings: React.FC = () => {
                         description="Permite que los clientes hagan pedidos para recoger."
                         enabled={settings.modules?.retiro !== false}
                         onChange={(val) => handleModuleChange('retiro', val)}
+                    />
+                </div>
+            </div>
+
+            <div>
+                <h3 className="text-xl font-bold text-text-primary dark:text-ivory-cream mb-4">Métodos de Pago</h3>
+                <div className="space-y-3">
+                    <ToggleSwitch
+                        label="Efectivo"
+                        description="Aceptar pagos en efectivo."
+                        enabled={settings.paymentMethods?.efectivo !== false}
+                        onChange={(val) => handlePaymentMethodChange('efectivo', val)}
+                    />
+                    <ToggleSwitch
+                        label="Tarjeta (POS)"
+                        description="Aceptar pagos con tarjeta de crédito/débito."
+                        enabled={settings.paymentMethods?.tarjeta !== false}
+                        onChange={(val) => handlePaymentMethodChange('tarjeta', val)}
+                    />
+                     <OnlinePaymentConfigurator
+                        label="Yape"
+                        config={settings.paymentMethods?.yape || { enabled: false }}
+                        onChange={(config) => handleOnlinePaymentMethodChange('yape', config)}
+                    />
+                    <OnlinePaymentConfigurator
+                        label="Plin"
+                        config={settings.paymentMethods?.plin || { enabled: false }}
+                        onChange={(config) => handleOnlinePaymentMethodChange('plin', config)}
                     />
                 </div>
             </div>

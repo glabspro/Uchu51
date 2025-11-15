@@ -4,6 +4,10 @@
 
 
 
+
+
+
+
 export type EstadoPedido = 'pendiente confirmar pago' | 'pendiente de confirmación' | 'nuevo' | 'confirmado' | 'en preparación' | 'en armado' | 'listo para armado' | 'listo' | 'en camino' | 'entregado' | 'cancelado' | 'recogido' | 'pagado' | 'cuenta solicitada';
 export type TipoPedido = 'delivery' | 'local' | 'retiro';
 export type Turno = 'mañana' | 'tarde' | 'noche';
@@ -13,14 +17,16 @@ export type MetodoPago = 'efectivo' | 'tarjeta' | 'yape' | 'plin' | 'online';
 export type Theme = 'light' | 'dark';
 export type AppView = 'customer' | 'login' | 'admin' | 'super_admin';
 
+export interface PaymentMethodDetail {
+    enabled: boolean;
+    holderName?: string;
+    phoneNumber?: string;
+    qrUrl?: string;
+}
+
 export interface RestaurantSettings {
     cooks: string[];
     drivers: string[];
-    paymentInfo: {
-        nombre: string;
-        telefono: string;
-        qrUrl: string;
-    };
     tables: number[];
     branding?: {
         primaryColor?: string;
@@ -30,6 +36,12 @@ export interface RestaurantSettings {
         delivery?: boolean;
         local?: boolean;
         retiro?: boolean;
+    };
+    paymentMethods?: {
+        efectivo?: boolean;
+        tarjeta?: boolean;
+        yape?: PaymentMethodDetail;
+        plin?: PaymentMethodDetail;
     };
 }
 

@@ -28,8 +28,26 @@ const PaymentMethodButton: React.FC<{
 );
 
 const PaymentModal: React.FC<PaymentModalProps> = ({ order }) => {
-    const { dispatch } = useAppContext();
-    const [selectedMethod, setSelectedMethod] = useState<MetodoPago>('efectivo');
+    const { state, dispatch } = useAppContext();
+    const { restaurantSettings } = state;
+    
+    const paymentMethodsEnabled = useMemo(() => {
+        const pm = restaurantSettings?.paymentMethods;
+        return {
+            efectivo: pm?.efectivo !== false,
+            tarjeta: pm?.tarjeta !== false,
+            yape: pm?.yape?.enabled === true,
+            plin: pm?.plin?.enabled === true,
+        }
+    }, [restaurantSettings]);
+
+    const [selectedMethod, setSelectedMethod] = useState<MetodoPago>(() => {
+        if (paymentMethodsEnabled.efectivo) return 'efectivo';
+        if (paymentMethodsEnabled.tarjeta) return 'tarjeta';
+        if (paymentMethodsEnabled.yape) return 'yape';
+        if (paymentMethodsEnabled.plin) return 'plin';
+        return 'efectivo'; // fallback
+    });
     const [amountReceived, setAmountReceived] = useState<string>('');
     
     const onClose = () => dispatch({ type: 'CLOSE_MODALS' });
@@ -82,10 +100,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ order }) => {
                     <div className="mb-6">
                         <h3 className="text-lg font-semibold text-text-secondary dark:text-slate-300 mb-3">Método de Pago</h3>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            <PaymentMethodButton method="efectivo" label="Efectivo" icon={<CashIcon className="h-5 w-5"/>} currentMethod={selectedMethod} setMethod={setSelectedMethod} />
-                            <PaymentMethodButton method="tarjeta" label="Tarjeta" icon={<CreditCardIcon className="h-5 w-5"/>} currentMethod={selectedMethod} setMethod={setSelectedMethod} />
-                            <PaymentMethodButton method="yape" label="Yape" icon={<DevicePhoneMobileIcon className="h-5 w-5"/>} currentMethod={selectedMethod} setMethod={setSelectedMethod} />
-                             <PaymentMethodButton method="plin" label="Plin" icon={<DevicePhoneMobileIcon className="h-5 w-5"/>} currentMethod={selectedMethod} setMethod={setSelectedMethod} />
+                            {paymentMethodsEnabled.efectivo && <PaymentMethodButton method="efectivo" label="Efectivo" icon={<CashIcon className="h-5 w-5"/>} currentMethod={selectedMethod} setMethod={setSelectedMethod} />}
+                            {paymentMethodsEnabled.tarjeta && <PaymentMethodButton method="tarjeta" label="Tarjeta" icon={<CreditCardIcon className="h-5 w-5"/>} currentMethod={selectedMethod} setMethod={setSelectedMethod} />}
+                            {paymentMethodsEnabled.yape && <PaymentMethodButton method="yape" label="Yape" icon={<DevicePhoneMobileIcon className="h-5 w-5"/>} currentMethod={selectedMethod} setMethod={setSelectedMethod} />}
+                            {paymentMethodsEnabled.plin && <PaymentMethodButton method="plin" label="Plin" icon={<DevicePhoneMobileIcon className="h-5 w-5"/>} currentMethod={selectedMethod} setMethod={setSelectedMethod} />}
                         </div>
                     </div>
 

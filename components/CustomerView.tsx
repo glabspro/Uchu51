@@ -31,7 +31,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
     const [newOrderId, setNewOrderId] = useState('');
     const [activeCategory, setActiveCategory] = useState('Hamburguesas');
     const [paymentMethod, setPaymentMethod] = useState<MetodoPago>('efectivo');
-    const [paymentChoice, setPaymentChoice] = useState<PaymentChoice>('payNow');
+    const [paymentChoice, setPaymentChoice] = useState<PaymentChoice | null>(null);
     const [showInstallInstructions, setShowInstallInstructions] = useState(false);
     const [showPromosModal, setShowPromosModal] = useState(false);
     const [currentSlide, setCurrentSlide] = useState(0);
@@ -64,10 +64,14 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
     const onToggleTheme = () => dispatch({ type: 'TOGGLE_THEME' });
     const onInstallClick = () => { if (installPrompt) { installPrompt.prompt(); /* Can't reset prompt from here easily */ }};
 
-    const yapePlinInfo = useMemo(() => restaurantSettings?.paymentInfo || {
-        nombre: "Restaurante UCHU51",
-        telefono: "987654321",
-        qrUrl: "https://placehold.co/200x200/png?text=QR+Yape/Plin",
+    const paymentMethodsEnabled = useMemo(() => {
+        const pm = restaurantSettings?.paymentMethods;
+        return {
+            efectivo: pm?.efectivo !== false,
+            tarjeta: pm?.tarjeta !== false,
+            yape: pm?.yape?.enabled === true,
+            plin: pm?.plin?.enabled === true,
+        }
     }, [restaurantSettings]);
 
     const handleLogoClick = () => {
@@ -130,6 +134,31 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
             setPromosShownThisLoad(true);
         }
     }, [activePromotions, promosShownThisLoad]);
+    
+    const showPayNow = paymentMethodsEnabled.yape || paymentMethodsEnabled.plin;
+    const showPayLater = paymentMethodsEnabled.efectivo || paymentMethodsEnabled.tarjeta;
+
+    useEffect(() => {
+        // Set an initial choice if not set
+        if (paymentChoice === null) {
+            if (showPayNow) {
+                setPaymentChoice('payNow');
+            } else if (showPayLater) {
+                setPaymentChoice('payLater');
+            }
+        }
+    }, [showPayNow, showPayLater, paymentChoice]);
+
+    useEffect(() => {
+        if (paymentChoice === 'payLater') {
+            if (paymentMethodsEnabled.efectivo) {
+                setPaymentMethod('efectivo');
+            } else if (paymentMethodsEnabled.tarjeta) {
+                setPaymentMethod('tarjeta');
+            }
+        }
+    }, [paymentChoice, paymentMethodsEnabled]);
+
 
     const getPromoImageUrl = (promo: Promocion, allProducts: Producto[]): string | undefined => {
         // Prioritize the image URL set directly on the promotion object.
@@ -365,7 +394,8 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
         
         const finalCart: ProductoPedido[] = cart.map(({ cartItemId, ...rest }) => rest);
         
-        const effectivePaymentMethod = paymentChoice === 'payNow' ? 'yape' : paymentMethod;
+        const onlineMethod: MetodoPago = restaurantSettings?.paymentMethods?.yape?.enabled ? 'yape' : 'plin';
+        const effectivePaymentMethod = paymentChoice === 'payNow' ? onlineMethod : paymentMethod;
 
         const newOrder: Omit<Pedido, 'id' | 'fecha' | 'turno' | 'historial' | 'areaPreparacion' | 'estado' | 'gananciaEstimada'> = {
             tipo: orderType,
@@ -698,40 +728,48 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                 
                  <div className="bg-surface dark:bg-[#34424D] p-4 rounded-2xl space-y-4">
                     <h3 className="font-bold text-lg text-text-primary dark:text-ivory-cream">¿Cómo quieres pagar?</h3>
-                    <div className="grid grid-cols-2 gap-3">
-                        <button
-                            onClick={() => setPaymentChoice('payNow')}
-                            className={`p-4 rounded-xl border-2 text-center transition-colors ${
-                                paymentChoice === 'payNow'
-                                    ? 'bg-primary/10 border-primary'
-                                    : 'bg-background dark:bg-gunmetal/50 border-text-primary/10 dark:border-[#45535D] hover:border-primary/50'
-                            }`}
-                        >
-                            <p className={`font-bold ${paymentChoice === 'payNow' ? 'text-primary' : 'text-text-primary dark:text-ivory-cream'}`}>Pagar ahora</p>
-                            <p className="text-xs text-text-secondary dark:text-light-silver">Online con Yape/Plin</p>
-                        </button>
-                        <button
-                            onClick={() => setPaymentChoice('payLater')}
-                            className={`p-4 rounded-xl border-2 text-center transition-colors ${
-                                paymentChoice === 'payLater'
-                                    ? 'bg-primary/10 border-primary'
-                                    : 'bg-background dark:bg-gunmetal/50 border-text-primary/10 dark:border-[#45535D] hover:border-primary/50'
-                            }`}
-                        >
-                            <p className={`font-bold ${paymentChoice === 'payLater' ? 'text-primary' : 'text-text-primary dark:text-ivory-cream'}`}>Pagar al recibir</p>
-                            <p className="text-xs text-text-secondary dark:text-light-silver">Efectivo o Tarjeta</p>
-                        </button>
+                    <div className={`grid ${showPayNow && showPayLater ? 'grid-cols-2' : 'grid-cols-1'} gap-3`}>
+                        {showPayNow && (
+                            <button
+                                onClick={() => setPaymentChoice('payNow')}
+                                className={`p-4 rounded-xl border-2 text-center transition-colors ${
+                                    paymentChoice === 'payNow'
+                                        ? 'bg-primary/10 border-primary'
+                                        : 'bg-background dark:bg-gunmetal/50 border-text-primary/10 dark:border-[#45535D] hover:border-primary/50'
+                                }`}
+                            >
+                                <p className={`font-bold ${paymentChoice === 'payNow' ? 'text-primary' : 'text-text-primary dark:text-ivory-cream'}`}>Pagar ahora</p>
+                                <p className="text-xs text-text-secondary dark:text-light-silver">Online con Yape/Plin</p>
+                            </button>
+                        )}
+                        {showPayLater && (
+                            <button
+                                onClick={() => setPaymentChoice('payLater')}
+                                className={`p-4 rounded-xl border-2 text-center transition-colors ${
+                                    paymentChoice === 'payLater'
+                                        ? 'bg-primary/10 border-primary'
+                                        : 'bg-background dark:bg-gunmetal/50 border-text-primary/10 dark:border-[#45535D] hover:border-primary/50'
+                                }`}
+                            >
+                                <p className={`font-bold ${paymentChoice === 'payLater' ? 'text-primary' : 'text-text-primary dark:text-ivory-cream'}`}>Pagar al recibir</p>
+                                <p className="text-xs text-text-secondary dark:text-light-silver">Efectivo o Tarjeta</p>
+                            </button>
+                        )}
                     </div>
 
                     {paymentChoice === 'payLater' && (
                         <div className="animate-fade-in-up pt-4 space-y-3 border-t border-text-primary/10 dark:border-[#45535D]">
                             <div className="grid grid-cols-2 gap-3">
-                                <button onClick={() => setPaymentMethod('efectivo')} className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'efectivo' ? 'bg-primary/10 border-primary text-primary' : 'bg-background dark:bg-gunmetal/50 border-transparent text-text-primary dark:text-ivory-cream'}`}>
-                                    <CashIcon className="h-5 w-5"/> <span>Efectivo</span>
-                                </button>
-                                <button onClick={() => setPaymentMethod('tarjeta')} className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'tarjeta' ? 'bg-primary/10 border-primary text-primary' : 'bg-background dark:bg-gunmetal/50 border-transparent text-text-primary dark:text-ivory-cream'}`}>
-                                    <CreditCardIcon className="h-5 w-5"/> <span>Tarjeta (POS)</span>
-                                </button>
+                                {paymentMethodsEnabled.efectivo && (
+                                    <button onClick={() => setPaymentMethod('efectivo')} className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'efectivo' ? 'bg-primary/10 border-primary text-primary' : 'bg-background dark:bg-gunmetal/50 border-transparent text-text-primary dark:text-ivory-cream'}`}>
+                                        <CashIcon className="h-5 w-5"/> <span>Efectivo</span>
+                                    </button>
+                                )}
+                                {paymentMethodsEnabled.tarjeta && (
+                                    <button onClick={() => setPaymentMethod('tarjeta')} className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'tarjeta' ? 'bg-primary/10 border-primary text-primary' : 'bg-background dark:bg-gunmetal/50 border-transparent text-text-primary dark:text-ivory-cream'}`}>
+                                        <CreditCardIcon className="h-5 w-5"/> <span>Tarjeta (POS)</span>
+                                    </button>
+                                )}
                             </div>
 
                             {paymentMethod === 'efectivo' && (
@@ -771,8 +809,18 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
     );
 
     const renderConfirmationScreen = () => {
+        const yapeConfig = restaurantSettings?.paymentMethods?.yape;
+        const plinConfig = restaurantSettings?.paymentMethods?.plin;
+
+        // Decide which config to use. Prioritize Yape if both are enabled.
+        const onlinePaymentConfig = yapeConfig?.enabled ? yapeConfig : (plinConfig?.enabled ? plinConfig : null);
+
         const whatsappMessage = encodeURIComponent(`Hola, acabo de realizar el pedido ${newOrderId}.`);
-        const whatsappLink = `https://wa.me/51${yapePlinInfo.telefono}?text=${whatsappMessage}`;
+        const whatsappLink = `https://wa.me/51${onlinePaymentConfig?.phoneNumber || ''}?text=${whatsappMessage}`;
+        const enabledOnlineMethods = [
+            yapeConfig?.enabled && 'Yape',
+            plinConfig?.enabled && 'Plin'
+        ].filter(Boolean).join('/');
 
         const handleSimulatePayment = () => {
             dispatch({ type: 'CONFIRM_CUSTOMER_PAYMENT', payload: newOrderId });
@@ -799,10 +847,10 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                             <div className="mt-6 p-4 bg-surface dark:bg-[#34424D] rounded-2xl w-full max-w-sm">
                                 <h2 className="text-2xl font-heading font-bold text-text-primary dark:text-white">¡Pedido Recibido!</h2>
                                 <p className="text-base text-text-secondary dark:text-light-silver mt-1">Pedido <span className="font-bold text-primary">{newOrderId}</span></p>
-                                <h3 className="font-bold mt-4 mb-2">Paga S/.{total.toFixed(2)} con Yape/Plin para confirmar</h3>
-                                <img src={yapePlinInfo.qrUrl} alt="QR Code" className="w-40 h-40 mx-auto rounded-lg" />
-                                <p className="mt-2 text-sm">A nombre de: <span className="font-semibold">{yapePlinInfo.nombre}</span></p>
-                                <p className="text-sm">Número: <span className="font-semibold">{yapePlinInfo.telefono}</span></p>
+                                <h3 className="font-bold mt-4 mb-2">Paga S/.{total.toFixed(2)} con {enabledOnlineMethods} para confirmar</h3>
+                                <img src={onlinePaymentConfig?.qrUrl || ''} alt="QR Code" className="w-40 h-40 mx-auto rounded-lg" />
+                                <p className="mt-2 text-sm">A nombre de: <span className="font-semibold">{onlinePaymentConfig?.holderName || ''}</span></p>
+                                <p className="text-sm">Número: <span className="font-semibold">{onlinePaymentConfig?.phoneNumber || ''}</span></p>
                                 <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="mt-4 w-full bg-green-500 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2">
                                    <WhatsAppIcon className="h-6 w-6"/> Enviar voucher por WhatsApp
                                 </a>
