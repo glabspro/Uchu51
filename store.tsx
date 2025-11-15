@@ -1,6 +1,8 @@
 
 
 
+
+
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import type {
     Pedido, Producto, Promocion, Salsa, ClienteLeal, LoyaltyProgram, Recompensa, Mesa,
@@ -246,6 +248,16 @@ function appReducer(state: AppState, action: AppAction): AppState {
         case 'SET_SAUCES': return { ...state, salsas: action.payload };
         case 'SET_PROMOTIONS': return { ...state, promotions: action.payload };
         case 'SET_LOYALTY_PROGRAMS': return { ...state, loyaltyPrograms: action.payload };
+        case 'UPDATE_RESTAURANT_SETTINGS': {
+            const newSettings: RestaurantSettings = {
+                ...state.restaurantSettings!,
+                ...action.payload,
+            };
+            return {
+                ...state,
+                restaurantSettings: newSettings,
+            };
+        }
         
         case 'UPDATE_ORDER_STATUS': {
             const { orderId, newStatus, user } = action.payload;

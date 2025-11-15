@@ -14,13 +14,13 @@ const NavItem: React.FC<{
     return (
         <button
             onClick={() => onNavigate(view)}
-            className={`flex flex-col items-center justify-center flex-1 py-2 transition-colors duration-200 ${
-                isActive ? 'text-primary' : 'text-text-secondary dark:text-light-silver hover:text-primary'
+            className={`relative flex flex-col items-center justify-center flex-1 py-2 transition-all duration-200 rounded-lg m-1 ${
+                isActive ? 'bg-primary/10 text-primary' : 'text-text-secondary dark:text-light-silver hover:bg-text-primary/5'
             }`}
             aria-current={isActive ? 'page' : undefined}
         >
             {icon}
-            <span className="text-xs font-semibold mt-1">{label}</span>
+            <span className={`text-xs mt-1 transition-all ${isActive ? 'font-bold' : 'font-semibold'}`}>{label}</span>
         </button>
     );
 };

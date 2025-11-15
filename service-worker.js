@@ -46,6 +46,7 @@ const URLS_TO_CACHE = [
   'components/SauceManager.tsx',
   'components/SauceEditorModal.tsx',
   'components/ReportesView.tsx',
+  'components/LocalSettings.tsx',
   'icon-192x192.png',
   'icon-512x512.png'
 ];

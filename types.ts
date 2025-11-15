@@ -1,6 +1,8 @@
 
 
 
+
+
 export type EstadoPedido = 'pendiente confirmar pago' | 'pendiente de confirmación' | 'nuevo' | 'confirmado' | 'en preparación' | 'en armado' | 'listo para armado' | 'listo' | 'en camino' | 'entregado' | 'cancelado' | 'recogido' | 'pagado' | 'cuenta solicitada';
 export type TipoPedido = 'delivery' | 'local' | 'retiro';
 export type Turno = 'mañana' | 'tarde' | 'noche';
@@ -241,4 +243,5 @@ export type Action =
   | { type: 'SET_LOYALTY_PROGRAMS'; payload: LoyaltyProgram[] }
   | { type: 'ADD_NEW_CUSTOMER'; payload: { telefono: string; nombre: string } }
   | { type: 'REDEEM_REWARD'; payload: { customerId: string; reward: Recompensa } }
-  | { type: 'SET_INSTALL_PROMPT'; payload: any };
+  | { type: 'SET_INSTALL_PROMPT'; payload: any }
+  | { type: 'UPDATE_RESTAURANT_SETTINGS'; payload: Partial<RestaurantSettings> };

@@ -12,7 +12,6 @@ interface PromotionModalProps {
 
 const PromotionModal: React.FC<PromotionModalProps> = ({ promotion, onSave, onClose, products }) => {
     const { state } = useAppContext();
-    // FIX: Add missing 'restaurant_id' property.
     const [formData, setFormData] = useState<Omit<Promocion, 'id'>>({
         nombre: promotion?.nombre || '',
         descripcion: promotion?.descripcion || '',
@@ -45,6 +44,14 @@ const PromotionModal: React.FC<PromotionModalProps> = ({ promotion, onSave, onCl
     const removeComboProduct = (index: number) => {
         const updatedProductos = (formData.condiciones.productos || []).filter((_, i) => i !== index);
         handleConditionChange('productos', updatedProductos);
+    };
+
+    const handleProductIdsChange = (productId: string) => {
+        const currentIds = formData.condiciones.productoIds || [];
+        const newIds = currentIds.includes(productId)
+            ? currentIds.filter(id => id !== productId)
+            : [...currentIds, productId];
+        handleConditionChange('productoIds', newIds);
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -89,10 +96,34 @@ const PromotionModal: React.FC<PromotionModalProps> = ({ promotion, onSave, onCl
                 );
             case 'descuento_porcentaje':
                  return (
-                    <div>
-                        <label className="block text-sm font-medium text-text-secondary dark:text-slate-400 mb-1">Descuento (%)</label>
-                        <input type="number" value={formData.condiciones.porcentaje || ''} onChange={e => handleConditionChange('porcentaje', parseInt(e.target.value))} className="w-full bg-background dark:bg-slate-700 border border-text-primary/10 dark:border-slate-600 rounded-md p-2" />
-                         <p className="text-xs text-text-secondary dark:text-slate-500 mt-1">Se aplicará a toda la orden. La selección por producto se añadirá próximamente.</p>
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-text-secondary dark:text-slate-400 mb-1">Porcentaje de Descuento (%)</label>
+                            <input
+                                type="number"
+                                value={formData.condiciones.porcentaje || ''}
+                                onChange={e => handleConditionChange('porcentaje', parseInt(e.target.value))}
+                                className="w-full bg-background dark:bg-slate-700 border border-text-primary/10 dark:border-slate-600 rounded-md p-2"
+                                placeholder="Ej: 15"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-text-secondary dark:text-slate-400 mb-1">Aplicar a Productos Específicos (Opcional)</label>
+                            <p className="text-xs text-text-secondary dark:text-slate-500 mb-2">Si no seleccionas ninguno, el descuento se aplicará a toda la orden.</p>
+                            <div className="max-h-40 overflow-y-auto space-y-2 p-2 bg-background dark:bg-slate-900/50 rounded-md border border-text-primary/10 dark:border-slate-700">
+                                {products.map(product => (
+                                    <label key={product.id} className="flex items-center gap-3 p-2 rounded-md hover:bg-surface dark:hover:bg-slate-700/50 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={(formData.condiciones.productoIds || []).includes(product.id)}
+                                            onChange={() => handleProductIdsChange(product.id)}
+                                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                        <span className="text-sm">{product.nombre}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 );
             default:
