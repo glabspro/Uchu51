@@ -18,7 +18,7 @@ const NavButton: React.FC<{
         onClick={onClick}
         title={isCollapsed ? label : undefined}
         className={`flex items-center w-full py-3 rounded-lg text-base font-semibold transition-all duration-200 group
-            ${isActive ? 'bg-primary text-white shadow-sm' : 'text-text-secondary hover:bg-surface hover:text-text-primary dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-white'}
+            ${isActive ? 'bg-primary text-white shadow-sm' : 'text-text-secondary hover:bg-surface hover:text-text-primary dark:text-light-silver dark:hover:bg-[#45535D] dark:hover:text-white'}
             ${isCollapsed ? 'justify-center' : 'space-x-3 px-4'}
         `}
     >
@@ -58,8 +58,8 @@ const Sidebar: React.FC<SidebarProps> = () => {
         : allNavItems;
     
     return (
-        <aside className={`${isSidebarCollapsed ? 'w-20' : 'w-64'} bg-surface dark:bg-slate-800 flex flex-col flex-shrink-0 border-r border-text-primary/5 dark:border-slate-700 transition-all duration-300 ease-in-out`}>
-            <div className={`h-16 flex items-center border-b border-text-primary/5 dark:border-slate-700 transition-all duration-300 ${isSidebarCollapsed ? 'justify-center px-2' : 'px-6'}`}>
+        <aside className={`hidden md:flex ${isSidebarCollapsed ? 'w-20' : 'w-64'} bg-surface dark:bg-[#34424D] flex-col flex-shrink-0 border-r border-text-primary/5 dark:border-[#45535D] transition-all duration-300 ease-in-out`}>
+            <div className={`h-16 flex items-center border-b border-text-primary/5 dark:border-[#45535D] transition-all duration-300 ${isSidebarCollapsed ? 'justify-center px-2' : 'px-6'}`}>
                  {isSidebarCollapsed 
                     ? <LogoIcon className="h-9 w-auto"/> 
                     : <Logo logoUrl={restaurantSettings?.branding?.logoUrl} className="h-9 w-auto" variant={theme === 'dark' ? 'light' : 'default'} />}
@@ -76,11 +76,11 @@ const Sidebar: React.FC<SidebarProps> = () => {
                     />
                 ))}
             </nav>
-            <div className="p-4 border-t border-text-primary/5 dark:border-slate-700">
+            <div className="p-4 border-t border-text-primary/5 dark:border-[#45535D]">
                 <button
                     onClick={onToggle}
                     title={isSidebarCollapsed ? 'Expandir menú' : 'Contraer menú'}
-                    className="flex items-center justify-center w-full py-2 mb-2 rounded-lg text-text-secondary hover:bg-surface dark:text-slate-400 dark:hover:bg-slate-700 transition-colors"
+                    className="flex items-center justify-center w-full py-2 mb-2 rounded-lg text-text-secondary hover:bg-surface dark:text-light-silver dark:hover:bg-[#45535D] transition-colors"
                 >
                     <span className="sr-only">{isSidebarCollapsed ? 'Expandir menú' : 'Contraer menú'}</span>
                     {isSidebarCollapsed ? <ChevronDoubleRightIcon className="h-6 w-6" /> : <ChevronDoubleLeftIcon className="h-6 w-6" />}
@@ -88,7 +88,7 @@ const Sidebar: React.FC<SidebarProps> = () => {
                 <button
                     onClick={onLogout}
                     title={isSidebarCollapsed ? 'Salir' : undefined}
-                    className={`flex items-center w-full px-4 py-3 rounded-lg text-base font-semibold transition-all duration-200 text-text-secondary hover:bg-surface hover:text-danger dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-red-500
+                    className={`flex items-center w-full px-4 py-3 rounded-lg text-base font-semibold transition-all duration-200 text-text-secondary hover:bg-surface hover:text-danger dark:text-light-silver dark:hover:bg-[#45535D] dark:hover:text-red-500
                         ${isSidebarCollapsed ? 'justify-center' : 'space-x-3'}
                     `}
                 >

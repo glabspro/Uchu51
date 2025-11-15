@@ -8,7 +8,7 @@ import LoyaltyProgramManager from './LoyaltyProgramManager';
 import PromotionsManager from './PromotionsManager';
 import SauceManager from './SauceManager';
 import ReportesView from './ReportesView';
-import { ShoppingBagIcon, ArchiveBoxIcon, SparklesIcon, UserGroupIcon, StarIcon, DocumentMagnifyingGlassIcon } from './icons';
+import { ShoppingBagIcon, ArchiveBoxIcon, SparklesIcon, UserGroupIcon, StarIcon, DocumentMagnifyingGlassIcon, BuildingStorefrontIcon } from './icons';
 
 interface GestionViewProps {
 }
@@ -26,7 +26,7 @@ const TabButton: React.FC<{
         className={`flex items-center space-x-3 py-3 px-4 font-bold transition-colors rounded-t-lg border-b-4 ${
             isActive
                 ? 'text-primary border-primary'
-                : 'text-text-secondary dark:text-slate-400 hover:bg-background/50 dark:hover:bg-slate-800/50 border-transparent hover:border-primary/40'
+                : 'text-text-secondary dark:text-zinc-400 hover:bg-background/50 dark:hover:bg-zinc-800/50 border-transparent hover:border-primary/40'
         }`}
     >
         {icon}
@@ -91,9 +91,9 @@ const GestionView: React.FC<GestionViewProps> = () => {
 
     return (
         <div className="flex flex-col h-full">
-            <h1 className="text-3xl font-heading font-bold mb-4 text-text-primary dark:text-slate-100">Gestión del Negocio</h1>
-            <div className="bg-surface dark:bg-slate-800 rounded-t-lg shadow-sm flex-shrink-0">
-                <div className="flex space-x-1 border-b border-text-primary/5 dark:border-slate-700">
+            <h1 className="text-3xl font-heading font-bold mb-4 text-text-primary dark:text-zinc-100">Gestión del Negocio</h1>
+            <div className="bg-surface dark:bg-zinc-800 rounded-t-lg shadow-sm flex-shrink-0">
+                <div className="flex space-x-1 border-b border-text-primary/5 dark:border-zinc-700">
                     <TabButton isActive={activeTab === 'productos'} onClick={() => setActiveTab('productos')} icon={<ShoppingBagIcon className="h-6 w-6" />} label="Productos" />
                     <TabButton isActive={activeTab === 'inventario'} onClick={() => setActiveTab('inventario')} icon={<ArchiveBoxIcon className="h-6 w-6" />} label="Inventario" />
                     <TabButton isActive={activeTab === 'cremas'} onClick={() => setActiveTab('cremas')} icon={<SparklesIcon className="h-6 w-6" />} label="Cremas" />
@@ -103,7 +103,7 @@ const GestionView: React.FC<GestionViewProps> = () => {
                     <TabButton isActive={activeTab === 'reportes'} onClick={() => setActiveTab('reportes')} icon={<DocumentMagnifyingGlassIcon className="h-6 w-6" />} label="Reportes" />
                 </div>
             </div>
-            <div className="flex-grow bg-surface dark:bg-slate-800 p-6 rounded-b-lg shadow-sm">
+            <div className="flex-grow bg-surface dark:bg-zinc-800 p-6 rounded-b-lg shadow-sm">
                 {renderContent()}
             </div>
         </div>

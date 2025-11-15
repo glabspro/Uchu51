@@ -15,7 +15,7 @@ export const LogoIcon: React.FC<LogoIconProps> = ({ className }) => {
             <defs>
                 <linearGradient id="chili-gradient-icon" x1="50%" y1="0%" x2="50%" y2="100%">
                     <stop offset="0%" stopColor="#FDBA74" />
-                    <stop offset="100%" stopColor="#F97316" />
+                    <stop offset="100%" stopColor="hsl(var(--color-primary-h), var(--color-primary-s), var(--color-primary-l))" />
                 </linearGradient>
             </defs>
             <g transform="translate(0, 3)">

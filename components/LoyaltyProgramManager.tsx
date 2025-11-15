@@ -12,7 +12,6 @@ interface LoyaltyProgramManagerProps {
 const LoyaltyProgramManager: React.FC<LoyaltyProgramManagerProps> = ({ programs, setPrograms, products }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProgram, setEditingProgram] = useState<LoyaltyProgram | null>(null);
-    const [showDeleteConfirm, setShowDeleteConfirm] = useState<LoyaltyProgram | null>(null);
 
     const handleAddNew = () => {
         setEditingProgram(null);
@@ -23,86 +22,90 @@ const LoyaltyProgramManager: React.FC<LoyaltyProgramManagerProps> = ({ programs,
         setEditingProgram(program);
         setIsModalOpen(true);
     };
-
-    const handleDelete = (programToDelete: LoyaltyProgram) => {
-        setPrograms(prev => prev.filter(p => p.id !== programToDelete.id));
-        setShowDeleteConfirm(null);
-    };
-
+    
     const handleSave = (programToSave: LoyaltyProgram) => {
-        setPrograms(prev => {
-            if (editingProgram) {
-                return prev.map(p => p.id === programToSave.id ? programToSave : p);
-            } else {
-                const newProgram = { ...programToSave, id: `prog-${Date.now()}` };
-                // If it's the only program, make it active
-                if (prev.length === 0) {
-                    newProgram.isActive = true;
-                }
-                return [...prev, newProgram];
-            }
-        });
+        if (editingProgram) {
+            setPrograms(prev => prev.map(p => p.id === programToSave.id ? programToSave : p));
+        } else {
+            setPrograms(prev => [...prev, { ...programToSave, id: `prog-${Date.now()}` }]);
+        }
         setIsModalOpen(false);
     };
-    
-    const handleSetActive = (programId: string) => {
-        setPrograms(prev => prev.map(p => ({
-            ...p,
-            isActive: p.id === programId
-        })));
+
+    const handleToggleActive = (programId: string) => {
+        // Only one program can be active at a time.
+        setPrograms(prev => prev.map(p => 
+            p.id === programId 
+            ? { ...p, isActive: true } 
+            : { ...p, isActive: false }
+        ));
     };
+
+    const activeProgram = programs.find(p => p.isActive);
 
     return (
         <div>
             {isModalOpen && <LoyaltyProgramModal program={editingProgram} onSave={handleSave} onClose={() => setIsModalOpen(false)} products={products} />}
-            {showDeleteConfirm && (
-                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[101] p-4">
-                    <div className="bg-surface dark:bg-slate-800 rounded-2xl shadow-xl p-6 max-w-sm w-full text-center animate-fade-in-scale">
-                        <h3 className="text-xl font-heading font-bold text-text-primary dark:text-white">Eliminar Programa</h3>
-                        <p className="text-text-secondary dark:text-slate-400 my-3">¿Estás seguro de que quieres eliminar <span className="font-bold">{showDeleteConfirm.name}</span>? Esta acción no se puede deshacer.</p>
-                        <div className="grid grid-cols-2 gap-3 mt-6">
-                            <button onClick={() => setShowDeleteConfirm(null)} className="bg-text-primary/10 dark:bg-slate-700 hover:bg-text-primary/20 dark:hover:bg-slate-600 text-text-primary dark:text-slate-200 font-bold py-2 px-4 rounded-lg">Cancelar</button>
-                            <button onClick={() => handleDelete(showDeleteConfirm)} className="bg-danger hover:brightness-110 text-white font-bold py-2 px-4 rounded-lg">Sí, Eliminar</button>
-                        </div>
-                    </div>
-                </div>
-            )}
             <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-text-primary dark:text-slate-200">Programas de Lealtad ({programs.length})</h2>
+                <h2 className="text-2xl font-bold text-text-primary dark:text-zinc-200">Programa de Lealtad</h2>
                 <button onClick={handleAddNew} className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform hover:-translate-y-0.5 active:scale-95">
                     <PlusIcon className="h-5 w-5" />
                     Crear Programa
                 </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 max-h-[calc(100vh-22rem)] overflow-y-auto pr-3">
-                {programs.map(program => (
-                    <div key={program.id} className={`bg-background dark:bg-slate-900/50 rounded-xl shadow-sm border-2 ${program.isActive ? 'border-primary' : 'border-text-primary/5 dark:border-slate-700'} flex flex-col`}>
-                        <div className="p-4 flex-grow flex flex-col">
-                            {program.isActive && (
-                                <div className="absolute top-3 right-3 bg-primary text-white text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
-                                    <CheckCircleIcon className="h-4 w-4" />
-                                    Activo
-                                </div>
-                            )}
-                            <h3 className="font-bold text-lg text-text-primary dark:text-slate-100 pr-16">{program.name}</h3>
-                            <p className="text-sm text-text-secondary dark:text-slate-400 flex-grow mt-1">{program.description || 'Sin descripción.'}</p>
-                            <div className="mt-3 pt-3 border-t border-text-primary/10 dark:border-slate-700 space-y-1">
-                                <p className="text-xs text-text-secondary dark:text-slate-500 font-semibold">Regla: <span className="font-normal">{program.config.pointEarningMethod === 'monto' ? `${program.config.pointsPerMonto} pts por S/.${program.config.montoForPoints}` : `${program.config.pointsPerCompra} pts por compra`}</span></p>
-                                <p className="text-xs text-text-secondary dark:text-slate-500 font-semibold">Recompensas: <span className="font-normal">{program.rewards.length}</span></p>
-                            </div>
+            {activeProgram ? (
+                <div className="bg-background dark:bg-zinc-900/50 rounded-xl border border-primary p-4">
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <h3 className="font-bold text-lg text-primary">{activeProgram.name}</h3>
+                            <p className="text-sm text-text-secondary dark:text-zinc-400">{activeProgram.description}</p>
                         </div>
-                        <div className="bg-background/50 dark:bg-slate-800/50 p-2 grid grid-cols-2 gap-2">
-                             <button onClick={() => handleEdit(program)} className="flex items-center justify-center gap-2 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 p-2 rounded-md transition-colors"><PencilIcon className="h-4 w-4"/> Editar</button>
-                             <button onClick={() => setShowDeleteConfirm(program)} className="flex items-center justify-center gap-2 text-sm font-semibold text-danger dark:text-red-500 hover:bg-danger/10 p-2 rounded-md transition-colors"><TrashIcon className="h-4 w-4"/> Eliminar</button>
+                        <div className="flex items-center gap-2">
+                             <span className="text-xs font-bold px-2 py-1 rounded-full bg-primary/20 text-primary">Activo</span>
+                             <button onClick={() => handleEdit(activeProgram)} className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 rounded-md"><PencilIcon className="h-5 w-5"/></button>
                         </div>
-                        {!program.isActive && (
-                             <button onClick={() => handleSetActive(program.id)} className="bg-success/20 text-success font-bold p-3 rounded-b-lg hover:bg-success/30 transition-colors w-full">
-                                Activar Programa
-                             </button>
-                        )}
                     </div>
-                ))}
-            </div>
+                    <div className="mt-4 pt-4 border-t border-primary/20">
+                        <p className="text-sm font-semibold mb-2">Reglas:</p>
+                        <ul className="text-sm list-disc list-inside text-text-secondary dark:text-zinc-400">
+                           {activeProgram.config.pointEarningMethod === 'monto' 
+                                ? <li>{`Gana ${activeProgram.config.pointsPerMonto} puntos por cada S/. ${activeProgram.config.montoForPoints} gastados.`}</li>
+                                : <li>{`Gana ${activeProgram.config.pointsPerCompra} puntos por cada compra.`}</li>
+                           }
+                        </ul>
+                         <p className="text-sm font-semibold mt-3 mb-2">Recompensas:</p>
+                        <div className="space-y-1">
+                            {activeProgram.rewards.map(reward => (
+                                <div key={reward.id} className="flex justify-between text-sm">
+                                    <span>{reward.nombre}</span>
+                                    <span className="font-bold text-primary">{reward.puntosRequeridos} pts</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            ) : (
+                <p className="text-center text-text-secondary dark:text-zinc-500 py-8">No hay ningún programa de lealtad activo.</p>
+            )}
+             {programs.filter(p => !p.isActive).length > 0 && (
+                 <div className="mt-6">
+                    <h3 className="font-bold text-lg mb-2">Programas Inactivos</h3>
+                    <div className="space-y-2">
+                         {programs.filter(p => !p.isActive).map(program => (
+                             <div key={program.id} className="bg-background dark:bg-zinc-900/50 rounded-xl border border-text-primary/5 dark:border-zinc-700 p-3 flex justify-between items-center">
+                                 <div>
+                                     <p className="font-semibold">{program.name}</p>
+                                     <p className="text-sm text-text-secondary dark:text-zinc-400">{program.rewards.length} recompensas</p>
+                                 </div>
+                                  <div className="flex items-center gap-2">
+                                     <button onClick={() => handleToggleActive(program.id)} className="text-sm font-semibold flex items-center gap-1 bg-success/10 text-success p-2 rounded-md hover:bg-success/20"><CheckCircleIcon className="h-4 w-4"/> Activar</button>
+                                     <button onClick={() => handleEdit(program)} className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 rounded-md"><PencilIcon className="h-5 w-5"/></button>
+                                </div>
+                             </div>
+                         ))}
+                    </div>
+                 </div>
+             )}
         </div>
     );
 };

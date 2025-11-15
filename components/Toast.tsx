@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { CheckCircleIcon, InformationCircleIcon } from './icons';
 
@@ -24,7 +23,7 @@ const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
     const animationStyle = "animate-fade-in-right";
     const typeStyles = {
         success: "bg-success",
-        info: "bg-text-primary dark:bg-slate-700",
+        info: "bg-text-primary dark:bg-[#45535D]",
         // FIX: Added style for the 'danger' toast type to visually represent error messages.
         danger: "bg-danger",
     };

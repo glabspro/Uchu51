@@ -33,7 +33,7 @@ const LocalBoard: React.FC<LocalBoardProps> = ({ mesas }) => {
 
     return (
         <div>
-            <h1 className="text-3xl font-heading font-bold mb-8 text-text-primary dark:text-slate-100">Gestión de Salón</h1>
+            <h1 className="text-3xl font-heading font-bold mb-8 text-text-primary dark:text-ivory-cream">Gestión de Salón</h1>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
                 {mesas.map((mesa, i) => {
                     const statusInfo = mesa.ocupada && mesa.estadoPedido ? statusConfig[mesa.estadoPedido] : null;
@@ -42,13 +42,13 @@ const LocalBoard: React.FC<LocalBoardProps> = ({ mesas }) => {
                         'table-card',
                         'group',
                         'animate-fade-in-up',
-                        'bg-surface dark:bg-slate-800',
+                        'bg-surface dark:bg-[#34424D]',
                         'rounded-2xl shadow-lg',
                         'flex flex-col items-center justify-center',
                         'p-4 text-center transition-all duration-300',
                         'active:scale-95 border-2',
                         'relative overflow-hidden h-48',
-                        mesa.ocupada ? 'border-primary/50 dark:border-primary/70' : 'border-transparent dark:border-slate-700',
+                        mesa.ocupada ? 'border-primary/50 dark:border-primary/70' : 'border-transparent dark:border-[#45535D]',
                         statusInfo?.pulse ? 'animate-pulse-glow' : '',
                     ].join(' ');
 
@@ -64,14 +64,14 @@ const LocalBoard: React.FC<LocalBoardProps> = ({ mesas }) => {
                             style={cardStyle}
                             className={cardClasses}
                         >
-                            <div className="absolute top-3 left-3 text-xs font-mono text-text-secondary/60 dark:text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="absolute top-3 left-3 text-xs font-mono text-text-secondary/60 dark:text-light-silver/50 opacity-0 group-hover:opacity-100 transition-opacity">
                                {mesa.pedidoId}
                             </div>
                             
-                            <h2 className="text-6xl font-heading font-extrabold text-text-primary dark:text-slate-100 group-hover:text-primary transition-colors">
+                            <h2 className="text-6xl font-heading font-extrabold text-text-primary dark:text-ivory-cream group-hover:text-primary transition-colors">
                                 {mesa.numero}
                             </h2>
-                            <p className="font-semibold text-text-secondary dark:text-slate-400 -mt-1">Mesa</p>
+                            <p className="font-semibold text-text-secondary dark:text-light-silver -mt-1">Mesa</p>
 
                             <div className="absolute bottom-0 left-0 right-0 p-3 bg-white/50 dark:bg-black/20 backdrop-blur-sm">
                                 {mesa.ocupada ? (
@@ -91,7 +91,7 @@ const LocalBoard: React.FC<LocalBoardProps> = ({ mesas }) => {
                                         </span>
                                     )
                                 ) : (
-                                     <span className={`text-sm font-bold uppercase tracking-wider px-3 py-1.5 rounded-full bg-text-primary/10 dark:bg-slate-700 text-text-primary dark:text-slate-200`}>
+                                     <span className={`text-sm font-bold uppercase tracking-wider px-3 py-1.5 rounded-full bg-text-primary/10 dark:bg-[#45535D] text-text-primary dark:text-ivory-cream`}>
                                         Libre
                                     </span>
                                 )}

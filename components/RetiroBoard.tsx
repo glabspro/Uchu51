@@ -7,8 +7,8 @@ import { CheckCircleIcon } from './icons';
 interface RetiroBoardProps {}
 
 const RetiroColumn: React.FC<{ title: string; children: React.ReactNode; count: number; }> = ({ title, children, count }) => (
-    <div className="bg-background dark:bg-slate-800/50 rounded-2xl w-full md:w-1/2 flex-shrink-0 shadow-sm flex flex-col border border-text-primary/5 dark:border-slate-700">
-        <h2 className="text-lg font-heading font-bold text-text-primary dark:text-slate-200 bg-text-primary/10 dark:bg-slate-700/50 px-4 py-3 rounded-t-2xl flex items-center justify-between">
+    <div className="bg-background dark:bg-[#34424D]/50 rounded-2xl w-full md:w-1/2 flex-shrink-0 shadow-sm flex flex-col border border-text-primary/5 dark:border-[#45535D]">
+        <h2 className="text-lg font-heading font-bold text-text-primary dark:text-ivory-cream bg-text-primary/10 dark:bg-[#45535D]/50 px-4 py-3 rounded-t-2xl flex items-center justify-between">
             {title}
             <span className="bg-black/10 text-xs font-bold rounded-full px-2.5 py-1">{count}</span>
         </h2>

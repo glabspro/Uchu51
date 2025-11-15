@@ -19,7 +19,7 @@ const PaymentMethodButton: React.FC<{
         className={`flex items-center justify-center space-x-2 w-full p-3 rounded-xl border-2 transition-all duration-200 ${
             currentMethod === method
                 ? 'bg-primary/10 border-primary text-primary font-bold shadow-inner'
-                : 'bg-surface dark:bg-slate-700 border-text-primary/10 dark:border-slate-600 text-text-primary dark:text-slate-200 hover:border-primary/50 dark:hover:border-primary/80'
+                : 'bg-surface dark:bg-zinc-700 border-text-primary/10 dark:border-zinc-600 text-text-primary dark:text-zinc-200 hover:border-primary/50 dark:hover:border-primary/80'
         }`}
     >
         {icon}
@@ -58,20 +58,20 @@ const DeliveryPaymentModal: React.FC<DeliveryPaymentModalProps> = ({ order }) =>
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-[100] p-4 font-sans" onClick={onClose}>
-            <div className="bg-surface dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-lg animate-fade-in-scale" onClick={e => e.stopPropagation()}>
-                <div className="p-6 border-b border-text-primary/10 dark:border-slate-700 text-center">
-                    <h2 className="text-2xl font-heading font-bold text-text-primary dark:text-slate-100">Registrar Pago y Entrega</h2>
-                    <p className="text-text-secondary dark:text-slate-400">Pedido {order.id}</p>
+            <div className="bg-surface dark:bg-zinc-800 rounded-2xl shadow-xl w-full max-w-lg animate-fade-in-scale" onClick={e => e.stopPropagation()}>
+                <div className="p-6 border-b border-text-primary/10 dark:border-zinc-700 text-center">
+                    <h2 className="text-2xl font-heading font-bold text-text-primary dark:text-zinc-100">Registrar Pago y Entrega</h2>
+                    <p className="text-text-secondary dark:text-zinc-400">Pedido {order.id}</p>
                 </div>
 
                 <div className="p-6">
-                    <div className="bg-background dark:bg-slate-900/50 border border-text-primary/5 dark:border-slate-700 p-4 rounded-xl text-center mb-6">
-                        <p className="text-lg text-text-secondary dark:text-slate-400">Total a Cobrar</p>
+                    <div className="bg-background dark:bg-zinc-900/50 border border-text-primary/5 dark:border-zinc-700 p-4 rounded-xl text-center mb-6">
+                        <p className="text-lg text-text-secondary dark:text-zinc-400">Total a Cobrar</p>
                         <p className="text-5xl font-heading font-extrabold text-text-primary dark:text-white font-mono">S/.{order.total.toFixed(2)}</p>
                     </div>
 
                     <div className="mb-6">
-                        <h3 className="text-lg font-semibold text-text-secondary dark:text-slate-300 mb-3">Método de Pago</h3>
+                        <h3 className="text-lg font-semibold text-text-secondary dark:text-zinc-300 mb-3">Método de Pago</h3>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                            <PaymentMethodButton method="efectivo" label="Efectivo" icon={<CashIcon className="h-5 w-5"/>} currentMethod={selectedMethod} setMethod={setSelectedMethod} />
                            <PaymentMethodButton method="tarjeta" label="Tarjeta" icon={<CreditCardIcon className="h-5 w-5"/>} currentMethod={selectedMethod} setMethod={setSelectedMethod} />
@@ -83,19 +83,19 @@ const DeliveryPaymentModal: React.FC<DeliveryPaymentModalProps> = ({ order }) =>
                     {selectedMethod === 'efectivo' && (
                         <div className="space-y-4 animate-fade-in-right">
                              <div>
-                                <label htmlFor="amount-received" className="block text-sm font-bold text-text-primary dark:text-slate-200 mb-1">Monto Recibido</label>
+                                <label htmlFor="amount-received" className="block text-sm font-bold text-text-primary dark:text-zinc-200 mb-1">Monto Recibido</label>
                                 <input
                                     id="amount-received"
                                     type="number"
                                     value={amountReceived}
                                     onChange={(e) => setAmountReceived(e.target.value)}
                                     placeholder={`Ej: ${order.pagoConEfectivo?.toFixed(2) || '50.00'}`}
-                                    className="bg-background dark:bg-slate-700 border border-text-primary/10 dark:border-slate-600 rounded-lg p-3 w-full text-text-primary dark:text-slate-100 placeholder-text-secondary/70 dark:placeholder-slate-400 focus:ring-2 focus:ring-primary focus:border-primary transition text-xl font-mono"
+                                    className="bg-background dark:bg-zinc-700 border border-text-primary/10 dark:border-zinc-600 rounded-lg p-3 w-full text-text-primary dark:text-zinc-100 placeholder-text-secondary/70 dark:placeholder-zinc-400 focus:ring-2 focus:ring-primary focus:border-primary transition text-xl font-mono"
                                 />
                             </div>
                             <div className="flex gap-2">
                                 {quickCashOptions.map(amount => (
-                                     <button key={amount} onClick={() => setAmountReceived(amount.toFixed(2))} className="flex-1 bg-text-primary/10 dark:bg-slate-700 text-text-primary dark:text-slate-200 font-semibold py-2 rounded-lg hover:bg-text-primary/20 dark:hover:bg-slate-600 transition-colors">
+                                     <button key={amount} onClick={() => setAmountReceived(amount.toFixed(2))} className="flex-1 bg-text-primary/10 dark:bg-zinc-700 text-text-primary dark:text-zinc-200 font-semibold py-2 rounded-lg hover:bg-text-primary/20 dark:hover:bg-zinc-600 transition-colors">
                                         S/. {amount.toFixed(2)}
                                      </button>
                                 ))}
@@ -108,14 +108,14 @@ const DeliveryPaymentModal: React.FC<DeliveryPaymentModalProps> = ({ order }) =>
                     )}
                 </div>
 
-                <div className="p-6 border-t dark:border-slate-700 mt-auto bg-background dark:bg-slate-900/50 rounded-b-2xl grid grid-cols-2 gap-4">
-                    <button onClick={onClose} className="w-full bg-text-primary/10 dark:bg-slate-700 hover:bg-text-primary/20 dark:hover:bg-slate-600 text-text-primary dark:text-slate-200 font-bold py-3 px-6 rounded-xl transition-colors">
+                <div className="p-6 border-t dark:border-zinc-700 mt-auto bg-background dark:bg-zinc-900/50 rounded-b-2xl grid grid-cols-2 gap-4">
+                    <button onClick={onClose} className="w-full bg-text-primary/10 dark:bg-zinc-700 hover:bg-text-primary/20 dark:hover:bg-zinc-600 text-text-primary dark:text-zinc-200 font-bold py-3 px-6 rounded-xl transition-colors">
                         Cancelar
                     </button>
                     <button
                         onClick={handleConfirm}
                         disabled={isConfirmDisabled}
-                        className="w-full bg-success hover:brightness-105 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg hover:shadow-success/20 hover:-translate-y-0.5 disabled:bg-gray-400 dark:disabled:bg-slate-600/50 dark:disabled:text-slate-400 disabled:shadow-none disabled:translate-y-0"
+                        className="w-full bg-success hover:brightness-105 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg hover:shadow-success/20 hover:-translate-y-0.5 disabled:bg-gray-400 dark:disabled:bg-zinc-600/50 dark:disabled:text-zinc-400 disabled:shadow-none disabled:translate-y-0"
                     >
                         Confirmar Entrega y Pago
                     </button>

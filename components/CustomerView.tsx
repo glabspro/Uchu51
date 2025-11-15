@@ -96,7 +96,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
     };
 
     const prevSlide = () => {
-        setCurrentSlide(prev => (prev === 0 ? activePromotions.length - 1 : prev - 1));
+        setCurrentSlide(prev => (prev === 0 ? activePromotions.length - 1 : prev + 1));
     };
 
     useEffect(() => {
@@ -366,7 +366,6 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
         
         const effectivePaymentMethod = paymentChoice === 'payNow' ? 'yape' : paymentMethod;
 
-// FIX: Add missing 'restaurant_id' property.
         const newOrder: Omit<Pedido, 'id' | 'fecha' | 'turno' | 'historial' | 'areaPreparacion' | 'estado' | 'gananciaEstimada'> = {
             tipo: orderType,
             cliente: customerInfo,
@@ -450,9 +449,9 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
 
     const renderInstallInstructions = () => (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[101] p-4 animate-fade-in-scale">
-             <div className="bg-surface dark:bg-slate-800 rounded-2xl shadow-xl p-6 max-w-sm w-full text-center relative">
-                 <button onClick={() => setShowInstallInstructions(false)} className="absolute top-2 right-2 p-2 rounded-full hover:bg-text-primary/10 dark:hover:bg-slate-700">
-                    <XMarkIcon className="h-6 w-6 text-text-secondary dark:text-slate-400" />
+             <div className="bg-surface dark:bg-[#34424D] rounded-2xl shadow-xl p-6 max-w-sm w-full text-center relative">
+                 <button onClick={() => setShowInstallInstructions(false)} className="absolute top-2 right-2 p-2 rounded-full hover:bg-text-primary/10 dark:hover:bg-[#45535D]">
+                    <XMarkIcon className="h-6 w-6 text-text-secondary dark:text-light-silver" />
                  </button>
                  <h3 className="text-xl font-heading font-bold text-text-primary dark:text-white mb-4">Instalar Uchu51</h3>
                  {isIOS && (
@@ -540,474 +539,233 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
     );
 
     const renderSelectionScreen = () => (
-        <div className="text-center w-full max-w-md mx-auto animate-fade-in-up flex flex-col justify-between h-full p-4">
+        <div className="text-center w-full max-w-md mx-auto animate-fade-in-up flex flex-col flex-grow p-4">
             <div className="w-full flex justify-between items-center pt-4">
                 <div onClick={handleLogoClick} className="cursor-pointer" title="Acceso de administrador">
                     <Logo className="h-9 w-auto" variant={theme === 'dark' ? 'light' : 'default'} />
                 </div>
-                <button onClick={onToggleTheme} className="flex items-center justify-center h-10 w-10 rounded-full text-text-secondary dark:text-slate-400 hover:bg-surface dark:hover:bg-slate-800 hover:text-primary dark:hover:text-amber-400 transition-colors">
+                <button onClick={onToggleTheme} className="flex items-center justify-center h-10 w-10 rounded-full text-text-secondary dark:text-light-silver hover:bg-surface dark:hover:bg-[#34424D] hover:text-primary dark:hover:text-amber-400 transition-colors">
                     {theme === 'light' ? <MoonIcon className="h-6 w-6" /> : <SunIcon className="h-6 w-6" />}
                 </button>
             </div>
             
             <div className="flex-grow flex flex-col items-center justify-center">
                 <h1 className="font-heading text-4xl font-extrabold text-text-primary dark:text-white mb-3">El sabor que te mueve</h1>
-                <p className="text-base text-text-secondary dark:text-slate-400 mb-8 max-w-sm">Pide tu comida favorita, preparada al momento con los mejores ingredientes. Rápido, fresco y delicioso.</p>
-                
-                <div className="space-y-4 w-full">
-                    <button onClick={() => handleSelectOrderType('retiro')} className="group bg-surface dark:bg-slate-800 p-6 rounded-xl border border-text-primary/10 dark:border-slate-700 hover:shadow-xl hover:border-primary/50 dark:hover:border-primary hover:-translate-y-1 transition-all duration-300 w-full text-left flex items-center space-x-4 active:scale-95">
-                        <div className="bg-primary/10 p-3 rounded-lg"><ShoppingBagIcon className="h-8 w-8 text-primary"/></div>
-                        <div>
-                            <h3 className="text-lg font-heading font-bold text-text-primary dark:text-white">Para Llevar</h3>
-                            <p className="text-sm text-text-secondary dark:text-slate-400">Pide y recoge en tienda sin esperas.</p>
-                        </div>
-                    </button>
-                    <button onClick={() => handleSelectOrderType('delivery')} className="group bg-surface dark:bg-slate-800 p-6 rounded-xl border border-text-primary/10 dark:border-slate-700 hover:shadow-xl hover:border-primary/50 dark:hover:border-primary hover:-translate-y-1 transition-all duration-300 w-full text-left flex items-center space-x-4 active:scale-95">
-                        <div className="bg-primary/10 p-3 rounded-lg"><TruckIcon className="h-8 w-8 text-primary"/></div>
-                        <div>
-                            <h3 className="text-lg font-heading font-bold text-text-primary dark:text-white">Delivery</h3>
-                            <p className="text-sm text-text-secondary dark:text-slate-400">Te lo llevamos caliente a tu casa.</p>
-                        </div>
-                    </button>
-                    {showInstallButton && (
-                        <button onClick={handleSmartInstallClick} className="group bg-text-primary dark:bg-slate-700 p-4 rounded-xl border border-text-primary/10 dark:border-slate-600 hover:shadow-xl hover:border-primary/50 dark:hover:border-primary hover:-translate-y-1 transition-all duration-300 w-full text-left flex items-center space-x-4 active:scale-95">
-                            <div className="bg-white/10 p-3 rounded-lg"><ArrowDownOnSquareIcon className="h-8 w-8 text-white"/></div>
-                            <div>
-                                <h3 className="text-lg font-heading font-bold text-white">Instalar App</h3>
-                                <p className="text-sm text-slate-300">Añade Uchu51 a tu pantalla de inicio.</p>
-                            </div>
+                <p className="text-base text-text-secondary dark:text-light-silver mb-8 max-w-sm">Pide tu comida favorita, preparada al momento.</p>
+                <div className="w-full space-y-4">
+                    {restaurantSettings?.modules?.delivery !== false && (
+                         <button onClick={() => handleSelectOrderType('delivery')} className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-4 px-8 rounded-xl text-lg transition-all duration-300 shadow-lg shadow-primary/30 hover:shadow-primary/40 hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-2">
+                            <TruckIcon className="h-6 w-6" />
+                            Pide por Delivery
                         </button>
                     )}
+                   {restaurantSettings?.modules?.retiro !== false && (
+                     <button onClick={() => handleSelectOrderType('retiro')} className="w-full bg-text-primary dark:bg-[#45535D] hover:bg-text-primary/90 dark:hover:bg-[#56656E] text-white font-bold py-4 px-8 rounded-xl text-lg transition-all duration-300 shadow-lg hover:shadow-text-primary/20 hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-2">
+                        <ShoppingBagIcon className="h-6 w-6" />
+                        Para Recoger en Tienda
+                    </button>
+                   )}
                 </div>
             </div>
 
-            <div />
+            <div className="pb-4">
+                {showInstallButton && (
+                    <button onClick={handleSmartInstallClick} className="text-sm font-semibold text-text-secondary dark:text-light-silver hover:text-primary dark:hover:text-orange-400 transition-colors flex items-center justify-center gap-2 mx-auto">
+                        <ArrowDownOnSquareIcon className="h-5 w-5" />
+                        Instalar app para mejor experiencia
+                    </button>
+                )}
+            </div>
         </div>
     );
 
-    const renderCatalog = () => (
-        <div className="w-full animate-fade-in-up">
-            <div className="sticky top-0 bg-background/80 dark:bg-slate-900/80 backdrop-blur-lg z-20 pt-4 pb-4">
-                <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
-                    <div className="relative flex-grow">
-                        <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-text-secondary/50 dark:text-slate-500" />
-                        <input type="search" placeholder="Buscar comida..." value={searchTerm} onChange={(e) => {
-                            setSearchTerm(e.target.value);
-                            if(e.target.value) setActiveCategory('');
-                            else setActiveCategory('Promociones');
-                        }} className="w-full bg-surface dark:bg-slate-800 border border-text-primary/10 dark:border-slate-700 rounded-xl py-3 pl-12 pr-4 focus:ring-2 focus:ring-primary focus:border-primary transition dark:text-white dark:placeholder-slate-400" />
-                    </div>
-                     <button className="md:flex-shrink-0 bg-surface dark:bg-slate-800 border border-text-primary/10 dark:border-slate-700 rounded-xl p-3 flex items-center justify-center transition-transform active:scale-95">
-                        <AdjustmentsHorizontalIcon className="h-6 w-6 text-text-primary dark:text-slate-200" />
+    const renderCatalogScreen = () => (
+        <div className="flex flex-col h-full">
+            <header className="flex-shrink-0 bg-surface/80 dark:bg-[#34424D]/80 backdrop-blur-lg p-4 shadow-sm border-b border-text-primary/5 dark:border-[#45535D] sticky top-0 z-50">
+                <div className="flex items-center justify-between">
+                    <button onClick={handleGoBack} className="flex items-center font-semibold text-text-secondary dark:text-light-silver hover:text-primary dark:hover:text-orange-400 transition-colors">
+                        <ChevronLeftIcon className="h-6 w-6" />
+                        Volver
                     </button>
+                    <h2 className="font-bold text-lg capitalize">{orderType}</h2>
+                    <div className="w-20"></div>
                 </div>
-                 <div className="mt-4">
-                    <div className="flex items-center space-x-2 overflow-x-auto pb-2 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
-                        {categories.map(category => (
-                            <button 
-                                key={category} 
-                                onClick={() => {
-                                    setActiveCategory(category)
-                                    setSearchTerm('');
-                                }}
-                                className={`whitespace-nowrap py-2 px-5 rounded-full font-semibold text-sm transition-all duration-200 focus:outline-none border-2 active:scale-95 ${
-                                    activeCategory === category 
-                                        ? 'bg-primary text-white border-primary' 
-                                        : 'bg-surface dark:bg-slate-800 text-text-primary dark:text-slate-200 border-text-primary/10 dark:border-slate-700 hover:bg-background dark:hover:bg-slate-700 hover:border-text-primary/20'
-                                }`}
-                            >
-                                {category}
+                <div className="relative mt-4">
+                    <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-text-secondary/50 dark:text-light-silver/50" />
+                    <input type="search" placeholder="Buscar en el menú..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full p-2 pl-10 rounded-lg border border-text-primary/10 dark:border-[#45535D] bg-background dark:bg-[#45535D]/50 focus:ring-2 focus:ring-primary focus:border-primary" />
+                </div>
+            </header>
+
+            {!searchTerm && (
+                <nav className="flex-shrink-0 border-b border-text-primary/10 dark:border-[#45535D] p-2 sticky top-28 z-40 bg-surface/80 dark:bg-[#34424D]/80 backdrop-blur-sm">
+                    <div className="flex space-x-2 overflow-x-auto pb-1">
+                        {categories.map(cat => (
+                            <button key={cat} onClick={() => setActiveCategory(cat)} className={`py-2 px-4 rounded-full font-semibold whitespace-nowrap text-sm transition-colors ${activeCategory === cat ? 'bg-primary text-white shadow-sm' : 'bg-background dark:bg-[#45535D] text-text-primary dark:text-ivory-cream hover:bg-text-primary/5'}`}>
+                                {cat}
                             </button>
                         ))}
                     </div>
+                </nav>
+            )}
+
+            <main className="flex-grow overflow-y-auto p-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {filteredProducts.map(product => (
+                        <button key={product.id} onClick={() => setSelectedProduct(product)} className="bg-surface dark:bg-[#34424D] rounded-lg shadow-md p-2 text-center transition-transform hover:-translate-y-1 hover:shadow-lg flex flex-col border border-text-primary/5 dark:border-[#45535D] relative disabled:opacity-50" disabled={product.stock <= 0}>
+                            <div className="h-24 w-full bg-background dark:bg-[#45535D] rounded-md overflow-hidden relative">
+                                <img src={product.imagenUrl} alt={product.nombre} className={`w-full h-full object-cover product-image-${product.id}`} />
+                                {product.stock <= 0 && <div className="absolute inset-0 bg-black/50 flex items-center justify-center"><span className="bg-danger text-white font-bold text-xs px-2 py-1 rounded">AGOTADO</span></div>}
+                            </div>
+                            <p className="font-semibold text-sm mt-2 flex-grow text-text-primary dark:text-ivory-cream leading-tight">{product.nombre}</p>
+                            <p className="font-bold text-text-secondary dark:text-light-silver mt-1">S/.{product.precio.toFixed(2)}</p>
+                        </button>
+                    ))}
                 </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4 mt-4">
-                 {activeCategory === 'Promociones' && !searchTerm ? (
-                    activePromotions.map((promo, i) => {
-                        const imageUrl = getPromoImageUrl(promo, products);
-                        return (
-                            <button key={promo.id} onClick={() => { handleAddPromotionToCart(promo); setStage('checkout'); }} className={`product-card bg-surface dark:bg-slate-800 rounded-2xl border border-primary/20 dark:border-orange-500/30 overflow-hidden flex group p-4 animate-fade-in-up w-full text-left`} style={{'--delay': `${i * 30}ms`} as React.CSSProperties}>
-                                 <div className="flex-grow flex flex-col">
-                                     <h3 className="text-lg font-heading font-bold text-primary dark:text-orange-400 leading-tight flex items-center gap-2"><SparklesIcon className="h-5 w-5"/>{promo.nombre}</h3>
-                                     <p className="text-sm text-text-secondary dark:text-slate-400 mt-1 line-clamp-2 mb-2 flex-grow">{promo.descripcion}</p>
-                                     <div className="flex justify-between items-center mt-2">
-                                         <p className="text-xl font-heading font-extrabold text-text-primary dark:text-white">{promo.tipo === 'combo_fijo' ? `S/.${promo.condiciones.precioFijo?.toFixed(2)}` : '¡Ofertón!'}</p>
-                                         <div className="flex items-center gap-2 bg-primary rounded-lg text-white font-semibold px-4 py-2 group-hover:bg-primary-dark transition-all duration-300 shadow-lg group-hover:shadow-primary/30 transform group-hover:scale-105 active:scale-95">
-                                             <PlusIcon className="h-5 w-5" /> Añadir
-                                         </div>
-                                     </div>
-                                 </div>
-                                 {imageUrl && (
-                                    <div className="h-28 w-28 overflow-hidden rounded-xl ml-4 flex-shrink-0 relative">
-                                        <img className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" src={imageUrl} alt={promo.nombre} />
-                                    </div>
-                                 )}
-                            </button>
-                        );
-                    })
-                ) : filteredProducts.length > 0 ? filteredProducts.map((product, i) => (
-                   <button key={product.id} onClick={() => setSelectedProduct(product)} disabled={product.stock <= 0} className={`product-card bg-surface dark:bg-slate-800 rounded-2xl border border-text-primary/5 dark:border-slate-700 overflow-hidden flex group p-4 animate-fade-in-up w-full text-left ${product.stock <= 0 ? 'opacity-60' : ''}`} style={{'--delay': `${i * 30}ms`} as React.CSSProperties}>
-                        <div className="flex-grow">
-                            <div className="flex justify-between items-start mb-1">
-                                <h3 className="text-lg font-heading font-bold text-text-primary dark:text-slate-100 leading-tight">{product.nombre}</h3>
-                                <div className="flex items-center space-x-1 flex-shrink-0 ml-2">
-                                    <StarIcon className="h-4 w-4 text-accent"/>
-                                    <span className="text-sm font-semibold text-text-secondary dark:text-slate-400">4.8</span>
-                                </div>
-                            </div>
-                            <p className="text-sm text-text-secondary dark:text-slate-400 mt-1 line-clamp-2 mb-2">{product.descripcion}</p>
-                            <div className="flex justify-between items-center mt-2">
-                                <p className="text-xl font-heading font-extrabold text-text-primary dark:text-white">S/.{product.precio.toFixed(2)}</p>
-                                <div className="w-9 h-9 flex items-center justify-center bg-primary rounded-full text-white group-hover:bg-primary-dark transition-all duration-300 shadow-lg group-hover:shadow-primary/30 transform group-hover:scale-110 active:scale-95 group-disabled:bg-gray-400 group-disabled:shadow-none group-disabled:scale-100">
-                                    {product.stock > 0 ? <PlusIcon className="h-5 w-5" /> : <XMarkIcon className="h-5 w-5"/>}
-                                </div>
-                            </div>
+            </main>
+
+            {cartItemCount > 0 && (
+                 <footer className="flex-shrink-0 p-4 border-t border-text-primary/10 dark:border-[#45535D] bg-surface/90 dark:bg-[#34424D]/90 backdrop-blur-lg sticky bottom-0 z-50">
+                    <button id="cart-button" onClick={() => setStage('checkout')} className={`w-full bg-primary hover:bg-primary-dark text-white font-bold py-3 px-4 rounded-xl flex items-center justify-between transition-all duration-300 shadow-lg shadow-primary/30 hover:shadow-primary/40 active:scale-95 ${isCartAnimating ? 'animate-pulse' : ''}`}>
+                        <div className="flex items-center gap-2">
+                            <ShoppingBagIcon className="h-6 w-6"/>
+                            <span>{cartItemCount} item{cartItemCount > 1 ? 's' : ''}</span>
                         </div>
-                        <div className="h-28 w-28 overflow-hidden rounded-xl ml-4 flex-shrink-0 relative">
-                            <img className={`w-full h-full object-cover transition-transform duration-300 ${product.stock > 0 ? 'group-hover:scale-105' : 'filter grayscale'}`} src={product.imagenUrl} alt={product.nombre} />
-                            {product.stock <= 0 && <div className="absolute inset-0 bg-black/60 flex items-center justify-center rounded-xl"><span className="bg-danger text-white text-xs font-bold px-2 py-1 rounded">AGOTADO</span></div>}
-                        </div>
+                        <span>Ver Carrito - S/.{total.toFixed(2)}</span>
                     </button>
-                )) : (
-                     <div className="col-span-full text-center py-16">
-                        <p className="text-xl font-semibold text-text-secondary dark:text-slate-400">No se encontraron productos</p>
-                        <p className="text-text-secondary/80 dark:text-slate-500">Intenta con otra búsqueda o categoría.</p>
-                     </div>
-                )}
-            </div>
+                </footer>
+            )}
         </div>
     );
-    
-    const PaymentChoiceButton: React.FC<{
-        choice: PaymentChoice;
-        label: string;
-        description: string;
-        currentChoice: PaymentChoice;
-        setChoice: (choice: PaymentChoice) => void;
-    }> = ({ choice, label, description, currentChoice, setChoice }) => (
-        <button
-            onClick={() => setChoice(choice)}
-            className={`p-4 rounded-xl border-2 text-left transition-all duration-200 w-full ${
-                currentChoice === choice
-                    ? 'bg-primary/10 border-primary shadow-inner'
-                    : 'bg-surface dark:bg-slate-700 border-text-primary/10 dark:border-slate-600 hover:border-primary/50'
-            }`}
-        >
-            <p className={`font-bold text-lg ${currentChoice === choice ? 'text-primary' : 'text-text-primary dark:text-slate-100'}`}>{label}</p>
-            <p className="text-sm text-text-secondary dark:text-slate-400">{description}</p>
-        </button>
-    );
 
-    const renderCheckout = () => (
-         <div className="bg-surface dark:bg-slate-800 rounded-3xl shadow-2xl border border-text-primary/5 dark:border-slate-700 p-4 md:p-8 max-w-5xl w-full mx-auto animate-fade-in-scale">
-             <h2 className="text-4xl font-heading font-bold text-text-primary dark:text-white mb-8 text-center">Finalizar Pedido</h2>
-             
-             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="bg-background dark:bg-slate-900/50 p-4 md:p-6 rounded-2xl border border-text-primary/5 dark:border-slate-700">
-                    <h3 className="text-2xl font-heading font-bold text-text-primary dark:text-white mb-4">Resumen del Pedido</h3>
-                    <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
-                        {cart.length > 0 ? cart.map(item => {
-                            const productInfo = products.find(p => p.id === item.id);
-                            const unitPriceWithSauces = (item.precioOriginal ?? item.precio) + (item.salsas || []).reduce((sum, s) => sum + s.precio, 0);
-                            const itemTotal = item.precio * item.cantidad;
-                            const canHaveSauces = productInfo && !['Bebidas', 'Postres'].includes(productInfo.categoria);
-                            
-                            return (
-                                <div key={item.cartItemId} className="flex items-start">
-                                    <img src={item.imagenUrl} alt={item.nombre} className="w-16 h-16 md:w-20 md:h-20 rounded-lg object-cover mr-4"/>
-                                    <div className="flex-grow">
-                                        <p className="font-bold text-text-primary dark:text-slate-100 leading-tight">{item.nombre}</p>
-                                        {item.salsas && item.salsas.length > 0 && (
-                                            <p className="text-xs text-primary/80 dark:text-orange-400/80 italic">
-                                                + {item.salsas.map(s => s.nombre).join(', ')}
-                                            </p>
-                                        )}
-                                        {canHaveSauces && (
-                                             <button onClick={() => setEditingCartItemForSauces(item)} className="mt-2 text-sm font-bold flex items-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary dark:bg-orange-500/20 dark:hover:bg-orange-500/30 dark:text-orange-300 py-1.5 px-3 rounded-lg transition-colors shadow-sm">
-                                                <SparklesIcon className="h-4 w-4" />
-                                                {item.salsas && item.salsas.length > 0 ? 'Editar Cremas' : 'Añadir Cremas'}
-                                             </button>
-                                        )}
-                                        <p className="text-sm text-text-secondary dark:text-slate-400 mt-1">S/.{unitPriceWithSauces.toFixed(2)} c/u</p>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <button onClick={() => updateQuantity(item.cartItemId, item.cantidad - 1)} className="bg-text-primary/10 dark:bg-slate-700 rounded-full h-7 w-7 flex items-center justify-center font-bold text-text-primary dark:text-slate-200 hover:bg-text-primary/20 dark:hover:bg-slate-600 transition-transform active:scale-90">
-                                                {item.cantidad > 1 ? <MinusIcon className="h-4 w-4"/> : <TrashIcon className="h-4 w-4 text-danger" />}
-                                            </button>
-                                            <span className="font-bold w-6 text-center dark:text-slate-200">{item.cantidad}</span>
-                                            <button onClick={() => updateQuantity(item.cartItemId, item.cantidad + 1)} className="bg-text-primary/10 dark:bg-slate-700 rounded-full h-7 w-7 flex items-center justify-center font-bold text-text-primary dark:text-slate-200 hover:bg-text-primary/20 dark:hover:bg-slate-600 transition-transform active:scale-90"><PlusIcon className="h-4 w-4"/></button>
-                                        </div>
-                                    </div>
-                                    <div className="w-24 text-right">
-                                        <p className="font-bold text-text-primary dark:text-slate-100 text-lg">S/.{itemTotal.toFixed(2)}</p>
-                                        {item.precioOriginal != null && item.precio < item.precioOriginal && (
-                                            <p className="text-xs text-danger line-through">S/.{(item.precioOriginal * item.cantidad).toFixed(2)}</p>
-                                        )}
-                                    </div>
-                                </div>
-                            )
-                        }) : <p className="text-text-secondary dark:text-slate-400">Tu carrito está vacío.</p>}
-                    </div>
-                    <div className="border-t border-text-primary/10 dark:border-slate-700 mt-4 pt-4 flex justify-between items-center text-text-primary dark:text-white">
-                        <span className="text-xl font-heading font-bold">TOTAL</span>
-                        <span className="text-3xl font-heading font-extrabold text-primary">S/.{total.toFixed(2)}</span>
-                    </div>
+    const renderCheckoutScreen = () => (
+         <div className="flex flex-col h-full bg-background dark:bg-gunmetal">
+            <header className="flex-shrink-0 bg-surface/80 dark:bg-[#34424D]/80 backdrop-blur-lg p-4 shadow-sm border-b border-text-primary/5 dark:border-[#45535D] sticky top-0 z-50">
+                <div className="flex items-center justify-between">
+                    <button onClick={() => setStage('catalog')} className="flex items-center font-semibold text-text-secondary dark:text-light-silver hover:text-primary dark:hover:text-orange-400 transition-colors">
+                        <ChevronLeftIcon className="h-6 w-6" />
+                        Seguir Comprando
+                    </button>
+                    <h2 className="font-bold text-lg">Tu Pedido</h2>
+                    <div className="w-32"></div>
                 </div>
-
-                <div className="bg-background dark:bg-slate-900/50 p-4 md:p-6 rounded-2xl border border-text-primary/5 dark:border-slate-700 flex flex-col">
-                    <h3 className="text-2xl font-heading font-bold text-text-primary dark:text-white mb-4">Tus Datos y Pago</h3>
-                     <p className="bg-primary/10 text-primary font-semibold p-3 rounded-lg mb-4 text-center">
-                        Pedido para: <span className="font-bold">{orderType === 'delivery' ? 'Delivery' : 'Retiro en Tienda'}</span>
-                     </p>
-                    <div className="space-y-4">
-                        <div>
-                            <input type="text" placeholder="Nombre (para llamar tu pedido)" value={customerInfo.nombre} onChange={e => setCustomerInfo({...customerInfo, nombre: e.target.value})} className={`bg-surface dark:bg-slate-700 border ${formErrors.nombre ? 'border-danger' : 'border-text-primary/10 dark:border-slate-600'} rounded-lg p-3 w-full text-text-primary dark:text-slate-200 placeholder-text-secondary/70 dark:placeholder-slate-400 focus:ring-2 focus:ring-primary focus:border-primary transition`} />
-                            {formErrors.nombre && <p className="text-danger text-xs mt-1">{formErrors.nombre}</p>}
-                        </div>
-                        <div>
-                            <input type="tel" placeholder="Teléfono de Contacto (9 dígitos)" value={customerInfo.telefono} onChange={e => setCustomerInfo({...customerInfo, telefono: e.target.value.replace(/\D/g, '').slice(0, 9)})} className={`bg-surface dark:bg-slate-700 border ${formErrors.telefono ? 'border-danger' : 'border-text-primary/10 dark:border-slate-600'} rounded-lg p-3 w-full text-text-primary dark:text-slate-200 placeholder-text-secondary/70 dark:placeholder-slate-400 focus:ring-2 focus:ring-primary focus:border-primary transition`} />
-                            {formErrors.telefono && <p className="text-danger text-xs mt-1">{formErrors.telefono}</p>}
-                        </div>
-                        {loyalCustomer && activeProgram && (
-                            <div className="bg-primary/10 text-primary dark:text-orange-300 p-4 rounded-lg animate-fade-in-up space-y-3">
-                                <div className='flex justify-between items-center'>
-                                    <div>
-                                        <p className="font-bold">¡Hola de nuevo, {loyalCustomer.nombre}!</p>
-                                        <p>Tienes <span className="font-extrabold text-lg">{loyalCustomer.puntos}</span> Puntos</p>
-                                    </div>
-                                    <StarIcon className="h-8 w-8 text-primary"/>
-                                </div>
-                                <div className="border-t border-primary/20 pt-3">
-                                    <p className="font-bold text-sm mb-2">Mis Recompensas</p>
-                                    <div className="space-y-2">
-                                        {activeProgram.rewards.map(reward => {
-                                            const progress = Math.min((loyalCustomer.puntos / reward.puntosRequeridos) * 100, 100);
-                                            const canRedeem = progress >= 100;
-                                            return (
-                                                <div key={reward.id}>
-                                                    <div className="flex justify-between items-center text-xs font-semibold mb-1">
-                                                        <span>{reward.nombre}</span>
-                                                        <span className={canRedeem ? 'text-primary' : 'text-primary/70'}>{loyalCustomer.puntos}/{reward.puntosRequeridos} pts</span>
-                                                    </div>
-                                                    <div className="w-full bg-primary/20 rounded-full h-2">
-                                                        <div className={`bg-primary rounded-full h-2 ${canRedeem ? 'animate-pulse' : ''}`} style={{ width: `${progress}%` }}></div>
-                                                    </div>
-                                                </div>
-                                            )
-                                        })}
-                                    </div>
-                                </div>
+            </header>
+            <main className="flex-grow overflow-y-auto p-4 space-y-6">
+                <div className="bg-surface dark:bg-[#34424D] p-4 rounded-2xl">
+                    {cart.map(item => (
+                        <div key={item.cartItemId} className="flex gap-4 py-3 border-b border-text-primary/5 dark:border-[#45535D] last:border-b-0">
+                            <img src={item.imagenUrl} alt={item.nombre} className="w-16 h-16 rounded-lg object-cover" />
+                            <div className="flex-grow">
+                                <p className="font-semibold text-text-primary dark:text-ivory-cream">{item.nombre}</p>
+                                <p className="text-sm text-sky-600 dark:text-sky-400">{item.salsas?.map(s => s.nombre).join(', ')}</p>
+                                <p className="font-mono text-text-secondary dark:text-light-silver">S/.{item.precio.toFixed(2)}</p>
                             </div>
-                        )}
-                        {orderType === 'delivery' && (
-                            <div>
-                                <div className="relative flex items-center">
-                                    <input 
-                                        type="text" 
-                                        placeholder="Dirección de Entrega" 
-                                        value={customerInfo.direccion || ''} 
-                                        onChange={e => setCustomerInfo({...customerInfo, direccion: e.target.value})} 
-                                        className={`bg-surface dark:bg-slate-700 border ${formErrors.direccion ? 'border-danger' : 'border-text-primary/10 dark:border-slate-600'} rounded-lg p-3 w-full text-text-primary dark:text-slate-200 placeholder-text-secondary/70 dark:placeholder-slate-400 focus:ring-2 focus:ring-primary focus:border-primary transition pr-12`} 
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={handleGetCurrentLocation}
-                                        disabled={isLocating}
-                                        className="absolute top-1/2 right-2 -translate-y-1/2 text-primary hover:text-primary-dark disabled:opacity-50 disabled:cursor-wait p-1.5 rounded-full hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors"
-                                        aria-label="Usar ubicación actual"
-                                    >
-                                        {isLocating ? (
-                                            <svg className="animate-spin h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                            </svg>
-                                        ) : (
-                                            <MapPinIcon className="h-5 w-5" />
-                                        )}
+                            <div className="flex flex-col items-end justify-between">
+                                <p className="font-bold text-text-primary dark:text-ivory-cream">S/.{(item.precio * item.cantidad).toFixed(2)}</p>
+                                <div className="flex items-center gap-2">
+                                    <button onClick={() => updateQuantity(item.cartItemId, item.cantidad - 1)} className="bg-text-primary/10 dark:bg-[#45535D] rounded-full h-7 w-7 flex items-center justify-center font-bold">
+                                        {item.cantidad > 1 ? <MinusIcon className="h-4 w-4"/> : <TrashIcon className="h-4 w-4 text-danger"/>}
                                     </button>
+                                    <span className="font-bold w-5 text-center">{item.cantidad}</span>
+                                    <button onClick={() => updateQuantity(item.cartItemId, item.cantidad + 1)} className="bg-text-primary/10 dark:bg-[#45535D] rounded-full h-7 w-7 flex items-center justify-center font-bold"><PlusIcon className="h-4 w-4"/></button>
                                 </div>
-                                {formErrors.direccion && <p className="text-danger text-xs mt-1">{formErrors.direccion}</p>}
                             </div>
-                        )}
-                        <div>
-                            <textarea placeholder="Notas adicionales para tu pedido (ej. sin ají, tocar intercom...)" value={orderNotes} onChange={e => setOrderNotes(e.target.value)} className="bg-surface dark:bg-slate-700 border border-text-primary/10 dark:border-slate-600 rounded-lg p-3 w-full text-text-primary dark:text-slate-200 placeholder-text-secondary/70 dark:placeholder-slate-400 focus:ring-2 focus:ring-primary focus:border-primary transition" rows={2} />
                         </div>
-                    </div>
-                    <div className="mt-6">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-                           <PaymentChoiceButton choice="payNow" label="Pagar Ahora (Recomendado)" description="Con Yape/Plin para agilizar tu pedido." currentChoice={paymentChoice} setChoice={setPaymentChoice} />
-                           <PaymentChoiceButton choice="payLater" label={orderType === 'delivery' ? 'Pago Contraentrega' : 'Pagar en Tienda'} description="Paga con efectivo o tarjeta al recibir." currentChoice={paymentChoice} setChoice={setPaymentChoice} />
-                        </div>
-
-                         <div className="mt-3 p-3 bg-surface/60 dark:bg-slate-700/50 rounded-lg text-sm border border-text-primary/10 dark:border-slate-600 min-h-[180px]">
-                           {paymentChoice === 'payNow' ? (
-                                <div className="text-center animate-fade-in-right">
-                                     <p className="font-bold mb-2 text-text-primary dark:text-slate-200">¡Paga ahora y tu pedido pasará directo a cocina!</p>
-                                    <img src={yapePlinInfo.qrUrl} alt="QR Code" className="mx-auto rounded-lg w-24 h-24 mb-2"/>
-                                    <p className="text-text-secondary dark:text-slate-400">A nombre de: <span className="font-semibold text-text-primary dark:text-slate-200">{yapePlinInfo.nombre}</span></p>
-                                    <p className="text-text-secondary dark:text-slate-400">Teléfono: <span className="font-semibold text-text-primary dark:text-slate-200">{yapePlinInfo.telefono}</span></p>
-                                    <p className="mt-2 font-bold text-amber-700 dark:text-amber-300 bg-amber-500/10 dark:bg-amber-500/20 p-2 rounded-md text-xs">IMPORTANTE: Envía la captura de tu pago a nuestro WhatsApp para confirmar.</p>
-                                </div>
-                           ) : (
-                                <div className="animate-fade-in-right">
-                                    <div className="grid grid-cols-2 gap-2 mb-3">
-                                        <button onClick={() => setPaymentMethod('efectivo')} className={`flex items-center justify-center space-x-2 w-full p-2 rounded-lg border-2 transition-colors ${paymentMethod === 'efectivo' ? 'border-primary' : 'border-transparent'}`}>
-                                            <CashIcon className="h-5 w-5"/><span>Efectivo</span>
-                                        </button>
-                                         <button onClick={() => setPaymentMethod('tarjeta')} className={`flex items-center justify-center space-x-2 w-full p-2 rounded-lg border-2 transition-colors ${paymentMethod === 'tarjeta' ? 'border-primary' : 'border-transparent'}`}>
-                                            <CreditCardIcon className="h-5 w-5"/><span>Tarjeta</span>
-                                        </button>
-                                    </div>
-                                    {paymentMethod === 'efectivo' && (
-                                        <div className="space-y-2">
-                                            <label className="font-semibold block text-text-primary dark:text-slate-100 text-xs">¿Con cuánto pagarás?</label>
-                                            <label className="flex items-center space-x-2 bg-surface/70 dark:bg-slate-600/50 p-2 rounded-lg border border-text-primary/10 dark:border-slate-600 cursor-pointer">
-                                                <input type="checkbox" checked={isExactCash} onChange={(e) => setIsExactCash(e.target.checked)} className="h-4 w-4 rounded border-text-primary/20 dark:border-slate-500 text-primary focus:ring-primary bg-transparent dark:bg-slate-800" />
-                                                <span className="dark:text-slate-200 text-xs">Pagaré con el monto exacto</span>
-                                            </label>
-                                            {!isExactCash && (
-                                                <input id="cash-amount" type="number" value={cashPaymentAmount} onChange={e => setCashPaymentAmount(e.target.value)} placeholder="Ej: 50" className={`bg-surface dark:bg-slate-700 border ${formErrors.pagoConEfectivo ? 'border-danger' : 'border-text-primary/10 dark:border-slate-600'} rounded-lg p-2 w-full text-text-primary dark:text-slate-200 placeholder-text-secondary/70 dark:placeholder-slate-400 focus:ring-2 focus:ring-primary focus:border-primary transition`} />
-                                            )}
-                                            {formErrors.pagoConEfectivo && <p className="text-danger text-xs mt-1">{formErrors.pagoConEfectivo}</p>}
-                                        </div>
-                                    )}
-                                     {paymentMethod === 'tarjeta' && (
-                                        <p className="font-semibold text-center text-text-primary dark:text-slate-200 pt-8">{orderType === 'delivery' ? 'Llevaremos un POS.' : 'Paga con POS en tienda.'}</p>
-                                    )}
-                                </div>
-                           )}
-                        </div>
-                    </div>
-                    <div className="mt-auto pt-6 grid grid-cols-2 gap-4">
-                        <button onClick={() => setStage('catalog')} className="w-full bg-text-primary/10 dark:bg-slate-700 hover:bg-text-primary/20 dark:hover:bg-slate-600 text-text-primary dark:text-slate-200 font-bold py-3 px-6 rounded-xl transition-all active:scale-95">Volver</button>
-                        <button onClick={handlePlaceOrder} disabled={cart.length === 0} className="w-full bg-primary text-white font-bold py-3 px-6 rounded-xl disabled:bg-gray-400 dark:disabled:bg-slate-600 disabled:cursor-not-allowed transition-all duration-300 shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-0.5 active:scale-95">Confirmar Pedido</button>
-                    </div>
+                    ))}
                 </div>
-             </div>
-         </div>
-    );
-    
-    const renderConfirmation = () => {
-        let confirmationMessage = '';
-        let titleMessage = '¡Pedido Recibido!';
-        
-        const isPayNow = paymentChoice === 'payNow';
-        const isRiskyRetiro = orderType === 'retiro' && paymentChoice === 'payLater';
-
-        let whatsappUrl = '';
-
-        if (isPayNow) {
-            titleMessage = '¡Casi Listo! Confirma tu Pago';
-            confirmationMessage = `Recibimos tu pedido. Para finalizar, haz clic abajo para enviarnos la captura de tu pago por WhatsApp.`;
-            
-            const phoneNumber = yapePlinInfo.telefono.replace(/\s/g, '');
-            const fullPhoneNumber = `51${phoneNumber}`; // Peru country code
-            const message = `Hola Uchu51, acabo de realizar el pedido *${newOrderId}*. En breve comparto la captura del pago. ¡Gracias!`;
-            const encodedMessage = encodeURIComponent(message);
-            whatsappUrl = `https://wa.me/${fullPhoneNumber}?text=${encodedMessage}`;
-
-        } else if (isRiskyRetiro) {
-            titleMessage = '¡Pedido en Espera!';
-            confirmationMessage = `Estaremos validando tu pedido en breve. Recibirás una notificación cuando sea confirmado y comience a prepararse.`;
-        } else {
-             switch (orderType) {
-                case 'delivery':
-                    confirmationMessage = `Lo estaremos entregando en tu dirección en aproximadamente 30 minutos.`;
-                    break;
-                case 'retiro':
-                    confirmationMessage = `Puedes pasar a recogerlo en aproximadamente 15 minutos. ¡Te notificaremos cuando esté listo!`;
-                    break;
-            }
-        }
-
-
-        return (
-            <div className="bg-surface dark:bg-slate-800 rounded-3xl shadow-2xl border border-text-primary/5 dark:border-slate-700 p-12 max-w-2xl mx-auto text-center animate-fade-in-scale">
-                <CheckCircleIcon className="h-20 w-20 text-primary mx-auto mb-6" />
-                <h2 className="text-4xl font-heading font-bold text-text-primary dark:text-white mb-3">{titleMessage}</h2>
-                <p className="text-text-secondary dark:text-slate-300 text-lg mb-6">Gracias por tu compra. Tu número de referencia es <span className="font-bold text-primary">{newOrderId}</span>.</p>
-                <p className="text-text-secondary dark:text-slate-400">{confirmationMessage}</p>
-                
-                {isPayNow ? (
-                    <div className='mt-8 flex flex-col items-center'>
-                        <a
-                          href={whatsappUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center gap-3 bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 rounded-xl transition-all shadow-lg shadow-green-500/20 hover:shadow-green-500/40 active:scale-95 text-lg"
-                        >
-                            <WhatsAppIcon className="h-6 w-6" />
-                            Confirmar por WhatsApp
-                        </a>
-                        <button onClick={() => setStage('selection')} className="mt-4 bg-transparent text-text-secondary dark:text-slate-400 font-bold py-3 px-8 rounded-xl transition-all hover:bg-text-primary/10 dark:hover:bg-slate-700 active:scale-95">Hacer otro Pedido</button>
+                <div className="bg-surface dark:bg-[#34424D] p-4 rounded-2xl space-y-4">
+                    <h3 className="font-bold text-lg">Tus Datos</h3>
+                    <div>
+                        <input type="text" placeholder="Nombre Completo" value={customerInfo.nombre} onChange={e => setCustomerInfo(p => ({...p, nombre: e.target.value}))} className={`w-full p-3 rounded-lg bg-background dark:bg-[#45535D] border ${formErrors.nombre ? 'border-danger' : 'border-text-primary/10 dark:border-[#56656E]'}`} />
+                        {formErrors.nombre && <p className="text-danger text-xs mt-1">{formErrors.nombre}</p>}
                     </div>
-                ) : (
-                    <button onClick={() => setStage('selection')} className="mt-8 bg-primary hover:bg-primary-dark text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg shadow-primary/20 hover:shadow-primary/40 active:scale-95">Hacer otro Pedido</button>
+                    <div>
+                        <input type="tel" placeholder="N° de Celular (9 dígitos)" value={customerInfo.telefono} onChange={e => setCustomerInfo(p => ({...p, telefono: e.target.value.replace(/\D/g, '').slice(0, 9)}))} className={`w-full p-3 rounded-lg bg-background dark:bg-[#45535D] border ${formErrors.telefono ? 'border-danger' : 'border-text-primary/10 dark:border-[#56656E]'}`} />
+                        {formErrors.telefono && <p className="text-danger text-xs mt-1">{formErrors.telefono}</p>}
+                    </div>
+                    {orderType === 'delivery' && (
+                        <div>
+                            <input type="text" placeholder="Dirección de Entrega" value={customerInfo.direccion || ''} onChange={e => setCustomerInfo(p => ({...p, direccion: e.target.value}))} className={`w-full p-3 rounded-lg bg-background dark:bg-[#45535D] border ${formErrors.direccion ? 'border-danger' : 'border-text-primary/10 dark:border-[#56656E]'}`} />
+                            {formErrors.direccion && <p className="text-danger text-xs mt-1">{formErrors.direccion}</p>}
+                            <button onClick={handleGetCurrentLocation} className="text-sm font-semibold text-primary mt-2 flex items-center gap-1">
+                                <MapPinIcon className="h-4 w-4"/> {isLocating ? 'Obteniendo...' : 'Usar mi ubicación actual'}
+                            </button>
+                        </div>
+                    )}
+                     <textarea placeholder="¿Alguna indicación especial para tu pedido?" value={orderNotes} onChange={e => setOrderNotes(e.target.value)} rows={2} className="w-full p-3 rounded-lg bg-background dark:bg-[#45535D] border border-text-primary/10 dark:border-[#56656E]"></textarea>
+                </div>
+            </main>
+             <footer className="flex-shrink-0 p-4 border-t border-text-primary/10 dark:border-[#45535D] bg-surface/90 dark:bg-[#34424D]/90 backdrop-blur-lg sticky bottom-0 z-50">
+                <div className="flex justify-between items-center mb-3">
+                    <span className="font-semibold">Total a Pagar</span>
+                    <span className="font-bold text-2xl font-mono">S/.{total.toFixed(2)}</span>
+                </div>
+                <button onClick={handlePlaceOrder} className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3 px-4 rounded-xl transition-all shadow-lg">
+                    Confirmar Pedido
+                </button>
+            </footer>
+        </div>
+    );
+
+    const renderConfirmationScreen = () => {
+        const whatsappMessage = encodeURIComponent(`Hola, acabo de realizar el pedido ${newOrderId}.`);
+        const whatsappLink = `https://wa.me/51${yapePlinInfo.telefono}?text=${whatsappMessage}`;
+        return (
+            <div className="flex flex-col items-center justify-center text-center h-full p-4">
+                <CheckCircleIcon className="h-20 w-20 text-success mb-4" />
+                <h2 className="text-3xl font-heading font-bold text-text-primary dark:text-white">¡Pedido Recibido!</h2>
+                <p className="text-lg text-text-secondary dark:text-light-silver mt-2">Tu pedido <span className="font-bold text-primary">{newOrderId}</span> está en camino.</p>
+
+                {(paymentMethod === 'yape' || paymentMethod === 'plin') && paymentChoice === 'payNow' && (
+                    <div className="mt-6 p-4 bg-surface dark:bg-[#34424D] rounded-2xl w-full max-w-sm">
+                        <h3 className="font-bold mb-2">Paga con Yape/Plin para confirmar</h3>
+                        <img src={yapePlinInfo.qrUrl} alt="QR Code" className="w-40 h-40 mx-auto rounded-lg" />
+                        <p className="mt-2">A nombre de: <span className="font-semibold">{yapePlinInfo.nombre}</span></p>
+                        <p>Número: <span className="font-semibold">{yapePlinInfo.telefono}</span></p>
+                        <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="mt-4 w-full bg-green-500 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2">
+                           <WhatsAppIcon className="h-6 w-6"/> Enviar voucher por WhatsApp
+                        </a>
+                    </div>
                 )}
+                
+                <button onClick={() => setStage('selection')} className="mt-8 font-semibold text-primary hover:underline">
+                    Hacer otro pedido
+                </button>
             </div>
         );
+    }
+    
+    const mainContent = () => {
+        switch (stage) {
+            case 'catalog':
+                return renderCatalogScreen();
+            case 'checkout':
+                return renderCheckoutScreen();
+            case 'confirmation':
+                return renderConfirmationScreen();
+            case 'selection':
+            default:
+                return renderSelectionScreen();
+        }
     };
 
-    const isCatalogStage = stage === 'catalog' || stage === 'checkout';
-
     return (
-        <div className="min-h-screen flex flex-col font-sans bg-background dark:bg-slate-900 text-text-primary dark:text-slate-200">
-            {selectedProduct && (
-                <ProductDetailModal
-                    product={selectedProduct}
-                    onClose={() => setSelectedProduct(null)}
-                    onAddToCart={handleAddToCartWithAnimation}
-                />
-            )}
-            {editingCartItemForSauces && (
-                <SauceModal
-                    product={products.find(p => p.id === editingCartItemForSauces.id) || null}
-                    initialSalsas={editingCartItemForSauces.salsas}
-                    onClose={() => setEditingCartItemForSauces(null)}
-                    onConfirm={handleConfirmEditSauces}
-                />
-            )}
-            {showInstallInstructions && renderInstallInstructions()}
-            {showPromosModal && renderPromosModal()}
+        <div className="min-h-screen bg-background dark:bg-gunmetal font-sans flex flex-col relative">
             {showGoBackConfirm && (
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[101] p-4">
-                    <div className="bg-surface dark:bg-slate-800 rounded-2xl shadow-xl p-6 max-w-sm w-full text-center animate-fade-in-scale">
-                        <h3 className="text-xl font-heading font-bold text-text-primary dark:text-white">¿Volver al inicio?</h3>
-                        <p className="text-text-secondary dark:text-slate-400 my-3">Tu pedido actual se perderá. ¿Estás seguro que quieres continuar?</p>
+                    <div className="bg-surface dark:bg-[#34424D] rounded-2xl shadow-xl p-6 max-w-sm w-full text-center">
+                        <h3 className="text-xl font-bold">¿Descartar Pedido?</h3>
+                        <p className="my-3">Si vuelves, se vaciará tu carrito. ¿Estás seguro?</p>
                         <div className="grid grid-cols-2 gap-3 mt-6">
-                            <button onClick={() => setShowGoBackConfirm(false)} className="bg-text-primary/10 dark:bg-slate-700 hover:bg-text-primary/20 dark:hover:bg-slate-600 text-text-primary dark:text-slate-200 font-bold py-2 px-4 rounded-lg transition-colors active:scale-95">Cancelar</button>
-                            <button onClick={confirmGoBack} className="bg-danger hover:brightness-110 text-white font-bold py-2 px-4 rounded-lg transition-all active:scale-95">Sí, Volver</button>
+                            <button onClick={() => setShowGoBackConfirm(false)} className="bg-text-primary/10 font-bold py-2 px-4 rounded-lg">Cancelar</button>
+                            <button onClick={confirmGoBack} className="bg-danger text-white font-bold py-2 px-4 rounded-lg">Sí, descartar</button>
                         </div>
                     </div>
                 </div>
             )}
-
-            {isCatalogStage && (
-                <header className="sticky top-0 bg-background/80 dark:bg-slate-900/80 backdrop-blur-lg z-30 w-full animate-fade-in-down">
-                    <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="flex items-center justify-between h-16">
-                            <button onClick={handleGoBack} className="flex items-center space-x-1 text-text-secondary dark:text-slate-400 hover:text-primary dark:hover:text-orange-400 transition-colors font-semibold">
-                                <ChevronLeftIcon className="h-6 w-6" />
-                                <span>Inicio</span>
-                            </button>
-                             <div className="text-center">
-                                <p className="font-bold text-lg text-text-primary dark:text-white capitalize">{orderType}</p>
-                            </div>
-                            <button id="cart-button" onClick={() => setStage('checkout')} className={`relative p-2 rounded-full transition-colors ${stage === 'checkout' ? 'bg-primary/10 text-primary' : 'hover:bg-surface dark:hover:bg-slate-800'}`}>
-                                <ShoppingBagIcon className={`h-7 w-7 transition-transform ${isCartAnimating ? 'animate-wiggle' : ''}`}/>
-                                {cartItemCount > 0 && <span className="absolute -top-1 -right-1 bg-danger text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">{cartItemCount}</span>}
-                            </button>
-                        </div>
-                    </div>
-                </header>
-            )}
-
-            <main className="flex-grow flex items-center justify-center p-4 sm:p-6 lg:p-8">
-                {stage === 'selection' && renderSelectionScreen()}
-                {stage === 'catalog' && renderCatalog()}
-                {stage === 'checkout' && renderCheckout()}
-                {stage === 'confirmation' && renderConfirmation()}
-            </main>
+            {selectedProduct && <ProductDetailModal product={selectedProduct} onClose={() => setSelectedProduct(null)} onAddToCart={handleAddToCartWithAnimation} />}
+            {showInstallInstructions && renderInstallInstructions()}
+            {showPromosModal && renderPromosModal()}
+            {mainContent()}
         </div>
     );
 };

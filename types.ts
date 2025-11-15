@@ -1,5 +1,6 @@
 
 
+
 export type EstadoPedido = 'pendiente confirmar pago' | 'pendiente de confirmación' | 'nuevo' | 'confirmado' | 'en preparación' | 'en armado' | 'listo para armado' | 'listo' | 'en camino' | 'entregado' | 'cancelado' | 'recogido' | 'pagado' | 'cuenta solicitada';
 export type TipoPedido = 'delivery' | 'local' | 'retiro';
 export type Turno = 'mañana' | 'tarde' | 'noche';
@@ -98,7 +99,7 @@ export interface Pedido {
     estacion?: 'caliente' | 'fria';
     areaPreparacion?: AreaPreparacion;
     puntosGanados?: number;
-    gananciaEstimada?: number; // FIX: Add missing property
+    gananciaEstimada?: number;
     pagoRegistrado?: {
         metodo: MetodoPago;
         montoTotal: number;
@@ -151,7 +152,6 @@ export interface ClienteLeal {
     telefono: string;
     nombre: string;
     puntos: number;
-    // FIX: Changed Pedido[] to any[] to break a circular dependency in Supabase types.
     historialPedidos: any[];
     restaurant_id: string;
 }
@@ -213,8 +213,7 @@ export type Action =
   | { type: 'SET_TURNO'; payload: Turno }
   | { type: 'TOGGLE_THEME' }
   | { type: 'TOGGLE_SIDEBAR' }
-  // FIX: Add payload to 'LOGIN' action type to fix typing error in Login.tsx
-  | { type: 'LOGIN'; payload: UserRole }
+  | { type: 'LOGIN_INTERNAL_SUCCESS' }
   | { type: 'LOGIN_FAILED'; payload: string }
   | { type: 'LOGOUT' }
   | { type: 'GO_TO_LOGIN' }
@@ -242,5 +241,4 @@ export type Action =
   | { type: 'SET_LOYALTY_PROGRAMS'; payload: LoyaltyProgram[] }
   | { type: 'ADD_NEW_CUSTOMER'; payload: { telefono: string; nombre: string } }
   | { type: 'REDEEM_REWARD'; payload: { customerId: string; reward: Recompensa } }
-  | { type: 'SET_INSTALL_PROMPT'; payload: any }
-  | { type: 'SET_STATE'; payload: any };
+  | { type: 'SET_INSTALL_PROMPT'; payload: any };

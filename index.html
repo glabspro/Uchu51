@@ -8,7 +8,7 @@
 
     <!-- PWA Tags -->
     <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#F97316" />
+    <meta name="theme-color" content="#FF5B04" />
     <link rel="apple-touch-icon" href="/icon-192x192.png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,23 +25,26 @@
             heading: ['Poppins', 'sans-serif'],
           },
           colors: {
-            background: '#FDFCFB',
+            background: '#FDF6E3', // Ivory Cream
             surface: '#FFFFFF',
             primary: {
               DEFAULT: 'hsl(var(--color-primary-h), var(--color-primary-s), var(--color-primary-l))',
               dark: 'hsl(var(--color-primary-h), var(--color-primary-s), calc(var(--color-primary-l) * 0.92))',
             },
-            accent: {
-              DEFAULT: '#FFC700',
-              dark: '#EAB308',
-            },
+            accent: '#F4D47C', // Sand Yellow
             text: {
-              primary: '#44281D',
-              secondary: '#786d69',
+              primary: '#233038', // Gunmetal
+              secondary: '#5A6973', // Lighter Gunmetal
             },
             success: '#16A34A',
             danger: '#DC2626',
             warning: '#F59E0B',
+            // New palette colors
+            'gunmetal': '#233038',
+            'midnight-green': '#075056',
+            'ivory-cream': '#FDF6E3',
+            'sand-yellow': '#F4D47C',
+            'light-silver': '#D3DBDD',
           }
         }
       }
@@ -215,13 +218,12 @@
     }
     /* Handle specific secondary text colors */
     body.uchu-printing .printable-modal-content .text-text-secondary,
-    body.uchu-printing .printable-modal-content .dark\:text-slate-400,
-    body.uchu-printing .printable-modal-content .dark\:text-slate-500 {
+    body.uchu-printing .printable-modal-content .dark\:text-light-silver {
         color: #444 !important;
     }
     /* Ensure borders are visible */
      body.uchu-printing .printable-modal-content .border-gray-300,
-     body.uchu-printing .printable-modal-content .dark\:border-slate-600 {
+     body.uchu-printing .printable-modal-content .dark\:border-[#45535D] {
         border-color: #888 !important;
     }
     /* Hide elements that should not be printed */
@@ -231,7 +233,7 @@
   }
 </style>
 </head>
-<body class="antialiased bg-background text-text-primary dark:bg-slate-900 dark:text-slate-200">
+<body class="antialiased bg-background text-text-primary dark:bg-gunmetal dark:text-ivory-cream">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
 </body>

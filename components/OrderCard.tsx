@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from 'react';
 import type { Pedido } from '../types';
 import { ClockIcon, UserIcon, PhoneIcon, MapPinIcon } from './icons';
@@ -74,7 +72,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, children, style }) => {
 
     const getTimerColor = (timeInSeconds: number, timeEstimatedInMinutes: number) => {
         if (isFinalState) {
-            return 'text-text-secondary dark:text-slate-400';
+            return 'text-text-secondary dark:text-light-silver';
         }
         const percentage = timeInSeconds / (timeEstimatedInMinutes * 60);
         if (percentage < 0.75) return 'text-success dark:text-green-400';
@@ -98,16 +96,16 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, children, style }) => {
     }
 
     return (
-        <div style={style} className="bg-surface dark:bg-slate-800 rounded-2xl shadow-lg dark:shadow-2xl dark:shadow-slate-950/50 flex flex-col justify-between min-h-[250px] transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group animate-fade-in-up border border-text-primary/5 dark:border-slate-700">
+        <div style={style} className="bg-surface dark:bg-[#34424D] rounded-2xl shadow-lg dark:shadow-2xl dark:shadow-gunmetal/50 flex flex-col justify-between min-h-[250px] transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group animate-fade-in-up border border-text-primary/5 dark:border-[#45535D]">
             <div className="p-5 flex-grow flex flex-col">
                 <div className="flex justify-between items-start mb-3">
                     <div>
-                        <h3 className="font-heading font-extrabold text-xl text-text-primary dark:text-slate-100">{order.id}</h3>
+                        <h3 className="font-heading font-extrabold text-xl text-text-primary dark:text-ivory-cream">{order.id}</h3>
                         <p className="text-sm font-semibold text-primary dark:text-orange-400">
                             {order.tipo === 'delivery' ? 'Delivery' : (order.cliente.mesa ? `Salón - Mesa ${order.cliente.mesa}` : 'Retiro')}
                         </p>
                     </div>
-                     <div className={`text-2xl font-bold ${timerColor} flex items-center bg-background dark:bg-slate-700/50 px-3 py-1 rounded-lg font-mono`}>
+                     <div className={`text-2xl font-bold ${timerColor} flex items-center bg-background dark:bg-[#45535D]/50 px-3 py-1 rounded-lg font-mono`}>
                        <ClockIcon className="h-5 w-5 mr-2"/> {formatTime(tiempoTranscurrido)}
                     </div>
                 </div>
@@ -116,18 +114,18 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, children, style }) => {
                     <span className={`text-xs font-bold uppercase tracking-wider ${statusTextColor}`}>{statusLabel}</span>
                 </div>
 
-                <div className="space-y-2 text-sm text-text-secondary dark:text-slate-400 mb-4">
+                <div className="space-y-2 text-sm text-text-secondary dark:text-light-silver mb-4">
                     <div className="flex items-center">
-                        <UserIcon className="h-4 w-4 mr-2.5 text-text-primary/40 dark:text-slate-500" />
-                        <span className="font-medium text-text-primary dark:text-slate-200">{order.cliente.nombre}</span>
+                        <UserIcon className="h-4 w-4 mr-2.5 text-text-primary/40 dark:text-light-silver/50" />
+                        <span className="font-medium text-text-primary dark:text-ivory-cream">{order.cliente.nombre}</span>
                     </div>
                     <div className="flex items-center">
-                        <PhoneIcon className="h-4 w-4 mr-2.5 text-text-primary/40 dark:text-slate-500" />
+                        <PhoneIcon className="h-4 w-4 mr-2.5 text-text-primary/40 dark:text-light-silver/50" />
                         <span>{order.cliente.telefono.slice(-9)}</span>
                     </div>
                     {order.tipo === 'delivery' && order.cliente.direccion && (
                          <div className="flex items-start">
-                            <MapPinIcon className="h-4 w-4 mr-2.5 mt-0.5 text-text-primary/40 dark:text-slate-500 flex-shrink-0" />
+                            <MapPinIcon className="h-4 w-4 mr-2.5 mt-0.5 text-text-primary/40 dark:text-light-silver/50 flex-shrink-0" />
                             {mapsLink ? (
                                 <a href={mapsLink} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline transition-colors font-semibold">
                                     Ver en Google Maps
@@ -151,13 +149,13 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, children, style }) => {
                         <span className="font-bold">Nota:</span> {order.notas}
                     </div>
                 )}
-                <div className="border-t border-text-primary/10 dark:border-slate-700 pt-3 mt-auto">
+                <div className="border-t border-text-primary/10 dark:border-[#45535D] pt-3 mt-auto">
                     <ul className="space-y-1.5 text-sm">
                         {order.productos.map((p, index) => (
                             <li key={index}>
                                 <div className="flex justify-between">
-                                    <span className="text-text-primary dark:text-slate-200">{p.cantidad}x {p.nombre}</span>
-                                    <span className="font-mono text-text-secondary dark:text-slate-400">S/.{(p.cantidad * p.precio).toFixed(2)}</span>
+                                    <span className="text-text-primary dark:text-ivory-cream">{p.cantidad}x {p.nombre}</span>
+                                    <span className="font-mono text-text-secondary dark:text-light-silver">S/.{(p.cantidad * p.precio).toFixed(2)}</span>
                                 </div>
                                 {p.especificaciones && <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 pl-2 italic">↳ {p.especificaciones}</p>}
                                 {p.salsas && p.salsas.length > 0 && (
@@ -172,8 +170,8 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, children, style }) => {
             </div>
             
             <div className="px-5 pb-5">
-                <div className="flex justify-between items-center text-sm font-bold border-t border-text-primary/10 dark:border-slate-700 pt-3">
-                    <span className="text-text-secondary dark:text-slate-300 text-base">TOTAL</span>
+                <div className="flex justify-between items-center text-sm font-bold border-t border-text-primary/10 dark:border-[#45535D] pt-3">
+                    <span className="text-text-secondary dark:text-ivory-cream text-base">TOTAL</span>
                     <span className="text-xl font-mono text-text-primary dark:text-white font-heading">S/.{order.total.toFixed(2)}</span>
                 </div>
                 {children && <div className="mt-4">{children}</div>}

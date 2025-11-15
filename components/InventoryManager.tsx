@@ -32,11 +32,11 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ products, setProduc
 
     return (
         <div>
-            <h2 className="text-2xl font-bold text-text-primary dark:text-slate-200 mb-6">Inventario de Productos</h2>
-            <div className="bg-background dark:bg-slate-900/50 rounded-xl border border-text-primary/5 dark:border-slate-700 overflow-hidden">
+            <h2 className="text-2xl font-bold text-text-primary dark:text-zinc-200 mb-6">Inventario de Productos</h2>
+            <div className="bg-background dark:bg-zinc-900/50 rounded-xl border border-text-primary/5 dark:border-zinc-700 overflow-hidden">
                 <div className="overflow-x-auto max-h-[calc(100vh-20rem)]">
                     <table className="w-full text-sm text-left">
-                        <thead className="bg-surface dark:bg-slate-700/50 sticky top-0">
+                        <thead className="bg-surface dark:bg-zinc-700/50 sticky top-0">
                             <tr>
                                 <th className="p-4 font-semibold">Producto</th>
                                 <th className="p-4 font-semibold">Categoría</th>
@@ -44,12 +44,12 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ products, setProduc
                                 <th className="p-4 font-semibold">Actualizar Stock</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-text-primary/5 dark:divide-slate-700">
+                        <tbody className="divide-y divide-text-primary/5 dark:divide-zinc-700">
                             {sortedProducts.map(product => (
-                                <tr key={product.id} className="hover:bg-text-primary/5 dark:hover:bg-slate-700/30">
-                                    <td className="p-4 font-medium text-text-primary dark:text-slate-200">{product.nombre}</td>
-                                    <td className="p-4 text-text-secondary dark:text-slate-400">{product.categoria}</td>
-                                    <td className={`p-4 text-center font-bold text-lg ${product.stock < 10 ? 'text-danger' : 'text-text-primary dark:text-slate-200'}`}>
+                                <tr key={product.id} className="hover:bg-text-primary/5 dark:hover:bg-zinc-700/30">
+                                    <td className="p-4 font-medium text-text-primary dark:text-zinc-200">{product.nombre}</td>
+                                    <td className="p-4 text-text-secondary dark:text-zinc-400">{product.categoria}</td>
+                                    <td className={`p-4 text-center font-bold text-lg ${product.stock < 10 ? 'text-danger' : 'text-text-primary dark:text-zinc-200'}`}>
                                         {product.stock}
                                     </td>
                                     <td className="p-4">
@@ -60,7 +60,7 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ products, setProduc
                                                 onChange={e => handleStockChange(product.id, e.target.value)}
                                                 onBlur={() => handleUpdateStock(product.id)}
                                                 onKeyDown={(e) => e.key === 'Enter' && handleUpdateStock(product.id)}
-                                                className="w-24 bg-surface dark:bg-slate-700 border border-text-primary/10 dark:border-slate-600 rounded-md p-2 text-center font-mono focus:ring-2 focus:ring-primary focus:border-primary"
+                                                className="w-24 bg-surface dark:bg-zinc-700 border border-text-primary/10 dark:border-zinc-600 rounded-md p-2 text-center font-mono focus:ring-2 focus:ring-primary focus:border-primary"
                                             />
                                         </div>
                                     </td>

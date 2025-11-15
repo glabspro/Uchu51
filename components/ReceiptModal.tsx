@@ -112,22 +112,22 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ order }) => {
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-[100] p-4 printable-modal" onClick={onClose}>
-            <div className="bg-surface dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-sm" onClick={e => e.stopPropagation()}>
-                <div className="p-6 text-sm text-text-primary dark:text-slate-200 printable-modal-content">
+            <div className="bg-surface dark:bg-zinc-800 rounded-lg shadow-xl w-full max-w-sm" onClick={e => e.stopPropagation()}>
+                <div className="p-6 text-sm text-text-primary dark:text-zinc-200 printable-modal-content">
                     <div className="text-center mb-6">
                         <Logo logoUrl={restaurantSettings?.branding?.logoUrl} className="h-10 w-auto mx-auto mb-2" variant={theme === 'dark' ? 'light' : 'default'} />
-                        <p className="text-xs text-text-secondary dark:text-slate-400">Av. Ejemplo 123, Lima, Perú</p>
+                        <p className="text-xs text-text-secondary dark:text-zinc-400">Av. Ejemplo 123, Lima, Perú</p>
                         <p className="text-lg font-bold mt-2">COMPROBANTE DE PAGO</p>
                     </div>
 
-                    <div className="border-b border-dashed border-gray-300 dark:border-slate-600 pb-2 mb-2">
+                    <div className="border-b border-dashed border-gray-300 dark:border-zinc-600 pb-2 mb-2">
                         <p><span className="font-semibold">Pedido:</span> {order.id}</p>
                         <p><span className="font-semibold">Fecha:</span> {pago ? new Date(pago.fecha).toLocaleString() : new Date(order.fecha).toLocaleString()}</p>
                         <p><span className="font-semibold">Cliente:</span> {order.cliente.nombre}</p>
                         {order.tipo === 'local' && <p><span className="font-semibold">Mesa:</span> {order.cliente.mesa}</p>}
                     </div>
 
-                    <div className="border-b border-dashed border-gray-300 dark:border-slate-600 pb-2 mb-2">
+                    <div className="border-b border-dashed border-gray-300 dark:border-zinc-600 pb-2 mb-2">
                         <div className="flex justify-between font-semibold">
                             <span>Cant.</span>
                             <span className="flex-grow text-left pl-2">Descripción</span>
@@ -150,7 +150,7 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ order }) => {
                     </div>
 
                     {pago && (
-                        <div className="border-t border-dashed border-gray-300 dark:border-slate-600 pt-2 mt-2">
+                        <div className="border-t border-dashed border-gray-300 dark:border-zinc-600 pt-2 mt-2">
                             <div className="flex justify-between">
                                 <span>Método:</span>
                                 <span className="font-semibold capitalize">{pago.metodo.replace(/yape\/plin/g, 'Yape/Plin')}</span>
@@ -171,17 +171,17 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ order }) => {
                     )}
                     
                     {order.puntosGanados && order.puntosGanados > 0 && (
-                        <div className="border-t border-dashed border-gray-300 dark:border-slate-600 mt-2 pt-2 text-center bg-primary/10 dark:bg-orange-500/20 p-3 rounded-lg">
+                        <div className="border-t border-dashed border-gray-300 dark:border-zinc-600 mt-2 pt-2 text-center bg-primary/10 dark:bg-orange-500/20 p-3 rounded-lg">
                             <p className="font-semibold text-primary dark:text-orange-300">¡Gracias por tu lealtad! 🌟</p>
-                            <p className="text-text-primary dark:text-slate-200">Ganaste <span className="font-bold text-lg">{order.puntosGanados}</span> puntos en esta compra.</p>
+                            <p className="text-text-primary dark:text-zinc-200">Ganaste <span className="font-bold text-lg">{order.puntosGanados}</span> puntos en esta compra.</p>
                         </div>
                     )}
 
 
-                    <p className="text-center text-xs mt-6 text-text-secondary dark:text-slate-500">¡Gracias por su compra!</p>
+                    <p className="text-center text-xs mt-6 text-text-secondary dark:text-zinc-500">¡Gracias por su compra!</p>
                 </div>
-                 <div className="p-4 bg-background dark:bg-slate-900/50 rounded-b-lg grid grid-cols-3 gap-2 no-print">
-                    <button onClick={onClose} className="w-full bg-text-primary/10 dark:bg-slate-700 hover:bg-text-primary/20 dark:hover:bg-slate-600 text-text-primary dark:text-slate-200 font-bold py-2 px-3 rounded-lg text-sm">
+                 <div className="p-4 bg-background dark:bg-zinc-900/50 rounded-b-lg grid grid-cols-3 gap-2 no-print">
+                    <button onClick={onClose} className="w-full bg-text-primary/10 dark:bg-zinc-700 hover:bg-text-primary/20 dark:hover:bg-zinc-600 text-text-primary dark:text-zinc-200 font-bold py-2 px-3 rounded-lg text-sm">
                         Cerrar
                     </button>
                     <button onClick={handlePrint} className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-2 px-3 rounded-lg shadow-md text-sm">

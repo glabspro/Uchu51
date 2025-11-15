@@ -1,8 +1,5 @@
-
-
 import React, { useEffect, useMemo, useCallback } from 'react';
-// FIX: Import necessary types for POSView props
-import type { Pedido, Mesa, EstadoPedido, UserRole, Recompensa, ClienteLeal, AppView } from './types';
+import type { Pedido, Mesa, EstadoPedido, Recompensa, ClienteLeal } from './types';
 import { useAppContext } from './store';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
@@ -13,9 +10,8 @@ import RetiroBoard from './components/RetiroBoard';
 import Dashboard from './components/Dashboard';
 import WaitingBoard from './components/WaitingBoard';
 import POSView from './components/POSView';
-// FIX: Changed to named import for CustomerView as it doesn't have a default export
 import { CustomerView } from './components/CustomerView';
-import Login from './components/Login';
+import Login from './Login';
 import SuperAdminView from './components/SuperAdminView';
 import Toast from './components/Toast';
 import CajaView from './components/CajaView';
@@ -26,6 +22,7 @@ import DeliveryPaymentModal from './components/DeliveryPaymentModal';
 import GestionView from './components/GestionView';
 import AssignCustomerModal from './components/AssignCustomerModal';
 import { LogoIcon } from './components/LogoIcon';
+import BottomNavBar from './components/BottomNavBar';
 
 const hexToHsl = (hex: string): { h: number; s: number; l: number } | null => {
     if (!hex || !/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(hex)) {
@@ -75,7 +72,6 @@ const App: React.FC = () => {
         appView, 
         loginError, 
         toasts, 
-        isSidebarCollapsed,
         posMesaActiva,
         orderForPreBill,
         orderToPay,
@@ -84,6 +80,7 @@ const App: React.FC = () => {
         installPrompt,
         mesaParaAsignarCliente,
         isLoading,
+        criticalError,
         restaurantSettings,
     } = state;
 
@@ -98,7 +95,7 @@ const App: React.FC = () => {
 
     useEffect(() => {
         const root = window.document.documentElement;
-        const primaryColor = restaurantSettings?.branding?.primaryColor || '#F97316';
+        const primaryColor = restaurantSettings?.branding?.primaryColor || '#FF5B04';
         
         const hsl = hexToHsl(primaryColor);
         if (hsl) {
@@ -127,7 +124,6 @@ const App: React.FC = () => {
         });
     }, [orders, restaurantSettings]);
 
-    const filteredOrders = useMemo(() => orders.filter(order => order.turno === turno), [orders, turno]);
     const openOrders = useMemo(() => orders.filter(o => !['pagado', 'cancelado'].includes(o.estado)), [orders]);
     const retiroOrdersToPay = useMemo(() => openOrders.filter(o => o.tipo === 'retiro' && o.estado === 'listo' && ['efectivo', 'tarjeta'].includes(o.metodoPago)), [openOrders]);
     const paidOrdersInSession = useMemo(() => (cajaSession.estado !== 'abierta') ? [] : orders.filter(o => o?.estado === 'pagado' && o.pagoRegistrado && typeof o.pagoRegistrado.fecha === 'string' && !isNaN(new Date(o.pagoRegistrado.fecha).getTime()) && !isNaN(new Date(cajaSession.fechaApertura).getTime()) && new Date(o.pagoRegistrado.fecha) >= new Date(cajaSession.fechaApertura)), [orders, cajaSession.estado, cajaSession.fechaApertura]);
@@ -136,7 +132,6 @@ const App: React.FC = () => {
         dispatch({ type: 'REMOVE_TOAST', payload: id });
     }, [dispatch]);
 
-    // FIX: Added callbacks for POSView props
     const onExitPOS = useCallback(() => {
         dispatch({ type: 'SELECT_MESA', payload: { mesa: null } });
     }, [dispatch]);
@@ -149,9 +144,9 @@ const App: React.FC = () => {
         dispatch({ type: 'INITIATE_PREBILL', payload: orderId });
     }, [dispatch]);
 
-    const updateOrderStatus = useCallback((orderId: string, newStatus: EstadoPedido, user: UserRole) => {
-        dispatch({ type: 'UPDATE_ORDER_STATUS', payload: { orderId, newStatus, user } });
-    }, [dispatch]);
+    const updateOrderStatus = useCallback((orderId: string, newStatus: EstadoPedido) => {
+        dispatch({ type: 'UPDATE_ORDER_STATUS', payload: { orderId, newStatus, user: state.currentUserRole } });
+    }, [dispatch, state.currentUserRole]);
 
     const redeemReward = useCallback((customerId: string, reward: Recompensa) => {
         dispatch({ type: 'REDEEM_REWARD', payload: { customerId, reward } });
@@ -176,9 +171,22 @@ const App: React.FC = () => {
         }
     };
 
+    if (criticalError) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-background dark:bg-gunmetal p-4 font-sans text-text-primary">
+                <div className="bg-surface dark:bg-[#34424D] p-8 rounded-2xl shadow-2xl max-w-2xl w-full border border-danger/20">
+                    <h1 className="text-2xl font-heading font-bold text-danger mb-4 text-center">Error Crítico de Conexión</h1>
+                    <pre className="text-left bg-background dark:bg-[#45535D] p-4 rounded-lg whitespace-pre-wrap text-sm text-text-secondary dark:text-light-silver font-mono leading-relaxed">
+                        {criticalError}
+                    </pre>
+                </div>
+            </div>
+        );
+    }
+
     if (isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-background dark:bg-slate-900">
+            <div className="min-h-screen flex items-center justify-center bg-background dark:bg-gunmetal">
                 <LogoIcon className="h-16 w-16 animate-pulse" />
             </div>
         );
@@ -203,7 +211,6 @@ const App: React.FC = () => {
                         customers={customers}
                         loyaltyPrograms={loyaltyPrograms}
                         promotions={promotions}
-                        // FIX: Passing missing props to POSView
                         onExit={onExitPOS}
                         onSaveOrder={onSavePOSOrder}
                         onGeneratePreBill={onGeneratePreBill}
@@ -217,7 +224,7 @@ const App: React.FC = () => {
         }
 
         return (
-            <div className="min-h-screen flex bg-background dark:bg-slate-900">
+            <div className="min-h-screen flex bg-background dark:bg-gunmetal">
                 {orderForPreBill && <PreBillModal order={orderForPreBill} />}
                 {orderToPay && <PaymentModal order={orderToPay} />}
                 {orderForDeliveryPayment && <DeliveryPaymentModal order={orderForDeliveryPayment} />}
@@ -237,11 +244,12 @@ const App: React.FC = () => {
                 <Sidebar />
                 <div className="flex-1 flex flex-col">
                     <Header />
-                    <main className="flex-grow p-4 md:p-6 lg:p-8 overflow-y-auto">
+                    <main className="flex-grow p-4 md:p-6 lg:p-8 overflow-y-auto pb-20 md:pb-6 lg:p-8">
                         <div key={view} className="animate-fade-in-scale">{renderView()}</div>
                     </main>
                 </div>
                 <div className="fixed top-4 right-4 z-[100] space-y-2 w-full max-w-sm">{toasts.map(t => <Toast key={t.id} message={t.message} type={t.type} onClose={() => removeToast(t.id)} />)}</div>
+                <BottomNavBar />
             </div>
         );
     }

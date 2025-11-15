@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import type { Pedido, Producto, ProductoPedido, Mesa, Salsa, EstadoPedido, ClienteLeal, Recompensa, LoyaltyProgram, Promocion } from '../types';
+import type { Pedido, Producto, ProductoPedido, Mesa, Salsa, EstadoPedido, ClienteLeal, Recompensa, LoyaltyProgram, Promocion } from './types';
 import { ChevronLeftIcon, TrashIcon, MinusIcon, PlusIcon, CheckCircleIcon, UserIcon, StarIcon, SparklesIcon } from './icons';
 import SauceModal from './SauceModal';
 import AssignCustomerModal from './AssignCustomerModal';
@@ -31,7 +31,7 @@ const getStatusAppearance = (status: Pedido['estado']) => {
         case 'listo': return { color: 'bg-green-500', label: 'Listo para Servir' };
         case 'entregado': return { color: 'bg-emerald-600', label: 'Servido en Mesa' };
         case 'cuenta solicitada': return { color: 'bg-blue-500', label: 'Cuenta Solicitada' };
-        default: return { color: 'bg-gray-400', label: status };
+        default: return { color: 'bg-zinc-400', label: status };
     }
 };
 
@@ -409,7 +409,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
     };
 
     return (
-        <div className="fixed inset-0 bg-background dark:bg-gunmetal flex flex-col font-sans">
+        <div className="fixed inset-0 bg-background dark:bg-zinc-900 flex flex-col font-sans">
             {isSauceModalOpen && <SauceModal product={productForSauces} onClose={() => setIsSauceModalOpen(false)} onConfirm={handleAddToCartWithSauces} />}
             {isAssignCustomerModalOpen && <AssignCustomerModal customers={customers} onAssign={handleAssignCustomer} onClose={() => setIsAssignCustomerModalOpen(false)} onAddNewCustomer={onAddNewCustomer} />}
             {isRedeemRewardModalOpen && assignedCustomer && activeProgram && <RedeemRewardModal customer={assignedCustomer} rewards={activeProgram.rewards} onRedeem={handleRedeemReward} onClose={() => setIsRedeemRewardModalOpen(false)} />}
@@ -417,25 +417,25 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
 
             {showExitConfirm && (
                  <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[101] p-4">
-                    <div className="bg-surface dark:bg-[#34424D] rounded-2xl shadow-xl p-6 max-w-sm w-full text-center animate-fade-in-scale">
+                    <div className="bg-surface dark:bg-zinc-800 rounded-2xl shadow-xl p-6 max-w-sm w-full text-center animate-fade-in-scale">
                         <h3 className="text-xl font-heading font-bold text-text-primary dark:text-white">Items sin enviar</h3>
-                        <p className="text-text-secondary dark:text-light-silver my-3">Tienes items sin enviar a cocina. Si sales, se perderán. ¿Deseas salir de todas formas?</p>
+                        <p className="text-text-secondary dark:text-zinc-400 my-3">Tienes items sin enviar a cocina. Si sales, se perderán. ¿Deseas salir de todas formas?</p>
                         <div className="grid grid-cols-2 gap-3 mt-6">
-                            <button onClick={() => setShowExitConfirm(false)} className="bg-text-primary/10 dark:bg-[#45535D] hover:bg-text-primary/20 dark:hover:bg-[#56656E] text-text-primary dark:text-ivory-cream font-bold py-2 px-4 rounded-lg transition-colors active:scale-95">Cancelar</button>
+                            <button onClick={() => setShowExitConfirm(false)} className="bg-text-primary/10 dark:bg-zinc-700 hover:bg-text-primary/20 dark:hover:bg-zinc-600 text-text-primary dark:text-zinc-200 font-bold py-2 px-4 rounded-lg transition-colors active:scale-95">Cancelar</button>
                             <button onClick={onExit} className="bg-danger hover:brightness-110 text-white font-bold py-2 px-4 rounded-lg transition-all active:scale-95">Salir sin guardar</button>
                         </div>
                     </div>
                 </div>
             )}
-            <header className="flex-shrink-0 bg-surface dark:bg-[#34424D] shadow-md z-10">
-                <div className="flex items-center justify-between p-3 border-b border-text-primary/5 dark:border-[#45535D]">
-                    <button onClick={handleExitClick} className="flex items-center font-semibold text-text-secondary dark:text-light-silver hover:text-primary dark:hover:text-orange-400 transition-colors">
+            <header className="flex-shrink-0 bg-surface dark:bg-zinc-800 shadow-md z-10">
+                <div className="flex items-center justify-between p-3 border-b border-text-primary/5 dark:border-zinc-700">
+                    <button onClick={handleExitClick} className="flex items-center font-semibold text-text-secondary dark:text-zinc-400 hover:text-primary dark:hover:text-orange-400 transition-colors">
                         <ChevronLeftIcon className="h-6 w-6 mr-1" />
                         VOLVER AL SALÓN
                     </button>
                     <div className="text-center">
-                        <h1 className="text-2xl font-heading font-bold text-text-primary dark:text-ivory-cream">Mesa {mesa.numero}</h1>
-                        {currentOrder?.id && <p className="text-sm font-mono text-text-secondary dark:text-light-silver/50">{currentOrder.id}</p>}
+                        <h1 className="text-2xl font-heading font-bold text-text-primary dark:text-zinc-100">Mesa {mesa.numero}</h1>
+                        {currentOrder?.id && <p className="text-sm font-mono text-text-secondary dark:text-zinc-500">{currentOrder.id}</p>}
                     </div>
                      <div className="w-48 text-right">
                         {currentOrder ? (() => {
@@ -456,13 +456,13 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
 
             <main className="flex-grow flex flex-col lg:flex-row overflow-hidden">
                 {/* Left Panel - Order */}
-                <div className="w-full lg:w-5/12 bg-surface dark:bg-[#34424D] flex flex-col p-4 border-r border-text-primary/5 dark:border-[#45535D]">
+                <div className="w-full lg:w-5/12 bg-surface dark:bg-zinc-800 flex flex-col p-4 border-r border-text-primary/5 dark:border-zinc-700">
                     <div className="flex-shrink-0 mb-4">
                         {assignedCustomer ? (
-                            <div className="p-3 bg-background dark:bg-gunmetal/50 rounded-lg flex justify-between items-center">
+                            <div className="p-3 bg-background dark:bg-zinc-900/50 rounded-lg flex justify-between items-center">
                                 <div>
-                                    <p className="font-bold text-text-primary dark:text-ivory-cream">{assignedCustomer.nombre}</p>
-                                    <p className="text-sm text-text-secondary dark:text-light-silver">{assignedCustomer.telefono.slice(-9)}</p>
+                                    <p className="font-bold text-text-primary dark:text-zinc-200">{assignedCustomer.nombre}</p>
+                                    <p className="text-sm text-text-secondary dark:text-zinc-400">{assignedCustomer.telefono.slice(-9)}</p>
                                     <p className="text-sm font-bold text-primary dark:text-orange-400">{assignedCustomer.puntos} Puntos</p>
                                 </div>
                                 <button onClick={handleRemoveCustomer} className="text-xs font-semibold text-danger hover:underline">Quitar</button>
@@ -470,7 +470,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                         ) : (
                             <div className="p-4 bg-primary/10 dark:bg-orange-500/20 rounded-lg border-2 border-dashed border-primary/30 dark:border-orange-500/40 text-center">
                                 <h3 className="font-bold text-lg text-primary dark:text-orange-300 mb-2">Programa de Lealtad</h3>
-                                <p className="text-sm text-text-secondary dark:text-light-silver mb-3">Busca o registra al cliente para acumular puntos y acceder a promociones.</p>
+                                <p className="text-sm text-text-secondary dark:text-zinc-400 mb-3">Busca o registra al cliente para acumular puntos y acceder a promociones.</p>
                                 <button onClick={() => setIsAssignCustomerModalOpen(true)} className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold py-2.5 rounded-lg transition-all shadow-md shadow-primary/20 hover:shadow-primary/30">
                                     <UserIcon className="h-5 w-5" /> Buscar / Registrar Cliente
                                 </button>
@@ -478,23 +478,23 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                         )}
                     </div>
                     <div className="mb-4">
-                        <label className="block text-sm font-medium text-text-secondary dark:text-light-silver mb-1">Indicaciones Especiales</label>
+                        <label className="block text-sm font-medium text-text-secondary dark:text-zinc-400 mb-1">Indicaciones Especiales</label>
                         <textarea
                             value={currentOrder?.notas || ''}
                             onChange={handleNotesChange}
                             rows={2}
                             placeholder="Ej: sin ají, término 3/4, alergia..."
-                            className="w-full bg-background dark:bg-gunmetal/50 rounded-lg p-2 border border-text-primary/10 dark:border-[#45535D] focus:ring-2 focus:ring-primary focus:border-primary transition"
+                            className="w-full bg-background dark:bg-zinc-900/50 rounded-lg p-2 border border-text-primary/10 dark:border-zinc-700 focus:ring-2 focus:ring-primary focus:border-primary transition"
                         />
                     </div>
                     <div className="flex-grow overflow-y-auto pr-2">
                         {currentOrder && currentOrder.productos.length > 0 ? (
                             currentOrder.productos.map((item, index) => (
-                                <div key={index} onClick={() => setSelectedItem(item)} className={`p-3 rounded-lg cursor-pointer mb-2 relative transition-all ${item.sentToKitchen ? 'bg-background/50 dark:bg-gunmetal/50 opacity-70' : ''} ${selectedItem === item ? 'bg-primary/10' : 'hover:bg-background dark:hover:bg-[#45535D]/50'}`}>
+                                <div key={index} onClick={() => setSelectedItem(item)} className={`p-3 rounded-lg cursor-pointer mb-2 relative transition-all ${item.sentToKitchen ? 'bg-background/50 dark:bg-zinc-900/50 opacity-70' : ''} ${selectedItem === item ? 'bg-primary/10' : 'hover:bg-background dark:hover:bg-zinc-700/50'}`}>
                                     <div className="flex justify-between items-start">
                                         <div className="flex-grow">
                                             <div className="flex items-center flex-wrap">
-                                                <p className="font-semibold text-text-primary dark:text-ivory-cream pr-2">{item.nombre}</p>
+                                                <p className="font-semibold text-text-primary dark:text-zinc-200 pr-2">{item.nombre}</p>
                                                 {item.sentToKitchen ? (
                                                      <span className="text-xs font-bold bg-success/20 text-success dark:bg-green-500/20 dark:text-green-300 rounded-full px-2 py-0.5 mr-2 flex items-center gap-1"><CheckCircleIcon className="h-3 w-3"/>Enviado</span>
                                                 ) : (
@@ -508,29 +508,29 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                                                     + {item.salsas.map(s => s.nombre).join(', ')}
                                                 </p>
                                             )}
-                                            <p className="text-sm text-text-secondary dark:text-light-silver">{item.cantidad} x S/.{(item.precioOriginal ?? item.precio).toFixed(2)}</p>
+                                            <p className="text-sm text-text-secondary dark:text-zinc-400">{item.cantidad} x S/.{(item.precioOriginal ?? item.precio).toFixed(2)}</p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="font-bold text-text-primary dark:text-ivory-cream text-lg">S/.{((item.precio + (item.salsas || []).reduce((sum,s) => sum + s.precio, 0)) * item.cantidad).toFixed(2)}</p>
+                                            <p className="font-bold text-text-primary dark:text-zinc-100 text-lg">S/.{((item.precio + (item.salsas || []).reduce((sum,s) => sum + s.precio, 0)) * item.cantidad).toFixed(2)}</p>
                                             {item.precioOriginal && <p className="text-xs text-danger dark:text-red-400 line-through">S/.{(item.precioOriginal * item.cantidad).toFixed(2)}</p>}
                                         </div>
                                     </div>
                                     <div className="absolute right-3 bottom-3 flex items-center gap-2 mt-1">
-                                        <button onClick={(e) => { e.stopPropagation(); handleQuantityChange(item, -1); }} className="bg-text-primary/10 dark:bg-[#45535D] rounded-full h-8 w-8 flex items-center justify-center font-bold text-text-primary dark:text-ivory-cream hover:bg-text-primary/20 dark:hover:bg-[#56656E] transition-transform active:scale-90">
+                                        <button onClick={(e) => { e.stopPropagation(); handleQuantityChange(item, -1); }} className="bg-text-primary/10 dark:bg-zinc-700 rounded-full h-8 w-8 flex items-center justify-center font-bold text-text-primary dark:text-zinc-200 hover:bg-text-primary/20 dark:hover:bg-zinc-600 transition-transform active:scale-90">
                                             {item.cantidad > 1 ? <MinusIcon className="h-5 w-5"/> : <TrashIcon className="h-4 w-4 text-danger" />}
                                         </button>
-                                        <span className="font-bold w-6 text-center text-lg dark:text-ivory-cream">{item.cantidad}</span>
-                                        <button onClick={(e) => { e.stopPropagation(); handleQuantityChange(item, 1); }} className="bg-text-primary/10 dark:bg-[#45535D] rounded-full h-8 w-8 flex items-center justify-center font-bold text-text-primary dark:text-ivory-cream hover:bg-text-primary/20 dark:hover:bg-[#56656E] transition-transform active:scale-90"><PlusIcon className="h-5 w-5" /></button>
+                                        <span className="font-bold w-6 text-center text-lg dark:text-zinc-200">{item.cantidad}</span>
+                                        <button onClick={(e) => { e.stopPropagation(); handleQuantityChange(item, 1); }} className="bg-text-primary/10 dark:bg-zinc-700 rounded-full h-8 w-8 flex items-center justify-center font-bold text-text-primary dark:text-zinc-200 hover:bg-text-primary/20 dark:hover:bg-zinc-600 transition-transform active:scale-90"><PlusIcon className="h-5 w-5" /></button>
                                     </div>
                                 </div>
                             ))
                         ) : (
-                            <div className="h-full flex items-center justify-center text-center text-text-secondary/60 dark:text-light-silver/50">
+                            <div className="h-full flex items-center justify-center text-center text-text-secondary/60 dark:text-zinc-500">
                                 <p>Selecciona productos del menú para comenzar.</p>
                             </div>
                         )}
                     </div>
-                    <div className="flex-shrink-0 pt-4 border-t border-text-primary/10 dark:border-[#45535D]">
+                    <div className="flex-shrink-0 pt-4 border-t border-text-primary/10 dark:border-zinc-700">
                         <div className="grid grid-cols-2 gap-3 mb-3">
                             {assignedCustomer && activeProgram && (
                                 <button
@@ -548,8 +548,8 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                             </button>
                         </div>
                         <div className="flex justify-between items-center text-3xl font-heading font-extrabold mb-4">
-                            <span className="text-text-primary dark:text-ivory-cream">Total</span>
-                            <span className="text-text-primary dark:text-ivory-cream font-mono">S/.{currentOrder?.total.toFixed(2) || '0.00'}</span>
+                            <span className="text-text-primary dark:text-zinc-100">Total</span>
+                            <span className="text-text-primary dark:text-zinc-100 font-mono">S/.{currentOrder?.total.toFixed(2) || '0.00'}</span>
                         </div>
                          {currentOrder?.estado === 'listo' && (
                             <button
@@ -566,7 +566,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                                 <>
                                     <button
                                         onClick={handleSendToKitchen}
-                                        className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl text-base transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:scale-95 disabled:bg-gray-400 dark:disabled:bg-[#45535D] disabled:shadow-none disabled:translate-y-0 disabled:cursor-not-allowed"
+                                        className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl text-base transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:scale-95 disabled:bg-gray-400 dark:disabled:bg-zinc-700 disabled:shadow-none disabled:translate-y-0 disabled:cursor-not-allowed"
                                         disabled={isSubmitting || !hasUnsentItems}
                                     >
                                         {isSubmitting ? 'Enviando...' : 'Adicionar y Enviar a Cocina'}
@@ -575,14 +575,14 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                                         <button
                                             onClick={handleSaveChanges}
                                             disabled={!hasUnsentItems}
-                                            className="w-full bg-text-primary/10 dark:bg-[#45535D] hover:bg-text-primary/20 dark:hover:bg-[#56656E] text-text-primary dark:text-ivory-cream font-bold py-3 rounded-xl text-base transition-colors active:scale-95 disabled:bg-gray-400/20 dark:disabled:bg-[#34424D] disabled:text-text-secondary/50 disabled:cursor-not-allowed"
+                                            className="w-full bg-text-primary/10 dark:bg-zinc-700 hover:bg-text-primary/20 dark:hover:bg-zinc-600 text-text-primary dark:text-zinc-200 font-bold py-3 rounded-xl text-base transition-colors active:scale-95 disabled:bg-gray-400/20 dark:disabled:bg-zinc-800 disabled:text-text-secondary/50 disabled:cursor-not-allowed"
                                         >
                                             Guardar Cambios
                                         </button>
                                         <button
                                             onClick={() => onGeneratePreBill(currentOrder!.id)}
                                             disabled={hasUnsentItems}
-                                            className="w-full bg-text-primary/80 dark:bg-[#56656E] text-white font-bold py-3 rounded-xl text-base hover:bg-text-primary/90 dark:hover:bg-[#45535D] transition-all duration-300 shadow-lg hover:shadow-text-primary/20 hover:-translate-y-0.5 active:scale-95 disabled:bg-gray-400/50 dark:disabled:bg-[#45535D] disabled:text-text-secondary dark:disabled:text-light-silver disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0"
+                                            className="w-full bg-text-primary/80 dark:bg-zinc-600 text-white font-bold py-3 rounded-xl text-base hover:bg-text-primary/90 dark:hover:bg-zinc-500 transition-all duration-300 shadow-lg hover:shadow-text-primary/20 hover:-translate-y-0.5 active:scale-95 disabled:bg-gray-400/50 dark:disabled:bg-zinc-700 disabled:text-text-secondary dark:disabled:text-zinc-400 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0"
                                             aria-label="Ver o imprimir la pre-cuenta del pedido"
                                         >
                                             Ver Cuenta
@@ -592,7 +592,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                              ) : (
                                 <button
                                     onClick={handleSendToKitchen}
-                                    className="w-full bg-success text-white font-bold py-4 rounded-xl text-xl transition-all duration-300 shadow-lg shadow-success/30 hover:shadow-success/40 hover:-translate-y-0.5 active:scale-95 disabled:bg-gray-400 dark:disabled:bg-[#45535D] disabled:shadow-none disabled:translate-y-0 disabled:cursor-not-allowed"
+                                    className="w-full bg-success text-white font-bold py-4 rounded-xl text-xl transition-all duration-300 shadow-lg shadow-success/30 hover:shadow-success/40 hover:-translate-y-0.5 active:scale-95 disabled:bg-gray-400 dark:disabled:bg-zinc-700 disabled:shadow-none disabled:translate-y-0 disabled:cursor-not-allowed"
                                     disabled={isSubmitting || !currentOrder || currentOrder.productos.length === 0}
                                 >
                                     {isSubmitting ? 'Enviando...' : 'Enviar a Cocina'}
@@ -605,12 +605,12 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                 {/* Right Panel - Products */}
                 <div className="w-full lg:w-7/12 flex flex-col p-4">
                      <div className="flex-shrink-0 mb-4">
-                        <input type="search" placeholder="Buscar producto..." className="w-full p-3 rounded-lg border border-text-primary/10 dark:border-[#45535D] bg-surface dark:bg-[#34424D] focus:ring-2 focus:ring-primary focus:border-primary dark:text-ivory-cream dark:placeholder-light-silver" />
+                        <input type="search" placeholder="Buscar producto..." className="w-full p-3 rounded-lg border border-text-primary/10 dark:border-zinc-700 bg-surface dark:bg-zinc-800 focus:ring-2 focus:ring-primary focus:border-primary dark:text-zinc-200 dark:placeholder-zinc-400" />
                     </div>
-                    <div className="flex-shrink-0 border-b border-text-primary/10 dark:border-[#45535D]">
+                    <div className="flex-shrink-0 border-b border-text-primary/10 dark:border-zinc-700">
                          <div className="flex space-x-2 overflow-x-auto pb-2">
                              {categories.map(cat => (
-                                 <button key={cat} onClick={() => setActiveCategory(cat)} className={`py-2 px-4 rounded-lg font-semibold whitespace-nowrap text-sm ${activeCategory === cat ? 'bg-primary text-white shadow-sm' : 'bg-surface dark:bg-[#34424D] text-text-primary dark:text-ivory-cream hover:bg-text-primary/5 dark:hover:bg-[#45535D]/50'}`}>
+                                 <button key={cat} onClick={() => setActiveCategory(cat)} className={`py-2 px-4 rounded-lg font-semibold whitespace-nowrap text-sm ${activeCategory === cat ? 'bg-primary text-white shadow-sm' : 'bg-surface dark:bg-zinc-800 text-text-primary dark:text-zinc-200 hover:bg-text-primary/5 dark:hover:bg-zinc-700/50'}`}>
                                      {cat}
                                  </button>
                              ))}
@@ -619,8 +619,8 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                     <div className="flex-grow overflow-y-auto pt-4 pr-2">
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                             {(groupedProducts[activeCategory] || []).map(product => (
-                                <button key={product.id} onClick={() => handleProductClick(product)} className="bg-surface dark:bg-[#34424D] rounded-lg shadow-md p-2 text-center transition-transform hover:-translate-y-1 hover:shadow-lg flex flex-col border border-text-primary/5 dark:border-[#45535D] relative disabled:opacity-50 disabled:cursor-not-allowed" disabled={product.stock <= 0}>
-                                    <div className="h-24 w-full bg-background dark:bg-[#45535D] rounded-md overflow-hidden relative">
+                                <button key={product.id} onClick={() => handleProductClick(product)} className="bg-surface dark:bg-zinc-800 rounded-lg shadow-md p-2 text-center transition-transform hover:-translate-y-1 hover:shadow-lg flex flex-col border border-text-primary/5 dark:border-zinc-700 relative disabled:opacity-50 disabled:cursor-not-allowed" disabled={product.stock <= 0}>
+                                    <div className="h-24 w-full bg-background dark:bg-zinc-700 rounded-md overflow-hidden relative">
                                         <img src={product.imagenUrl} alt={product.nombre} className={`w-full h-full object-cover ${product.stock <= 0 ? 'filter grayscale' : ''}`} />
                                          {product.stock <= 0 && (
                                             <div className="absolute inset-0 bg-black/60 flex items-center justify-center rounded-md">
@@ -628,8 +628,8 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                                             </div>
                                         )}
                                     </div>
-                                    <p className="font-semibold text-sm mt-2 flex-grow text-text-primary dark:text-ivory-cream leading-tight">{product.nombre}</p>
-                                    <p className="font-bold text-text-secondary dark:text-light-silver mt-1">S/.{product.precio.toFixed(2)}</p>
+                                    <p className="font-semibold text-sm mt-2 flex-grow text-text-primary dark:text-zinc-200 leading-tight">{product.nombre}</p>
+                                    <p className="font-bold text-text-secondary dark:text-zinc-400 mt-1">S/.{product.precio.toFixed(2)}</p>
                                 </button>
                             ))}
                         </div>

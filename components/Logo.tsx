@@ -31,7 +31,7 @@ export const Logo: React.FC<LogoProps> = ({ className, variant = 'default', logo
             <defs>
                 <linearGradient id="chili-gradient-new" x1="50%" y1="0%" x2="50%" y2="100%">
                     <stop offset="0%" stopColor="#FDBA74" />
-                    <stop offset="100%" stop-color="hsl(var(--color-primary-h), var(--color-primary-s), var(--color-primary-l))" />
+                    <stop offset="100%" stopColor="hsl(var(--color-primary-h), var(--color-primary-s), var(--color-primary-l))" />
                 </linearGradient>
             </defs>
 
