@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type { Promocion, Producto, TipoPromocion } from '../types';
 import { PlusIcon, TrashIcon } from './icons';
 import { useAppContext } from '../store';
+import ImageUpload from './ImageUpload';
 
 interface PromotionModalProps {
     promotion: Promocion | null;
@@ -24,6 +25,10 @@ const PromotionModal: React.FC<PromotionModalProps> = ({ promotion, onSave, onCl
 
     const handleTypeChange = (tipo: TipoPromocion) => {
         setFormData(prev => ({ ...prev, tipo, condiciones: {} }));
+    };
+    
+    const handleImageChange = (url: string) => {
+        setFormData(prev => ({ ...prev, imagenUrl: url }));
     };
     
     const handleConditionChange = (field: string, value: any) => {
@@ -144,10 +149,13 @@ const PromotionModal: React.FC<PromotionModalProps> = ({ promotion, onSave, onCl
                         <label className="block text-sm font-medium text-text-secondary dark:text-slate-400 mb-1">Descripción</label>
                         <input type="text" value={formData.descripcion} onChange={e => setFormData(p => ({...p, descripcion: e.target.value}))} className="w-full bg-background dark:bg-slate-700 border border-text-primary/10 dark:border-slate-600 rounded-md p-2" />
                     </div>
-                     <div>
-                        <label className="block text-sm font-medium text-text-secondary dark:text-slate-400 mb-1">URL de la Imagen</label>
-                        <input type="text" value={formData.imagenUrl} onChange={e => setFormData(p => ({...p, imagenUrl: e.target.value}))} className="w-full bg-background dark:bg-slate-700 border border-text-primary/10 dark:border-slate-600 rounded-md p-2" />
-                    </div>
+                     
+                    <ImageUpload 
+                        currentImageUrl={formData.imagenUrl || ''} 
+                        onImageChange={handleImageChange} 
+                        label="Imagen Promocional"
+                    />
+
                      <div>
                         <label className="block text-sm font-medium text-text-secondary dark:text-slate-400 mb-1">Tipo de Promoción</label>
                         <select value={formData.tipo} onChange={e => handleTypeChange(e.target.value as TipoPromocion)} className="w-full bg-background dark:bg-slate-700 border border-text-primary/10 dark:border-slate-600 rounded-md p-2">

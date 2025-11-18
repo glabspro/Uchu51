@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
+
+import React, { createContext, useContext, useReducer, useEffect, ReactNode, useCallback } from 'react';
 import type {
     Pedido, Producto, Promocion, Salsa, ClienteLeal, LoyaltyProgram, Recompensa, Mesa,
     CajaSession, MovimientoCaja, EstadoPedido, UserRole, View, Turno, Toast, MetodoPago, Action,
@@ -7,18 +8,20 @@ import type {
     RestaurantSettings,
     AppView
 } from './types';
+import { supabase } from './utils/supabase';
 
-// --- MOCK DATA ---
-const MOCK_RESTAURANT_ID = 'd290f1ee-6c54-4b01-90e6-d701748f0851';
+// --- CONSTANTS ---
+const RESTAURANT_ID = 'd290f1ee-6c54-4b01-90e6-d701748f0851';
 
-const MOCK_RESTAURANT_SETTINGS: RestaurantSettings = {
+// --- DEFAULT FALLBACK SETTINGS ---
+const DEFAULT_SETTINGS: RestaurantSettings = {
   cooks: ['Cocinero 1', 'Cocinero 2'],
   drivers: ['Driver A', 'Driver B'],
   tables: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
   branding: {
-    primaryColor: '#F64D00', // Food Safari Orange
-    secondaryColor: '#FFB40B', // Food Safari Yellow
-    backgroundColor: '#FFFFFF', // White Surface
+    primaryColor: '#F64D00',
+    secondaryColor: '#FFB40B',
+    backgroundColor: '#FFFFFF',
     logoUrl: null,
   },
   modules: {
@@ -29,115 +32,10 @@ const MOCK_RESTAURANT_SETTINGS: RestaurantSettings = {
   paymentMethods: {
     efectivo: true,
     tarjeta: true,
-    yape: {
-        enabled: true,
-        holderName: 'Uchu51 Yape',
-        phoneNumber: '987654321',
-        qrUrl: 'https://i.postimg.cc/d15q6qNm/yape-qr.png'
-    },
-    plin: {
-        enabled: true,
-        holderName: 'Uchu51 Plin',
-        phoneNumber: '912345678',
-        qrUrl: 'https://i.postimg.cc/L8W2r7D2/plin-qr.png'
-    }
+    yape: { enabled: true },
+    plin: { enabled: true }
   }
 };
-
-const MOCK_PRODUCTS: Producto[] = [
-    { id: 'prod-1', nombre: 'Hamburguesa Clásica', categoria: 'Hamburguesas', precio: 15.90, costo: 5.50, stock: 50, descripcion: 'Carne de res, lechuga, tomate, queso y papas fritas.', imagenUrl: 'https://i.postimg.cc/pX4290Nor/clasica.jpg', restaurant_id: MOCK_RESTAURANT_ID },
-    { id: 'prod-2', nombre: 'Hamburguesa Royal', categoria: 'Hamburguesas', precio: 18.90, costo: 7.00, stock: 30, descripcion: 'Clásica con huevo frito y plátano.', imagenUrl: 'https://i.postimg.cc/vH4Cj2v9/royal.jpg', restaurant_id: MOCK_RESTAURANT_ID },
-    { id: 'prod-3', nombre: 'Pollo Broaster (1/4)', categoria: 'Pollo Broaster', precio: 12.90, costo: 4.50, stock: 100, descripcion: 'Pollo crujiente con papas y ensalada.', imagenUrl: 'https://i.postimg.cc/k4z07x5W/broaster.jpg', restaurant_id: MOCK_RESTAURANT_ID },
-    { id: 'prod-4', nombre: 'Alitas BBQ (6 und)', categoria: 'Alitas', precio: 20.00, costo: 8.00, stock: 40, descripcion: 'Alitas bañadas en salsa BBQ.', imagenUrl: 'https://i.postimg.cc/d1cLLwqv/alitas.jpg', restaurant_id: MOCK_RESTAURANT_ID },
-    { id: 'prod-5', nombre: 'Salchipapa Clásica', categoria: 'Salchipapas y Mixtos', precio: 10.00, costo: 3.50, stock: 200, descripcion: 'Papas fritas con hotdog y cremas.', imagenUrl: 'https://i.postimg.cc/W3hB2L6B/salchipapa.jpg', restaurant_id: MOCK_RESTAURANT_ID },
-    { id: 'prod-6', nombre: 'Inca Kola 500ml', categoria: 'Bebidas', precio: 3.50, costo: 1.50, stock: 150, descripcion: 'Bebida gaseosa personal.', imagenUrl: 'https://i.postimg.cc/W4Do3gBH/inca.jpg', restaurant_id: MOCK_RESTAURANT_ID },
-    { id: 'prod-7', nombre: 'Torta de Chocolate', categoria: 'Postres', precio: 8.00, costo: 2.50, stock: 20, descripcion: 'Tajada de torta de chocolate con fudge.', imagenUrl: 'https://i.postimg.cc/8C1q23pP/torta-chocolate.jpg', restaurant_id: MOCK_RESTAURANT_ID },
-];
-
-const MOCK_SALSAS: Salsa[] = [
-    { nombre: 'Mayonesa', precio: 0, isAvailable: true, restaurant_id: MOCK_RESTAURANT_ID },
-    { nombre: 'Ketchup', precio: 0, isAvailable: true, restaurant_id: MOCK_RESTAURANT_ID },
-    { nombre: 'Mostaza', precio: 0, isAvailable: true, restaurant_id: MOCK_RESTAURANT_ID },
-    { nombre: 'Ají de la casa', precio: 0, isAvailable: true, restaurant_id: MOCK_RESTAURANT_ID },
-    { nombre: 'Golf', precio: 0, isAvailable: true, restaurant_id: MOCK_RESTAURANT_ID },
-    { nombre: 'Salsa de Aceituna', precio: 1.00, isAvailable: true, restaurant_id: MOCK_RESTAURANT_ID },
-];
-
-const MOCK_ORDERS: Pedido[] = [
-    {
-        id: 'PED-001', fecha: new Date(Date.now() - 5 * 60000).toISOString(), tipo: 'delivery', estado: 'en preparación', turno: 'tarde',
-        cliente: { nombre: 'Juan Perez', telefono: '987654321', direccion: 'Av. Siempre Viva 123' },
-        productos: [{ id: 'prod-1', nombre: 'Hamburguesa Clásica', cantidad: 2, precio: 15.90, sentToKitchen: true }],
-        total: 31.80, metodoPago: 'yape', tiempoEstimado: 30, historial: [], areaPreparacion: 'delivery', restaurant_id: MOCK_RESTAURANT_ID,
-    },
-    {
-        id: 'PED-002', fecha: new Date(Date.now() - 10 * 60000).toISOString(), tipo: 'local', estado: 'listo', turno: 'tarde',
-        cliente: { nombre: 'Mesa 5', telefono: '', mesa: 5 },
-        productos: [{ id: 'prod-3', nombre: 'Pollo Broaster (1/4)', cantidad: 1, precio: 12.90, sentToKitchen: true }],
-        total: 12.90, metodoPago: 'efectivo', tiempoEstimado: 15, historial: [], areaPreparacion: 'salon', restaurant_id: MOCK_RESTAURANT_ID,
-    },
-    {
-        id: 'PED-003', fecha: new Date(Date.now() - 2 * 60000).toISOString(), tipo: 'retiro', estado: 'listo', turno: 'tarde',
-        cliente: { nombre: 'Ana Lopez', telefono: '912345678' },
-        productos: [{ id: 'prod-5', nombre: 'Salchipapa Clásica', cantidad: 1, precio: 10.00, sentToKitchen: true }],
-        total: 10.00, metodoPago: 'efectivo', tiempoEstimado: 10, historial: [], areaPreparacion: 'retiro', restaurant_id: MOCK_RESTAURANT_ID,
-    },
-     {
-        id: 'PED-004', fecha: new Date(Date.now() - 15 * 60000).toISOString(), tipo: 'local', estado: 'cuenta solicitada', turno: 'tarde',
-        cliente: { nombre: 'Mesa 8', telefono: '', mesa: 8 },
-        productos: [
-            { id: 'prod-2', nombre: 'Hamburguesa Royal', cantidad: 1, precio: 18.90, sentToKitchen: true },
-            { id: 'prod-6', nombre: 'Inca Kola 500ml', cantidad: 1, precio: 3.50, sentToKitchen: true }
-        ],
-        total: 22.40, metodoPago: 'tarjeta', tiempoEstimado: 20, historial: [], areaPreparacion: 'salon', restaurant_id: MOCK_RESTAURANT_ID,
-    },
-    {
-        id: 'PED-005', fecha: new Date(Date.now() - 1 * 60000).toISOString(), tipo: 'delivery', estado: 'confirmado', turno: 'tarde',
-        cliente: { nombre: 'Carlos Ruiz', telefono: '999888777', direccion: 'Calle Falsa 456' },
-        productos: [{ id: 'prod-4', nombre: 'Alitas BBQ (6 und)', cantidad: 2, precio: 20.00, sentToKitchen: true }],
-        total: 40.00, metodoPago: 'plin', tiempoEstimado: 40, historial: [], areaPreparacion: 'delivery', restaurant_id: MOCK_RESTAURANT_ID,
-    },
-];
-
-const MOCK_CUSTOMERS: ClienteLeal[] = [
-    { telefono: '987654321', nombre: 'Juan Perez', puntos: 150, historialPedidos: [], restaurant_id: MOCK_RESTAURANT_ID },
-    { telefono: '912345678', nombre: 'Ana Lopez', puntos: 80, historialPedidos: [], restaurant_id: MOCK_RESTAURANT_ID },
-];
-
-const MOCK_LOYALTY_PROGRAMS: LoyaltyProgram[] = [
-    {
-        id: 'prog-1', name: 'Clientes Frecuentes Uchu51', isActive: true,
-        config: { pointEarningMethod: 'monto', pointsPerMonto: 1, montoForPoints: 1, pointsPerCompra: 0 },
-        rewards: [
-            { id: 'rew-1', nombre: 'Inca Kola 500ml Gratis', puntosRequeridos: 30, productoId: 'prod-6' },
-            { id: 'rew-2', nombre: 'Descuento S/.10', puntosRequeridos: 100 },
-        ],
-        restaurant_id: MOCK_RESTAURANT_ID
-    }
-];
-
-const MOCK_PROMOTIONS: Promocion[] = [
-    {
-        id: 'promo-1', nombre: '2x1 en Clásicas', tipo: 'dos_por_uno', isActive: true,
-        condiciones: { productoId_2x1: 'prod-1' },
-        descripcion: 'Compra una Hamburguesa Clásica y llévate la segunda gratis.',
-        restaurant_id: MOCK_RESTAURANT_ID,
-    },
-    {
-        id: 'promo-2', nombre: 'Combo Royal', tipo: 'combo_fijo', isActive: true,
-        condiciones: {
-            productos: [
-                { productoId: 'prod-2', cantidad: 1 },
-                { productoId: 'prod-6', cantidad: 1 },
-            ],
-            precioFijo: 20.00
-        },
-        descripcion: 'Una Hamburguesa Royal con tu Inca Kola a un precio especial.',
-        restaurant_id: MOCK_RESTAURANT_ID
-    }
-];
-
-// --- END MOCK DATA ---
 
 interface AppState {
     orders: Pedido[];
@@ -207,7 +105,7 @@ type AppAction = Action |
     { type: 'SET_CRITICAL_ERROR'; payload: string | null };
 
 
-const AppContext = createContext<{ state: AppState; dispatch: React.Dispatch<AppAction> }>({
+const AppContext = createContext<{ state: AppState; dispatch: (action: AppAction) => void }>({
     state: initialState,
     dispatch: () => null
 });
@@ -221,21 +119,24 @@ function appReducer(state: AppState, action: AppAction): AppState {
                 ...state,
                 appView: 'admin',
                 currentUserRole: 'admin',
-                restaurantId: MOCK_RESTAURANT_ID,
+                restaurantId: RESTAURANT_ID,
                 loginError: null,
             };
         case 'LOGOUT': {
             return {
-                ...initialState,
-                isLoading: false,
+                ...state,
                 appView: 'customer',
-                theme: state.theme,
+                // Keep data loaded
             };
         }
         case 'SET_STATE': return { ...state, ...action.payload };
         case 'SET_VIEW': return { ...state, view: action.payload };
         case 'SET_TURNO': return { ...state, turno: action.payload };
-        case 'TOGGLE_THEME': return { ...state, theme: state.theme === 'light' ? 'dark' : 'light' };
+        case 'TOGGLE_THEME': {
+            const newTheme = state.theme === 'light' ? 'dark' : 'light';
+            localStorage.setItem('theme', newTheme);
+            return { ...state, theme: newTheme };
+        }
         case 'TOGGLE_SIDEBAR': return { ...state, isSidebarCollapsed: !state.isSidebarCollapsed };
         case 'LOGIN_FAILED': return { ...state, loginError: action.payload };
         case 'GO_TO_LOGIN': return { ...state, appView: 'login', loginError: null };
@@ -266,7 +167,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
                 restaurantSettings: newSettings,
             };
         }
-        
         case 'UPDATE_ORDER_STATUS': {
             const { orderId, newStatus, user } = action.payload;
             return {
@@ -285,38 +185,35 @@ function appReducer(state: AppState, action: AppAction): AppState {
             return { ...state, orders: state.orders.map(o => o.id === orderId ? { ...o, repartidorAsignado: driverName } : o) };
         }
         case 'SAVE_ORDER': {
+            // Note: This case handles local optimistic updates for 'SAVE_ORDER' dispatch
+            // But we also use 'SAVE_POS_ORDER' for DB-synced orders.
             const orderData = action.payload;
-            const isPayNow = ['yape', 'plin'].includes(orderData.metodoPago);
-            const isRiskyRetiro = orderData.tipo === 'retiro' && ['efectivo', 'tarjeta'].includes(orderData.metodoPago);
-            const initialState: EstadoPedido = isPayNow ? 'pendiente confirmar pago' : isRiskyRetiro ? 'pendiente de confirmación' : 'en preparación';
-            const getAreaPreparacion = (tipo: Pedido['tipo']): AreaPreparacion => tipo === 'local' ? 'salon' : tipo;
-            
+            // If no ID is present, generate a temp one (UI only)
+            const tempId = `PED-${String(Date.now()).slice(-4)}`; 
             const newOrder: Pedido = { 
                 ...orderData, 
-                id: `PED-${String(Date.now()).slice(-4)}`,
+                id: tempId,
                 fecha: new Date().toISOString(), 
-                estado: initialState, 
+                estado: 'nuevo', // Default, wrapper logic might override
                 turno: state.turno, 
-                historial: [{ estado: initialState, fecha: new Date().toISOString(), usuario: 'cliente' }], 
-                areaPreparacion: getAreaPreparacion(orderData.tipo),
+                historial: [{ estado: 'nuevo', fecha: new Date().toISOString(), usuario: 'cliente' }], 
+                areaPreparacion: orderData.tipo === 'local' ? 'salon' : orderData.tipo,
                 restaurant_id: state.restaurantId!,
             };
             
-            let toastMessage = `Nuevo pedido ${newOrder.id} enviado a cocina.`;
-            if (isPayNow) toastMessage = `Pedido ${newOrder.id} recibido. Esperando confirmación de pago.`;
-            else if (isRiskyRetiro) toastMessage = `Pedido ${newOrder.id} pendiente de confirmación.`;
-
             return { 
                 ...state, 
                 orders: [newOrder, ...state.orders],
-                toasts: [...state.toasts, { id: Date.now(), message: toastMessage, type: 'success' }] 
+                toasts: [...state.toasts, { id: Date.now(), message: `Pedido enviado.`, type: 'success' }] 
             };
         }
         case 'SAVE_POS_ORDER': {
             const { orderData } = action.payload;
-            const isNew = !orderData.id;
+            const existingIndex = state.orders.findIndex(o => o.id === orderData.id);
+            const isNew = existingIndex === -1;
+
             const orderToSave = isNew 
-                ? { ...orderData, id: `PED-${String(Date.now()).slice(-4)}`, restaurant_id: state.restaurantId! }
+                ? (orderData.id ? orderData : { ...orderData, id: `PED-${String(Date.now()).slice(-4)}`, restaurant_id: state.restaurantId! })
                 : orderData;
 
             return {
@@ -353,7 +250,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
                 toasts: [...state.toasts, { id: Date.now(), message: `Pago del pedido ${orderId} confirmado.`, type: 'success' }]
             };
         }
-        // Simplified actions for local state
         case 'OPEN_CAJA': {
             const newSession: CajaSession = {
                 estado: 'abierta',
@@ -410,64 +306,230 @@ function appReducer(state: AppState, action: AppAction): AppState {
 
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [state, dispatch] = useReducer(appReducer, initialState);
-    
-    // Effect to load initial app data and merge with saved user settings
+    const [state, baseDispatch] = useReducer(appReducer, initialState);
+
+    // --- DATA FETCHING ---
     useEffect(() => {
-        dispatch({ type: 'SET_LOADING', payload: true });
+        const fetchInitialData = async () => {
+            baseDispatch({ type: 'SET_LOADING', payload: true });
+            try {
+                // 1. Restaurant Settings
+                const { data: restaurantData, error: restError } = await supabase
+                    .from('restaurants')
+                    .select('*')
+                    .eq('id', RESTAURANT_ID)
+                    .single();
+
+                if (restError) throw restError;
+                if (restaurantData) {
+                    const fetchedSettings: RestaurantSettings = {
+                        branding: restaurantData.branding || DEFAULT_SETTINGS.branding,
+                        modules: restaurantData.modules || DEFAULT_SETTINGS.modules,
+                        paymentMethods: restaurantData.payment_methods || DEFAULT_SETTINGS.paymentMethods,
+                        tables: restaurantData.tables || DEFAULT_SETTINGS.tables,
+                        cooks: DEFAULT_SETTINGS.cooks,
+                        drivers: DEFAULT_SETTINGS.drivers,
+                    };
+                    baseDispatch({ type: 'SET_STATE', payload: { restaurantSettings: fetchedSettings } });
+                }
+
+                // 2. Products
+                const { data: productsData } = await supabase.from('products').select('*').eq('restaurant_id', RESTAURANT_ID);
+                if (productsData) baseDispatch({ type: 'SET_PRODUCTS', payload: productsData });
+
+                // 3. Salsas
+                const { data: salsasData } = await supabase.from('salsas').select('*').eq('restaurant_id', RESTAURANT_ID);
+                if (salsasData) baseDispatch({ type: 'SET_SAUCES', payload: salsasData });
+                
+                // 4. Orders (Active only for now/optimization)
+                const { data: ordersData } = await supabase
+                    .from('orders')
+                    .select('*')
+                    .eq('restaurant_id', RESTAURANT_ID)
+                    .order('fecha', { ascending: false })
+                    .limit(100); // Limit to last 100 for performance
+                if (ordersData) {
+                    // Parse jsonb fields if necessary (Supabase client usually handles it)
+                     baseDispatch({ type: 'SET_STATE', payload: { orders: ordersData } });
+                }
+
+                // 5. Customers
+                const { data: customersData } = await supabase.from('customers').select('*').eq('restaurant_id', RESTAURANT_ID);
+                if(customersData) baseDispatch({ type: 'SET_STATE', payload: { customers: customersData } });
+
+                baseDispatch({ type: 'SET_STATE', payload: { restaurantId: RESTAURANT_ID } });
+
+            } catch (error: any) {
+                console.error("Error fetching initial data:", error);
+                baseDispatch({ type: 'SET_CRITICAL_ERROR', payload: `Error al conectar con la base de datos: ${error.message}` });
+            } finally {
+                baseDispatch({ type: 'SET_LOADING', payload: false });
+            }
+        };
+
+        fetchInitialData();
         
-        // Load user settings from localStorage
-        let savedSettings: RestaurantSettings | null = null;
-        let savedTheme: 'light' | 'dark' = 'light';
-        try {
-            const storedSettings = localStorage.getItem('restaurantSettings');
-            if (storedSettings) {
-                savedSettings = JSON.parse(storedSettings);
-            }
-            const storedTheme = localStorage.getItem('theme');
-            if (storedTheme === 'dark' || storedTheme === 'light') {
-                savedTheme = storedTheme;
-            }
-        } catch (e) {
-            console.error("Could not load user settings from localStorage", e);
+        // Load theme from local storage
+        const storedTheme = localStorage.getItem('theme');
+        if (storedTheme === 'dark' || storedTheme === 'light') {
+            baseDispatch({ type: 'SET_STATE', payload: { theme: storedTheme } });
         }
 
-        // Simulate fetching main app data from a backend
-        setTimeout(() => {
-            dispatch({
-                type: 'SET_STATE',
-                payload: {
-                    products: MOCK_PRODUCTS,
-                    salsas: MOCK_SALSAS,
-                    promotions: MOCK_PROMOTIONS,
-                    orders: MOCK_ORDERS,
-                    loyaltyPrograms: MOCK_LOYALTY_PROGRAMS,
-                    customers: MOCK_CUSTOMERS,
-                    cajaHistory: [],
-                    // Use saved settings if available, otherwise use default mock settings
-                    restaurantSettings: savedSettings || MOCK_RESTAURANT_SETTINGS,
-                    theme: savedTheme,
-                    restaurantId: MOCK_RESTAURANT_ID,
-                    isLoading: false,
-                }
-            });
-        }, 1000);
     }, []);
 
-    // Effect to save user settings to localStorage whenever they change
+    // --- REALTIME SUBSCRIPTIONS ---
     useEffect(() => {
-        // Don't save during initial load or if settings are null
-        if (state.isLoading || !state.restaurantSettings) {
-            return;
-        }
-        try {
-            localStorage.setItem('restaurantSettings', JSON.stringify(state.restaurantSettings));
-            localStorage.setItem('theme', state.theme);
-        } catch (e) {
-            console.error("Could not save user settings to localStorage", e);
-        }
-    }, [state.restaurantSettings, state.theme, state.isLoading]);
+        // Subscribe to Restaurant Settings changes
+        const settingsChannel = supabase.channel('public:restaurants')
+            .on(
+                'postgres_changes',
+                { event: 'UPDATE', schema: 'public', table: 'restaurants', filter: `id=eq.${RESTAURANT_ID}` },
+                (payload) => {
+                    const newData = payload.new;
+                    const newSettings: RestaurantSettings = {
+                         branding: newData.branding,
+                         modules: newData.modules,
+                         paymentMethods: newData.payment_methods,
+                         tables: newData.tables,
+                         cooks: DEFAULT_SETTINGS.cooks, // Fallbacks
+                         drivers: DEFAULT_SETTINGS.drivers,
+                    };
+                    console.log("Settings updated from remote:", newSettings);
+                    baseDispatch({ type: 'SET_STATE', payload: { restaurantSettings: newSettings } });
+                }
+            )
+            .subscribe();
 
+         // Subscribe to Orders changes
+         const ordersChannel = supabase.channel('public:orders')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'orders', filter: `restaurant_id=eq.${RESTAURANT_ID}` },
+                (payload) => {
+                     if (payload.eventType === 'INSERT') {
+                         // Avoid adding if we already have it (optimistic update)
+                         // But the ID might differ if we let DB generate it.
+                         // With our logic, we generate ID locally and send it.
+                         const newOrder = payload.new as Pedido;
+                         // Simple check to avoid dupes if ID matches
+                         baseDispatch({ type: 'SAVE_POS_ORDER', payload: { orderData: newOrder, mesaNumero: 0 } });
+                     } else if (payload.eventType === 'UPDATE') {
+                         const updatedOrder = payload.new as Pedido;
+                         // Find and update
+                         baseDispatch({ type: 'SAVE_POS_ORDER', payload: { orderData: updatedOrder, mesaNumero: 0 } });
+                     }
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(settingsChannel);
+            supabase.removeChannel(ordersChannel);
+        };
+    }, []);
+
+
+    // --- ENHANCED DISPATCH FOR SYNC ---
+    const dispatch = useCallback(async (action: AppAction) => {
+        // 1. Optimistic Update
+        baseDispatch(action);
+
+        // 2. Async Side Effects (Fire & Forget or Await)
+        try {
+            switch (action.type) {
+                case 'UPDATE_RESTAURANT_SETTINGS': {
+                    // We need the combined settings. Since state inside callback might be stale,
+                    // we ideally fetch current from state but useReducer doesn't expose it here easily.
+                    // However, React state updates are batched. 
+                    // We will assume the payload contains the diff.
+                    // To be safe, we read the latest from DB or local state ref if we had one.
+                    // For now, we'll do a robust update by spreading.
+                    // Note: 'action.payload' is Partial<RestaurantSettings>.
+                    
+                    // We can't easily access the *result* of the reducer here without a ref.
+                    // Simplest fix: We update the DB with the specific fields present in payload.
+                    const updates: any = {};
+                    if (action.payload.branding) updates.branding = action.payload.branding;
+                    if (action.payload.modules) updates.modules = action.payload.modules;
+                    if (action.payload.paymentMethods) updates.payment_methods = action.payload.paymentMethods;
+                    if (action.payload.tables) updates.tables = action.payload.tables;
+                    
+                    if (Object.keys(updates).length > 0) {
+                         await supabase.from('restaurants').update(updates).eq('id', RESTAURANT_ID);
+                    }
+                    break;
+                }
+                case 'SAVE_ORDER': {
+                    const orderData = action.payload;
+                    const isPayNow = ['yape', 'plin'].includes(orderData.metodoPago);
+                    const isRiskyRetiro = orderData.tipo === 'retiro' && ['efectivo', 'tarjeta'].includes(orderData.metodoPago);
+                    const initialState: EstadoPedido = isPayNow ? 'pendiente confirmar pago' : isRiskyRetiro ? 'pendiente de confirmación' : 'en preparación';
+                    const getAreaPreparacion = (tipo: Pedido['tipo']): AreaPreparacion => tipo === 'local' ? 'salon' : tipo;
+                    
+                    const generatedId = `PED-${String(Date.now()).slice(-4)}`;
+                    const newOrder: Pedido = { 
+                        ...orderData, 
+                        id: generatedId,
+                        fecha: new Date().toISOString(), 
+                        estado: initialState, 
+                        turno: state.turno, 
+                        historial: [{ estado: initialState, fecha: new Date().toISOString(), usuario: 'cliente' }], 
+                        areaPreparacion: getAreaPreparacion(orderData.tipo),
+                        restaurant_id: RESTAURANT_ID,
+                    };
+                    
+                    // Correct fix: dispatch SAVE_POS_ORDER to utilize its ID-preserving logic for the optimistic update
+                    // Since SAVE_ORDER in reducer ignores ID passed in payload and generates new one.
+                    baseDispatch({ type: 'SAVE_POS_ORDER', payload: { orderData: newOrder, mesaNumero: 0 } });
+                    
+                    await supabase.from('orders').insert(newOrder);
+                    break;
+                }
+                case 'SAVE_POS_ORDER': {
+                    // This is usually an update or a new order from POS with ID already handled
+                    const { orderData } = action.payload;
+                    
+                    // Check if it exists to decide insert/update
+                    const { data: existing } = await supabase.from('orders').select('id').eq('id', orderData.id).single();
+                    
+                    if (existing) {
+                         await supabase.from('orders').update(orderData).eq('id', orderData.id);
+                    } else {
+                         await supabase.from('orders').insert(orderData);
+                    }
+                    break;
+                }
+                case 'UPDATE_ORDER_STATUS': {
+                    const { orderId, newStatus, user } = action.payload;
+                    // We need to append to history. Fetch current, then update?
+                    // Or just push a jsonb update. Supabase supports appending to array? Not easily in one go without RPC.
+                    // We'll read-modify-write or just rely on the component passing correct history? 
+                    // The reducer updates history optimistically. We can construct the new history entry here.
+                    
+                    // To keep it simple: Fetch current order to get history, then append.
+                    const { data: currentOrder } = await supabase.from('orders').select('historial').eq('id', orderId).single();
+                    const currentHist = currentOrder?.historial || [];
+                    const newHistoryEntry: HistorialEstado = { estado: newStatus, fecha: new Date().toISOString(), usuario: user };
+                    
+                    await supabase.from('orders').update({
+                        estado: newStatus,
+                        historial: [...currentHist, newHistoryEntry]
+                    }).eq('id', orderId);
+                    break;
+                }
+                case 'SET_PRODUCTS': {
+                    // Bulk update not implemented in this snippet, usually products are saved individually via ProductManager
+                    break;
+                }
+                // Add handlers for other data types (products, salsas, etc) as needed
+                // For now, focusing on Settings and Orders as per request.
+            }
+        } catch (err) {
+            console.error("Error syncing action to Supabase:", action, err);
+            // Optionally dispatch an error toast
+            baseDispatch({ type: 'ADD_TOAST', payload: { message: 'Error de sincronización', type: 'danger' } });
+        }
+    }, [state.restaurantSettings, state.turno]); // Deps might need tuning
 
     return (
         <AppContext.Provider value={{ state, dispatch }}>

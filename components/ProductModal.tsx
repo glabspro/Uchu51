@@ -1,6 +1,7 @@
 import React, { useState, ChangeEvent } from 'react';
 import type { Producto } from '../types';
 import { useAppContext } from '../store';
+import ImageUpload from './ImageUpload';
 
 interface ProductModalProps {
     product: Producto | null;
@@ -10,7 +11,6 @@ interface ProductModalProps {
 
 const ProductModal: React.FC<ProductModalProps> = ({ product, onSave, onClose }) => {
     const { state } = useAppContext();
-    // FIX: Add missing 'restaurant_id' property.
     const [formData, setFormData] = useState<Producto>({
         id: product?.id || '',
         nombre: product?.nombre || '',
@@ -34,6 +34,10 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, onSave, onClose })
         setFormData(prev => ({ ...prev, [name]: processedValue }));
     };
     
+    const handleImageChange = (url: string) => {
+        setFormData(prev => ({ ...prev, imagenUrl: url }));
+    };
+    
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         onSave(formData);
@@ -44,27 +48,12 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, onSave, onClose })
             <div className="bg-surface dark:bg-zinc-800 rounded-2xl shadow-xl p-6 max-w-2xl w-full max-h-[90vh] flex flex-col animate-fade-in-scale" onClick={e => e.stopPropagation()}>
                 <h2 className="text-2xl font-heading font-bold text-text-primary dark:text-zinc-100 mb-6">{product ? 'Editar Producto' : 'Añadir Nuevo Producto'}</h2>
                 <form onSubmit={handleSubmit} className="flex-grow overflow-y-auto pr-2 space-y-4">
-                    <div className="flex items-center gap-4">
-                        <div className="w-32 h-32 rounded-lg bg-background dark:bg-zinc-700/50 flex-shrink-0 flex items-center justify-center border-2 border-dashed border-text-primary/10 dark:border-zinc-600 overflow-hidden">
-                             {formData.imagenUrl ? (
-                                <img src={formData.imagenUrl} alt="Preview" className="w-full h-full object-cover" />
-                            ) : (
-                                <span className="text-text-secondary dark:text-zinc-500 text-xs text-center">Sin Imagen</span>
-                            )}
-                        </div>
-                        <div className="flex-grow">
-                             <label className="block text-sm font-medium text-text-secondary dark:text-zinc-400 mb-1">URL de la Imagen</label>
-                             <input 
-                                type="text" 
-                                name="imagenUrl" 
-                                value={formData.imagenUrl} 
-                                onChange={handleChange}
-                                placeholder="https://i.postimg.cc/..."
-                                className="w-full bg-background dark:bg-zinc-700 border border-text-primary/10 dark:border-zinc-600 rounded-md p-2" 
-                             />
-                             <p className="text-xs text-text-secondary dark:text-zinc-500 mt-2">Pega la URL de una imagen. Recomendamos usar <a href="https://postimages.org/" target="_blank" rel="noopener noreferrer" className="text-primary underline font-semibold">Postimages</a>.</p>
-                        </div>
-                    </div>
+                    
+                    <ImageUpload 
+                        currentImageUrl={formData.imagenUrl} 
+                        onImageChange={handleImageChange} 
+                        label="Foto del Producto"
+                    />
 
                     <div>
                         <label className="block text-sm font-medium text-text-secondary dark:text-zinc-400 mb-1">Nombre del Producto</label>
@@ -82,6 +71,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, onSave, onClose })
                                 <option>Pollo Broaster</option>
                                 <option>Alitas</option>
                                 <option>Salchipapas y Mixtos</option>
+                                <option>Saltados</option>
                                 <option>Para Picar</option>
                                 <option>Bebidas</option>
                                 <option>Postres</option>

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useAppContext } from '../store';
 import type { RestaurantSettings, PaymentMethodDetail } from '../types';
 import { CheckCircleIcon, ExclamationTriangleIcon } from './icons';
+import ImageUpload from './ImageUpload';
 
 // --- Helper Functions ---
 const hexToHsl = (hex: string): { h: number; s: number; l: number } | null => {
@@ -124,15 +125,12 @@ const OnlinePaymentConfigurator: React.FC<{
                             className="w-full bg-surface dark:bg-[#34424D] p-2 mt-1 rounded-md border border-text-primary/10 dark:border-[#45535D]"
                         />
                     </div>
-                    <div>
-                        <label className="text-xs font-semibold text-text-secondary dark:text-light-silver">URL del Código QR</label>
-                        <input
-                            type="text"
-                            value={config.qrUrl || ''}
-                            onChange={(e) => onChange({ ...config, qrUrl: e.target.value })}
-                            className="w-full bg-surface dark:bg-[#34424D] p-2 mt-1 rounded-md border border-text-primary/10 dark:border-[#45535D]"
-                        />
-                    </div>
+                    
+                    <ImageUpload 
+                        currentImageUrl={config.qrUrl || ''} 
+                        onImageChange={(url) => onChange({ ...config, qrUrl: url })}
+                        label="Código QR"
+                    />
                 </div>
             )}
         </div>
@@ -362,8 +360,11 @@ const LocalSettings: React.FC = () => {
                         />
                     </div>
                      <div className="mt-6">
-                        <label className="block text-sm font-medium text-text-secondary dark:text-light-silver mb-1">URL del Logo</label>
-                        <input type="text" placeholder="https://ejemplo.com/logo.png" value={branding.logoUrl || ''} onChange={(e) => handleBrandingChange('logoUrl', e.target.value)} className="w-full bg-surface dark:bg-[#34424D] p-2 rounded-md border border-text-primary/10 dark:border-[#45535D]"/>
+                        <ImageUpload 
+                            currentImageUrl={branding.logoUrl || ''}
+                            onImageChange={(url) => handleBrandingChange('logoUrl', url)}
+                            label="Logotipo del Restaurante"
+                        />
                     </div>
                 </div>
             </div>
