@@ -1,13 +1,3 @@
-
-
-
-
-
-
-
-
-
-
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import type {
     Pedido, Producto, Promocion, Salsa, ClienteLeal, LoyaltyProgram, Recompensa, Mesa,
@@ -26,7 +16,9 @@ const MOCK_RESTAURANT_SETTINGS: RestaurantSettings = {
   drivers: ['Driver A', 'Driver B'],
   tables: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
   branding: {
-    primaryColor: '#F97316',
+    primaryColor: '#F64D00', // Palette Orange
+    secondaryColor: '#FFB40B', // Palette Yellow
+    backgroundColor: '#FFFFFF', // Palette White
     logoUrl: null,
   },
   modules: {
@@ -418,13 +410,29 @@ function appReducer(state: AppState, action: AppAction): AppState {
 
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    
     const [state, dispatch] = useReducer(appReducer, initialState);
     
+    // Effect to load initial app data and merge with saved user settings
     useEffect(() => {
         dispatch({ type: 'SET_LOADING', payload: true });
         
-        // Simulate fetching data
+        // Load user settings from localStorage
+        let savedSettings: RestaurantSettings | null = null;
+        let savedTheme: 'light' | 'dark' = 'light';
+        try {
+            const storedSettings = localStorage.getItem('restaurantSettings');
+            if (storedSettings) {
+                savedSettings = JSON.parse(storedSettings);
+            }
+            const storedTheme = localStorage.getItem('theme');
+            if (storedTheme === 'dark' || storedTheme === 'light') {
+                savedTheme = storedTheme;
+            }
+        } catch (e) {
+            console.error("Could not load user settings from localStorage", e);
+        }
+
+        // Simulate fetching main app data from a backend
         setTimeout(() => {
             dispatch({
                 type: 'SET_STATE',
@@ -436,13 +444,29 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                     loyaltyPrograms: MOCK_LOYALTY_PROGRAMS,
                     customers: MOCK_CUSTOMERS,
                     cajaHistory: [],
-                    restaurantSettings: MOCK_RESTAURANT_SETTINGS,
+                    // Use saved settings if available, otherwise use default mock settings
+                    restaurantSettings: savedSettings || MOCK_RESTAURANT_SETTINGS,
+                    theme: savedTheme,
                     restaurantId: MOCK_RESTAURANT_ID,
                     isLoading: false,
                 }
             });
-        }, 1000); // 1-second delay
+        }, 1000);
     }, []);
+
+    // Effect to save user settings to localStorage whenever they change
+    useEffect(() => {
+        // Don't save during initial load or if settings are null
+        if (state.isLoading || !state.restaurantSettings) {
+            return;
+        }
+        try {
+            localStorage.setItem('restaurantSettings', JSON.stringify(state.restaurantSettings));
+            localStorage.setItem('theme', state.theme);
+        } catch (e) {
+            console.error("Could not save user settings to localStorage", e);
+        }
+    }, [state.restaurantSettings, state.theme, state.isLoading]);
 
 
     return (

@@ -8,7 +8,7 @@
 
     <!-- PWA Tags -->
     <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#FF5B04" />
+    <meta name="theme-color" content="#F64D00" />
     <link rel="apple-touch-icon" href="/icon-192x192.png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -33,17 +33,17 @@
             },
             accent: 'hsl(var(--color-secondary-h), var(--color-secondary-s), var(--color-secondary-l))',
             text: {
-              primary: '#233038', // Gunmetal
-              secondary: '#5A6973', // Lighter Gunmetal
+              primary: '#272F31', // Palette Dark
+              secondary: '#5F6A6C', // Lighter Palette Dark
             },
-            success: '#16A34A',
+            success: '#16A34A', // Keep standard accessible green for UI feedback
             danger: '#DC2626',
-            warning: '#F59E0B',
+            warning: '#FFB40B', // Palette Yellow
             // New palette colors
-            'gunmetal': '#233038',
-            'midnight-green': '#075056',
-            'ivory-cream': '#FDF6E3',
-            'sand-yellow': '#F4D47C',
+            'gunmetal': '#272F31', // Palette Dark
+            'midnight-green': '#014325', // Palette Green
+            'ivory-cream': '#FDF6E3', // Keep as legacy or map to off-white
+            'sand-yellow': '#FFB40B', // Palette Yellow
             'light-silver': '#D3DBDD',
           }
         }
@@ -176,7 +176,7 @@
       box-shadow: 0 10px 20px rgba(0,0,0,0.1), 0 6px 6px rgba(0,0,0,0.05);
   }
   .dark .product-card:hover {
-      box-shadow: 0 10px 20px rgba(0,0,0,0.2), 0 0 15px rgba(249, 115, 22, 0.3);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.2), 0 0 15px rgba(246, 77, 0, 0.3);
   }
 
   @media print {
@@ -233,7 +233,7 @@
   }
 </style>
 </head>
-<body class="antialiased bg-background text-text-primary dark:bg-gunmetal dark:text-ivory-cream">
+<body class="antialiased bg-background text-text-primary dark:bg-gunmetal dark:text-white">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
 </body>

@@ -61,6 +61,7 @@ const getContrastRatio = (color1: string, color2: string): number => {
 
 // --- Palette Definitions ---
 const palettes = [
+    { name: 'Safari', primary: '#F64D00', secondary: '#FFB40B', background: '#FFFFFF' },
     { name: 'Clásico Criollo', primary: '#C81E1E', secondary: '#FBBF24', background: '#FFFBEB' },
     { name: 'Costa Marina', primary: '#0D9488', secondary: '#FDE68A', background: '#F0F9FF' },
     { name: 'Andino Terroso', primary: '#E85D04', secondary: '#6B7280', background: '#F5F5F4' },
@@ -220,9 +221,9 @@ const ColorPickerSection: React.FC<{
     );
 };
 
-const primaryPresets = ['#F97316', '#EF4444', '#D97706', '#DC2626', '#166534', '#1E40AF'];
-const secondaryPresets = ['#F4D47C', '#84CC16', '#3B82F6', '#A855F7', '#6366F1', '#EC4899'];
-const backgroundPresets = ['#FDF6E3', '#F3F4F6', '#FEFCE8', '#EFF6FF', '#F0FDF4', '#111827'];
+const primaryPresets = ['#F64D00', '#F97316', '#EF4444', '#D97706', '#166534', '#1E40AF'];
+const secondaryPresets = ['#FFB40B', '#F4D47C', '#84CC16', '#3B82F6', '#A855F7', '#6366F1', '#EC4899'];
+const backgroundPresets = ['#FFFFFF', '#FDF6E3', '#F3F4F6', '#FEFCE8', '#EFF6FF', '#F0FDF4', '#111827'];
 
 
 const LocalSettings: React.FC = () => {
@@ -323,29 +324,29 @@ const LocalSettings: React.FC = () => {
                              <div className="space-y-6 animate-fade-in-up">
                                 <ColorPickerSection
                                     title="Color Principal"
-                                    color={branding.primaryColor || '#F97316'}
+                                    color={branding.primaryColor || '#F64D00'}
                                     presets={primaryPresets}
                                     onChange={(color) => handleBrandingChange('primaryColor', color)}
                                     contrastCheck={{ against: '#FFFFFF', label: 'texto blanco' }}
                                 />
                                 <ColorPickerSection
                                     title="Color Secundario / Acento"
-                                    color={branding.secondaryColor || '#F4D47C'}
+                                    color={branding.secondaryColor || '#FFB40B'}
                                     presets={secondaryPresets}
                                     onChange={(color) => handleBrandingChange('secondaryColor', color)}
                                 />
                                 <ColorPickerSection
                                     title="Color de Fondo (Modo Claro)"
-                                    color={branding.backgroundColor || '#FDF6E3'}
+                                    color={branding.backgroundColor || '#FFFFFF'}
                                     presets={backgroundPresets}
                                     onChange={(color) => handleBrandingChange('backgroundColor', color)}
                                 />
                             </div>
                         )}
                         <BrandingPreview 
-                            primary={branding.primaryColor || '#F97316'}
-                            secondary={branding.secondaryColor || '#F4D47C'}
-                            background={branding.backgroundColor || '#FDF6E3'}
+                            primary={branding.primaryColor || '#F64D00'}
+                            secondary={branding.secondaryColor || '#FFB40B'}
+                            background={branding.backgroundColor || '#FFFFFF'}
                         />
                     </div>
                      <div className="mt-6">
