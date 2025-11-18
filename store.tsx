@@ -33,7 +33,8 @@ const DEFAULT_SETTINGS: RestaurantSettings = {
     efectivo: true,
     tarjeta: true,
     yape: { enabled: true },
-    plin: { enabled: true }
+    plin: { enabled: true },
+    mercadopago: { enabled: false }
   }
 };
 
@@ -183,26 +184,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
         case 'ASSIGN_DRIVER': {
             const { orderId, driverName } = action.payload;
             return { ...state, orders: state.orders.map(o => o.id === orderId ? { ...o, repartidorAsignado: driverName } : o) };
-        }
-        case 'SAVE_ORDER': {
-            const orderData = action.payload;
-            const tempId = `PED-${String(Date.now()).slice(-4)}`; 
-            const newOrder: Pedido = { 
-                ...orderData, 
-                id: tempId,
-                fecha: new Date().toISOString(), 
-                estado: 'nuevo', 
-                turno: state.turno, 
-                historial: [{ estado: 'nuevo', fecha: new Date().toISOString(), usuario: 'cliente' }], 
-                areaPreparacion: orderData.tipo === 'local' ? 'salon' : orderData.tipo,
-                restaurant_id: state.restaurantId!,
-            };
-            
-            return { 
-                ...state, 
-                orders: [newOrder, ...state.orders],
-                toasts: [...state.toasts, { id: Date.now(), message: `Pedido enviado.`, type: 'success' }] 
-            };
         }
         case 'SAVE_POS_ORDER': {
             const { orderData } = action.payload;
@@ -438,10 +419,30 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 }
             )
             .subscribe();
+            
+        // Subscribe to Salsas changes
+        const salsasChannel = supabase.channel('public:salsas')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'salsas', filter: `restaurant_id=eq.${RESTAURANT_ID}` },
+                async () => {
+                     // Re-fetch all salsas on any change to ensure consistent state
+                     const { data: salsasData } = await supabase.from('salsas').select('*').eq('restaurant_id', RESTAURANT_ID);
+                     if (salsasData) {
+                        const mappedSalsas = salsasData.map((s: any) => ({
+                            ...s,
+                            isAvailable: s.is_available
+                        }));
+                        baseDispatch({ type: 'SET_SAUCES', payload: mappedSalsas });
+                     }
+                }
+            )
+            .subscribe();
 
         return () => {
             supabase.removeChannel(settingsChannel);
             supabase.removeChannel(ordersChannel);
+            supabase.removeChannel(salsasChannel);
         };
     }, []);
 
@@ -466,7 +467,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 }
                 case 'SAVE_ORDER': {
                     const orderData = action.payload;
-                    const isPayNow = ['yape', 'plin'].includes(orderData.metodoPago);
+                    const isPayNow = ['yape', 'plin', 'mercadopago'].includes(orderData.metodoPago);
                     const isRiskyRetiro = orderData.tipo === 'retiro' && ['efectivo', 'tarjeta'].includes(orderData.metodoPago);
                     const initialState: EstadoPedido = isPayNow ? 'pendiente confirmar pago' : isRiskyRetiro ? 'pendiente de confirmación' : 'en preparación';
                     const getAreaPreparacion = (tipo: Pedido['tipo']): AreaPreparacion => tipo === 'local' ? 'salon' : tipo;

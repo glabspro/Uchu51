@@ -1,8 +1,9 @@
+
 import React, { useState, useMemo } from 'react';
 import type { Pedido, MetodoPago } from '../types';
-import { ChevronDownIcon, ChevronUpIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon, DocumentMagnifyingGlassIcon } from './icons';
+import { ChevronDownIcon, ChevronUpIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon, DocumentMagnifyingGlassIcon, GlobeAltIcon } from './icons';
 
-type ActiveFilter = 'all' | 'efectivo' | 'tarjeta' | 'yape' | 'plin';
+type ActiveFilter = 'all' | 'efectivo' | 'tarjeta' | 'yape' | 'plin' | 'mercadopago';
 
 
 const SalesHistoryModal: React.FC<{
@@ -21,6 +22,7 @@ const SalesHistoryModal: React.FC<{
                 'tarjeta': { count: 0, total: 0 },
                 'yape': { count: 0, total: 0 },
                 'plin': { count: 0, total: 0 },
+                'mercadopago': { count: 0, total: 0 },
             };
             
             const safeOrders = (paidOrders || []).filter(order => 
@@ -51,6 +53,7 @@ const SalesHistoryModal: React.FC<{
                     'tarjeta': { count: 0, total: 0 },
                     'yape': { count: 0, total: 0 },
                     'plin': { count: 0, total: 0 },
+                    'mercadopago': { count: 0, total: 0 },
                 }
             };
         }
@@ -78,9 +81,10 @@ const SalesHistoryModal: React.FC<{
         'tarjeta': { label: 'Tarjeta', icon: <CreditCardIcon className="h-5 w-5" />, color: 'text-blue-500' },
         'yape': { label: 'Yape', icon: <DevicePhoneMobileIcon className="h-5 w-5" />, color: 'text-purple-500' },
         'plin': { label: 'Plin', icon: <DevicePhoneMobileIcon className="h-5 w-5" />, color: 'text-sky-500' },
+        'mercadopago': { label: 'M. Pago', icon: <GlobeAltIcon className="h-5 w-5" />, color: 'text-cyan-500' },
     };
 
-    const filtersToDisplay: ActiveFilter[] = ['all', 'efectivo', 'tarjeta', 'yape', 'plin'];
+    const filtersToDisplay: ActiveFilter[] = ['all', 'efectivo', 'tarjeta', 'yape', 'plin', 'mercadopago'];
 
     const safeFormatTime = (dateString?: string) => {
         if (!dateString) return 'Inválido';

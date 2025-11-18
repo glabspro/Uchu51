@@ -1,7 +1,8 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Pedido, Producto, ProductoPedido, Cliente, Salsa, TipoPedido, MetodoPago, Theme, ClienteLeal, LoyaltyProgram, Promocion } from '../types';
 import { useAppContext } from '../store';
-import { ShoppingBagIcon, TrashIcon, CheckCircleIcon, TruckIcon, UserIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon, MapPinIcon, SearchIcon, AdjustmentsHorizontalIcon, MinusIcon, PlusIcon, StarIcon, SunIcon, MoonIcon, ChevronLeftIcon, ChevronRightIcon, WhatsAppIcon, ArrowDownOnSquareIcon, ArrowUpOnSquareIcon, EllipsisVerticalIcon, XMarkIcon, SparklesIcon, HomeIcon } from './icons';
+import { ShoppingBagIcon, TrashIcon, CheckCircleIcon, TruckIcon, UserIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon, MapPinIcon, SearchIcon, AdjustmentsHorizontalIcon, MinusIcon, PlusIcon, StarIcon, SunIcon, MoonIcon, ChevronLeftIcon, ChevronRightIcon, WhatsAppIcon, ArrowDownOnSquareIcon, ArrowUpOnSquareIcon, EllipsisVerticalIcon, XMarkIcon, SparklesIcon, HomeIcon, GlobeAltIcon } from './icons';
 import SauceModal from './SauceModal';
 import ProductDetailModal from './ProductDetailModal';
 import { Logo } from './Logo';
@@ -29,6 +30,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
     const [customerInfo, setCustomerInfo] = useState<Cliente>({ nombre: '', telefono: '' });
     const [stage, setStage] = useState<Stage>('selection');
     const [newOrderId, setNewOrderId] = useState('');
+    const [lastOrderTotal, setLastOrderTotal] = useState(0); // NEW: Store total to display after cart clear
     const [activeCategory, setActiveCategory] = useState('Hamburguesas');
     const [paymentMethod, setPaymentMethod] = useState<MetodoPago>('efectivo');
     const [paymentChoice, setPaymentChoice] = useState<PaymentChoice | null>(null);
@@ -71,6 +73,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
             tarjeta: pm?.tarjeta !== false,
             yape: pm?.yape?.enabled === true,
             plin: pm?.plin?.enabled === true,
+            mercadopago: pm?.mercadopago?.enabled === true,
         }
     }, [restaurantSettings]);
 
@@ -135,7 +138,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
         }
     }, [activePromotions, promosShownThisLoad]);
     
-    const showPayNow = paymentMethodsEnabled.yape || paymentMethodsEnabled.plin;
+    const showPayNow = paymentMethodsEnabled.yape || paymentMethodsEnabled.plin || paymentMethodsEnabled.mercadopago;
     const showPayLater = paymentMethodsEnabled.efectivo || paymentMethodsEnabled.tarjeta;
 
     useEffect(() => {
@@ -394,8 +397,32 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
         
         const finalCart: ProductoPedido[] = cart.map(({ cartItemId, ...rest }) => rest);
         
-        const onlineMethod: MetodoPago = restaurantSettings?.paymentMethods?.yape?.enabled ? 'yape' : 'plin';
-        const effectivePaymentMethod = paymentChoice === 'payNow' ? onlineMethod : paymentMethod;
+        // Determine the actual online payment method if 'payNow' is selected
+        // Prioritize Yape, then Plin, then MercadoPago if multiple are enabled (or let user choose in a real scenario, 
+        // but simplifying here to pick the first active one or we could add a selector)
+        // Actually, let's make paymentMethod state handle "online" types too if paymentChoice is payNow.
+        
+        let effectivePaymentMethod: MetodoPago = paymentMethod;
+
+        if (paymentChoice === 'payNow') {
+            if (paymentMethodsEnabled.yape) effectivePaymentMethod = 'yape';
+            else if (paymentMethodsEnabled.plin) effectivePaymentMethod = 'plin';
+            else if (paymentMethodsEnabled.mercadopago) effectivePaymentMethod = 'mercadopago';
+        }
+
+        // If the user selected a specific method via UI (future improvement), we'd use that. 
+        // For now, if multiple are enabled, we might need a sub-selection step, but let's reuse the paymentMethod state for online too.
+        // Let's fix the Payment Choice UI to actually set the specific online method if multiples are available.
+        
+        if (paymentChoice === 'payNow' && paymentMethod !== 'yape' && paymentMethod !== 'plin' && paymentMethod !== 'mercadopago') {
+             // Fallback default
+             if (paymentMethodsEnabled.yape) effectivePaymentMethod = 'yape';
+             else if (paymentMethodsEnabled.plin) effectivePaymentMethod = 'plin';
+             else if (paymentMethodsEnabled.mercadopago) effectivePaymentMethod = 'mercadopago';
+        } else if (paymentChoice === 'payNow') {
+             effectivePaymentMethod = paymentMethod;
+        }
+
 
         const newOrder: Omit<Pedido, 'id' | 'fecha' | 'turno' | 'historial' | 'areaPreparacion' | 'estado' | 'gananciaEstimada'> = {
             tipo: orderType,
@@ -414,6 +441,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
         
         const generatedId = `PED-${String(Date.now()).slice(-4)}`;
         setNewOrderId(generatedId);
+        setLastOrderTotal(total); // Store the total before clearing cart
         setStage('confirmation');
         setIsPaymentSimulated(false);
         setCart([]);
@@ -770,7 +798,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                                 }`}
                             >
                                 <p className={`font-bold ${paymentChoice === 'payNow' ? 'text-primary' : 'text-text-primary dark:text-ivory-cream'}`}>Pagar ahora</p>
-                                <p className="text-xs text-text-secondary dark:text-light-silver">Online con Yape/Plin</p>
+                                <p className="text-xs text-text-secondary dark:text-light-silver">Online (Yape/Plin/MP)</p>
                             </button>
                         )}
                         {showPayLater && (
@@ -787,6 +815,29 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                             </button>
                         )}
                     </div>
+
+                    {paymentChoice === 'payNow' && (
+                        <div className="animate-fade-in-up pt-4 space-y-3 border-t border-text-primary/10 dark:border-[#45535D]">
+                            <p className="text-sm text-text-secondary dark:text-light-silver mb-2">Selecciona tu billetera digital:</p>
+                            <div className="grid grid-cols-2 gap-3">
+                                {paymentMethodsEnabled.yape && (
+                                    <button onClick={() => setPaymentMethod('yape')} className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'yape' ? 'bg-primary/10 border-primary text-primary' : 'bg-background dark:bg-gunmetal/50 border-transparent text-text-primary dark:text-ivory-cream'}`}>
+                                        <DevicePhoneMobileIcon className="h-5 w-5"/> <span>Yape</span>
+                                    </button>
+                                )}
+                                {paymentMethodsEnabled.plin && (
+                                    <button onClick={() => setPaymentMethod('plin')} className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'plin' ? 'bg-primary/10 border-primary text-primary' : 'bg-background dark:bg-gunmetal/50 border-transparent text-text-primary dark:text-ivory-cream'}`}>
+                                        <DevicePhoneMobileIcon className="h-5 w-5"/> <span>Plin</span>
+                                    </button>
+                                )}
+                                {paymentMethodsEnabled.mercadopago && (
+                                    <button onClick={() => setPaymentMethod('mercadopago')} className={`col-span-2 flex items-center justify-center gap-2 p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'mercadopago' ? 'bg-primary/10 border-primary text-primary' : 'bg-background dark:bg-gunmetal/50 border-transparent text-text-primary dark:text-ivory-cream'}`}>
+                                        <GlobeAltIcon className="h-5 w-5"/> <span>Mercado Pago</span>
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    )}
 
                     {paymentChoice === 'payLater' && (
                         <div className="animate-fade-in-up pt-4 space-y-3 border-t border-text-primary/10 dark:border-[#45535D]">
@@ -842,16 +893,44 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
     const renderConfirmationScreen = () => {
         const yapeConfig = restaurantSettings?.paymentMethods?.yape;
         const plinConfig = restaurantSettings?.paymentMethods?.plin;
+        const mpConfig = restaurantSettings?.paymentMethods?.mercadopago;
 
-        // Decide which config to use. Prioritize Yape if both are enabled.
-        const onlinePaymentConfig = yapeConfig?.enabled ? yapeConfig : (plinConfig?.enabled ? plinConfig : null);
+        // Decide which config to use. Prioritize based on actual order method.
+        // In handlePlaceOrder we set method to 'yape'|'plin'|'mercadopago' if payNow.
+        // If order.metodoPago matches one of them, use that config.
+        
+        // Wait, `newOrderId` is state, but we need to look at the `paymentMethod` state variable 
+        // or fetch the order from store to know what was actually saved if we want to be 100% robust.
+        // But effectively `paymentMethod` holds the selected online method if paymentChoice is payNow.
+        
+        let onlinePaymentConfig: any = null;
+        let methodLabel = '';
+
+        if (paymentMethod === 'yape') {
+            onlinePaymentConfig = yapeConfig;
+            methodLabel = 'Yape';
+        } else if (paymentMethod === 'plin') {
+            onlinePaymentConfig = plinConfig;
+            methodLabel = 'Plin';
+        } else if (paymentMethod === 'mercadopago') {
+            onlinePaymentConfig = mpConfig;
+            methodLabel = 'Mercado Pago';
+        } else {
+             // Fallback if logic drifted, pick first available
+             if (yapeConfig?.enabled) { onlinePaymentConfig = yapeConfig; methodLabel = 'Yape'; }
+             else if (plinConfig?.enabled) { onlinePaymentConfig = plinConfig; methodLabel = 'Plin'; }
+             else if (mpConfig?.enabled) { onlinePaymentConfig = mpConfig; methodLabel = 'Mercado Pago'; }
+        }
+
 
         const whatsappMessage = encodeURIComponent(`Hola, acabo de realizar el pedido ${newOrderId}.`);
         const whatsappLink = `https://wa.me/51${onlinePaymentConfig?.phoneNumber || ''}?text=${whatsappMessage}`;
-        const enabledOnlineMethods = [
-            yapeConfig?.enabled && 'Yape',
-            plinConfig?.enabled && 'Plin'
-        ].filter(Boolean).join('/');
+        
+        // If MP, phone might be a link if used as an Alias
+        const isMpLink = methodLabel === 'Mercado Pago' && onlinePaymentConfig?.phoneNumber?.startsWith('http');
+        // Specific check for MP Payment Link field
+        const mpPaymentLink = methodLabel === 'Mercado Pago' ? onlinePaymentConfig?.paymentLink : null;
+
 
         const handleSimulatePayment = () => {
             dispatch({ type: 'CONFIRM_CUSTOMER_PAYMENT', payload: newOrderId });
@@ -878,10 +957,42 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                             <div className="mt-6 p-4 bg-surface dark:bg-[#34424D] rounded-2xl w-full max-w-sm">
                                 <h2 className="text-2xl font-heading font-bold text-text-primary dark:text-white">¡Pedido Recibido!</h2>
                                 <p className="text-base text-text-secondary dark:text-light-silver mt-1">Pedido <span className="font-bold text-primary">{newOrderId}</span></p>
-                                <h3 className="font-bold mt-4 mb-2">Paga S/.{total.toFixed(2)} con {enabledOnlineMethods} para confirmar</h3>
-                                <img src={onlinePaymentConfig?.qrUrl || ''} alt="QR Code" className="w-40 h-40 mx-auto rounded-lg" />
-                                <p className="mt-2 text-sm">A nombre de: <span className="font-semibold">{onlinePaymentConfig?.holderName || ''}</span></p>
-                                <p className="text-sm">Número: <span className="font-semibold">{onlinePaymentConfig?.phoneNumber || ''}</span></p>
+                                <h3 className="font-bold mt-4 mb-2">Paga S/.{lastOrderTotal.toFixed(2)} con {methodLabel}</h3>
+                                
+                                {/* Priority: 1. Payment Link Button, 2. QR Code, 3. Alias/Phone */}
+                                
+                                {mpPaymentLink ? (
+                                    <a 
+                                        href={mpPaymentLink} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer" 
+                                        className="block w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-center mb-4 shadow-lg transition-transform hover:-translate-y-0.5"
+                                    >
+                                        Pagar Ahora con Mercado Pago
+                                    </a>
+                                ) : (
+                                    onlinePaymentConfig?.qrUrl ? (
+                                        <img src={onlinePaymentConfig?.qrUrl} alt="QR Code" className="w-40 h-40 mx-auto rounded-lg mb-2" />
+                                    ) : (
+                                        <div className="w-40 h-40 mx-auto rounded-lg bg-gray-200 flex items-center justify-center mb-2">
+                                            <p className="text-xs text-gray-500">Sin QR</p>
+                                        </div>
+                                    )
+                                )}
+
+                                <p className="mt-2 text-sm">Titular: <span className="font-semibold">{onlinePaymentConfig?.holderName || ''}</span></p>
+                                
+                                {/* Only show phone/alias if no payment link button was shown above, or as fallback info */}
+                                {!mpPaymentLink && (
+                                    isMpLink ? (
+                                         <a href={onlinePaymentConfig?.phoneNumber} target="_blank" rel="noreferrer" className="block mt-2 text-primary font-bold underline text-sm break-all">
+                                            Ir al Link de Pago
+                                         </a>
+                                    ) : (
+                                         <p className="text-sm">Número: <span className="font-semibold">{onlinePaymentConfig?.phoneNumber || ''}</span></p>
+                                    )
+                                )}
+
                                 <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="mt-4 w-full bg-green-500 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2">
                                    <WhatsAppIcon className="h-6 w-6"/> Enviar voucher por WhatsApp
                                 </a>
@@ -889,8 +1000,11 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                                     onClick={handleSimulatePayment}
                                     className="mt-2 w-full bg-transparent border-2 border-dashed border-text-secondary/50 text-text-secondary dark:text-light-silver font-bold py-2 px-4 rounded-xl flex items-center justify-center gap-2 hover:border-primary hover:text-primary transition-colors"
                                 >
-                                    Simular Pago Confirmado
+                                    Ya realicé el pago
                                 </button>
+                                <p className="text-xs text-text-secondary/60 dark:text-light-silver/50 mt-1">
+                                    (Al hacer clic, notificas al restaurante que pagaste)
+                                </p>
                             </div>
                         )}
                     </>

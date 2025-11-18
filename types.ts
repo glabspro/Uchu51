@@ -1,28 +1,21 @@
 
-
-
-
-
-
-
-
-
-
-
 export type EstadoPedido = 'pendiente confirmar pago' | 'pendiente de confirmación' | 'nuevo' | 'confirmado' | 'en preparación' | 'en armado' | 'listo para armado' | 'listo' | 'en camino' | 'entregado' | 'cancelado' | 'recogido' | 'pagado' | 'cuenta solicitada';
 export type TipoPedido = 'delivery' | 'local' | 'retiro';
 export type Turno = 'mañana' | 'tarde' | 'noche';
 export type View = 'dashboard' | 'local' | 'cocina' | 'retiro' | 'delivery' | 'gestion' | 'caja' | 'recepcion';
 export type UserRole = 'owner' | 'admin' | 'cocinero' | 'repartidor' | 'recepcionista' | 'cliente';
-export type MetodoPago = 'efectivo' | 'tarjeta' | 'yape' | 'plin' | 'online';
+export type MetodoPago = 'efectivo' | 'tarjeta' | 'yape' | 'plin' | 'mercadopago' | 'online';
 export type Theme = 'light' | 'dark';
 export type AppView = 'customer' | 'login' | 'admin' | 'super_admin';
 
 export interface PaymentMethodDetail {
     enabled: boolean;
     holderName?: string;
-    phoneNumber?: string;
+    phoneNumber?: string; // Can be used for Link/Alias in Mercado Pago context
     qrUrl?: string;
+    // New fields for Mercado Pago integration
+    paymentLink?: string;
+    publicKey?: string; 
 }
 
 export interface RestaurantSettings {
@@ -45,6 +38,7 @@ export interface RestaurantSettings {
         tarjeta?: boolean;
         yape?: PaymentMethodDetail;
         plin?: PaymentMethodDetail;
+        mercadopago?: PaymentMethodDetail;
     };
 }
 
@@ -56,6 +50,7 @@ export interface Cliente {
 }
 
 export interface Salsa {
+    id?: string;
     nombre: string;
     precio: number;
     isAvailable: boolean;

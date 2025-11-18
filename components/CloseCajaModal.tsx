@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import type { CajaSession, MetodoPago, MovimientoCaja } from '../types';
 import { CheckCircleIcon, PrinterIcon, WhatsAppIcon, InformationCircleIcon } from './icons';
@@ -69,7 +70,7 @@ const CloseCajaModal: React.FC<CloseCajaModalProps> = ({ onClose, onCloseCaja, s
         window.open(whatsappUrl, '_blank');
     };
 
-    const metodos: MetodoPago[] = ['efectivo', 'tarjeta', 'yape', 'plin', 'online'];
+    const metodos: MetodoPago[] = ['efectivo', 'tarjeta', 'yape', 'plin', 'mercadopago', 'online'];
 
     if (step === 'result' && session.estado === 'cerrada') {
         const { diferencia = 0 } = session;
@@ -95,7 +96,7 @@ const CloseCajaModal: React.FC<CloseCajaModalProps> = ({ onClose, onCloseCaja, s
                         <p className="font-semibold">Desglose de Pagos:</p>
                         {metodos.map(metodo => ( session.ventasPorMetodo[metodo] > 0 &&
                             <div key={metodo} className="flex justify-between text-text-secondary dark:text-zinc-400 pl-2">
-                                <span className="capitalize">{metodo}:</span>
+                                <span className="capitalize">{metodo.replace('_', ' ')}:</span>
                                 <span>S/.{(session.ventasPorMetodo[metodo] || 0).toFixed(2)}</span>
                             </div>
                         ))}

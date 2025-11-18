@@ -1,17 +1,22 @@
+
 import React, { useState } from 'react';
 import type { Salsa } from '../types';
 import { PlusIcon, TrashIcon, AdjustmentsHorizontalIcon as PencilIcon } from './icons';
 import SauceEditorModal from './SauceEditorModal';
+import { supabase } from '../utils/supabase';
+import { useAppContext } from '../store';
 
 interface SauceManagerProps {
     salsas: Salsa[];
     setSalsas: (salsas: Salsa[]) => void;
 }
 
-const SauceManager: React.FC<SauceManagerProps> = ({ salsas, setSalsas }) => {
+const SauceManager: React.FC<SauceManagerProps> = ({ salsas }) => {
+    const { dispatch } = useAppContext();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingSauce, setEditingSauce] = useState<Salsa | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<Salsa | null>(null);
+    const [isProcessing, setIsProcessing] = useState(false);
 
     const handleAddNew = () => {
         setEditingSauce(null);
@@ -23,22 +28,54 @@ const SauceManager: React.FC<SauceManagerProps> = ({ salsas, setSalsas }) => {
         setIsModalOpen(true);
     };
 
-    const handleDelete = (sauceToDelete: Salsa) => {
-        setSalsas(salsas.filter(s => s.nombre !== sauceToDelete.nombre));
+    const handleDelete = async (sauceToDelete: Salsa) => {
+        if (!sauceToDelete.id) return;
+        setIsProcessing(true);
+        const { error } = await supabase.from('salsas').delete().eq('id', sauceToDelete.id);
+        if (error) {
+            console.error("Error deleting sauce:", error);
+            dispatch({ type: 'ADD_TOAST', payload: { message: 'Error al eliminar la crema', type: 'danger' } });
+        } else {
+             dispatch({ type: 'ADD_TOAST', payload: { message: 'Crema eliminada correctamente', type: 'success' } });
+        }
+        setIsProcessing(false);
         setShowDeleteConfirm(null);
     };
 
-    const handleSave = (sauceToSave: Omit<Salsa, 'isAvailable'>) => {
-        if (editingSauce) {
-            setSalsas(salsas.map(s => s.nombre === editingSauce.nombre ? { ...s, ...sauceToSave } : s));
+    const handleSave = async (sauceToSave: Omit<Salsa, 'isAvailable'>) => {
+        setIsProcessing(true);
+        const payload = {
+            nombre: sauceToSave.nombre,
+            precio: sauceToSave.precio,
+            restaurant_id: sauceToSave.restaurant_id
+        };
+
+        let error;
+        if (editingSauce && editingSauce.id) {
+            const { error: err } = await supabase.from('salsas').update(payload).eq('id', editingSauce.id);
+            error = err;
         } else {
-            setSalsas([...salsas, { ...sauceToSave, isAvailable: true }]);
+            const { error: err } = await supabase.from('salsas').insert({ ...payload, is_available: true });
+            error = err;
         }
-        setIsModalOpen(false);
+
+        if (error) {
+            console.error("Error saving sauce:", error);
+             dispatch({ type: 'ADD_TOAST', payload: { message: 'Error al guardar la crema', type: 'danger' } });
+        } else {
+            dispatch({ type: 'ADD_TOAST', payload: { message: 'Crema guardada correctamente', type: 'success' } });
+            setIsModalOpen(false);
+        }
+        setIsProcessing(false);
     };
 
-    const handleToggleAvailable = (sauceName: string) => {
-        setSalsas(salsas.map(s => s.nombre === sauceName ? { ...s, isAvailable: !s.isAvailable } : s));
+    const handleToggleAvailable = async (sauce: Salsa) => {
+        if (!sauce.id) return;
+        const { error } = await supabase.from('salsas').update({ is_available: !sauce.isAvailable }).eq('id', sauce.id);
+         if (error) {
+            console.error("Error updating sauce availability:", error);
+             dispatch({ type: 'ADD_TOAST', payload: { message: 'Error al actualizar estado', type: 'danger' } });
+        }
     };
 
     return (
@@ -51,7 +88,9 @@ const SauceManager: React.FC<SauceManagerProps> = ({ salsas, setSalsas }) => {
                         <p className="text-text-secondary dark:text-slate-400 my-3">¿Estás seguro de que quieres eliminar <span className="font-bold">{showDeleteConfirm.nombre}</span>? Esta acción no se puede deshacer.</p>
                         <div className="grid grid-cols-2 gap-3 mt-6">
                             <button onClick={() => setShowDeleteConfirm(null)} className="bg-text-primary/10 dark:bg-slate-700 hover:bg-text-primary/20 dark:hover:bg-slate-600 text-text-primary dark:text-slate-200 font-bold py-2 px-4 rounded-lg transition-colors active:scale-95">Cancelar</button>
-                            <button onClick={() => handleDelete(showDeleteConfirm)} className="bg-danger hover:brightness-110 text-white font-bold py-2 px-4 rounded-lg transition-all active:scale-95">Sí, Eliminar</button>
+                            <button onClick={() => handleDelete(showDeleteConfirm)} disabled={isProcessing} className="bg-danger hover:brightness-110 text-white font-bold py-2 px-4 rounded-lg transition-all active:scale-95 disabled:bg-gray-400">
+                                {isProcessing ? '...' : 'Sí, Eliminar'}
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -76,12 +115,12 @@ const SauceManager: React.FC<SauceManagerProps> = ({ salsas, setSalsas }) => {
                         </thead>
                         <tbody className="divide-y divide-text-primary/5 dark:divide-slate-700">
                             {salsas.map(sauce => (
-                                <tr key={sauce.nombre} className="hover:bg-text-primary/5 dark:hover:bg-slate-700/30">
+                                <tr key={sauce.id || sauce.nombre} className="hover:bg-text-primary/5 dark:hover:bg-slate-700/30">
                                     <td className="p-4 font-medium text-text-primary dark:text-slate-200">{sauce.nombre}</td>
                                     <td className="p-4 text-text-secondary dark:text-slate-400 font-mono text-center">S/.{sauce.precio.toFixed(2)}</td>
                                     <td className="p-4 text-center">
                                         <label className="relative inline-flex items-center cursor-pointer">
-                                          <input type="checkbox" checked={sauce.isAvailable} onChange={() => handleToggleAvailable(sauce.nombre)} className="sr-only peer" />
+                                          <input type="checkbox" checked={sauce.isAvailable} onChange={() => handleToggleAvailable(sauce)} className="sr-only peer" />
                                           <div className="w-11 h-6 bg-gray-200 dark:bg-slate-700 rounded-full peer peer-focus:ring-2 peer-focus:ring-primary/50 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
                                         </label>
                                     </td>

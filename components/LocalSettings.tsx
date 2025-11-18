@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAppContext } from '../store';
 import type { RestaurantSettings, PaymentMethodDetail } from '../types';
-import { CheckCircleIcon, ExclamationTriangleIcon } from './icons';
+import { CheckCircleIcon, ExclamationTriangleIcon, GlobeAltIcon } from './icons';
 import ImageUpload from './ImageUpload';
 
 // --- Helper Functions ---
@@ -96,11 +97,16 @@ const OnlinePaymentConfigurator: React.FC<{
     label: string;
     config: PaymentMethodDetail;
     onChange: (config: PaymentMethodDetail) => void;
-}> = ({ label, config, onChange }) => {
+    placeholderPhone?: string;
+    type?: 'wallet' | 'mercadopago';
+}> = ({ label, config, onChange, placeholderPhone = "Número de Teléfono", type = 'wallet' }) => {
     return (
         <div className="bg-background dark:bg-gunmetal/50 rounded-lg border border-text-primary/10 dark:border-[#45535D] p-4 space-y-4">
             <div className="flex items-center justify-between cursor-pointer" onClick={() => onChange({ ...config, enabled: !config.enabled })}>
-                <h4 className="font-semibold text-text-primary dark:text-ivory-cream">{label}</h4>
+                <div className="flex items-center gap-2">
+                    <h4 className="font-semibold text-text-primary dark:text-ivory-cream">{label}</h4>
+                    {type === 'mercadopago' && <GlobeAltIcon className="h-5 w-5 text-blue-500" />}
+                </div>
                 <div className={`w-14 h-8 flex items-center rounded-full p-1 duration-300 ease-in-out ${config.enabled ? 'bg-primary' : 'bg-text-primary/20 dark:bg-[#56656E]'}`}>
                     <div className={`bg-white w-6 h-6 rounded-full shadow-md transform duration-300 ease-in-out ${config.enabled ? 'translate-x-6' : ''}`}></div>
                 </div>
@@ -108,28 +114,63 @@ const OnlinePaymentConfigurator: React.FC<{
             {config.enabled && (
                 <div className="space-y-3 pt-3 border-t border-text-primary/10 dark:border-[#45535D] animate-fade-in-up">
                     <div>
-                        <label className="text-xs font-semibold text-text-secondary dark:text-light-silver">Nombre del Titular</label>
+                        <label className="text-xs font-semibold text-text-secondary dark:text-light-silver">Nombre del Titular / Negocio</label>
                         <input
                             type="text"
                             value={config.holderName || ''}
                             onChange={(e) => onChange({ ...config, holderName: e.target.value })}
                             className="w-full bg-surface dark:bg-[#34424D] p-2 mt-1 rounded-md border border-text-primary/10 dark:border-[#45535D]"
+                            placeholder="Ej: Mi Restaurante SAC"
                         />
                     </div>
+
+                    {/* Generic Phone/Alias field - Optional for MP if using Link */}
                     <div>
-                        <label className="text-xs font-semibold text-text-secondary dark:text-light-silver">Número de Teléfono</label>
+                        <label className="text-xs font-semibold text-text-secondary dark:text-light-silver">{placeholderPhone}</label>
                         <input
-                            type="tel"
+                            type="text"
                             value={config.phoneNumber || ''}
                             onChange={(e) => onChange({ ...config, phoneNumber: e.target.value })}
                             className="w-full bg-surface dark:bg-[#34424D] p-2 mt-1 rounded-md border border-text-primary/10 dark:border-[#45535D]"
+                            placeholder={type === 'mercadopago' ? 'Opcional (si usas Alias)' : '999 999 999'}
                         />
                     </div>
+
+                    {/* Specific fields for Mercado Pago */}
+                    {type === 'mercadopago' && (
+                        <>
+                             <div className="p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                                <label className="text-xs font-bold text-blue-700 dark:text-blue-300 flex items-center gap-1">
+                                    Link de Pago (Recomendado)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={config.paymentLink || ''}
+                                    onChange={(e) => onChange({ ...config, paymentLink: e.target.value })}
+                                    className="w-full bg-surface dark:bg-[#34424D] p-2 mt-1 rounded-md border border-text-primary/10 dark:border-[#45535D]"
+                                    placeholder="Ej: https://mpago.la/..."
+                                />
+                                <p className="text-[10px] text-text-secondary dark:text-light-silver mt-1">
+                                    Pega aquí el link generado en tu panel de Mercado Pago. El cliente será redirigido para pagar.
+                                </p>
+                            </div>
+                             <div>
+                                <label className="text-xs font-semibold text-text-secondary dark:text-light-silver">Public Key (Opcional - Para integración futura)</label>
+                                <input
+                                    type="text"
+                                    value={config.publicKey || ''}
+                                    onChange={(e) => onChange({ ...config, publicKey: e.target.value })}
+                                    className="w-full bg-surface dark:bg-[#34424D] p-2 mt-1 rounded-md border border-text-primary/10 dark:border-[#45535D]"
+                                    placeholder="TEST-xxxx-xxxx-xxxx"
+                                />
+                            </div>
+                        </>
+                    )}
                     
                     <ImageUpload 
                         currentImageUrl={config.qrUrl || ''} 
                         onImageChange={(url) => onChange({ ...config, qrUrl: url })}
-                        label="Código QR"
+                        label="Imagen del Código QR"
                     />
                 </div>
             )}
@@ -256,7 +297,7 @@ const LocalSettings: React.FC = () => {
         setSettings(prev => ({ ...prev, paymentMethods: { ...prev.paymentMethods, [method]: value } }));
     };
 
-    const handleOnlinePaymentMethodChange = (method: 'yape' | 'plin', newConfig: PaymentMethodDetail) => {
+    const handleOnlinePaymentMethodChange = (method: 'yape' | 'plin' | 'mercadopago', newConfig: PaymentMethodDetail) => {
         setSettings(prev => ({ ...prev, paymentMethods: { ...prev.paymentMethods, [method]: newConfig } }));
     };
 
@@ -417,6 +458,13 @@ const LocalSettings: React.FC = () => {
                         label="Plin"
                         config={settings.paymentMethods?.plin || { enabled: false }}
                         onChange={(config) => handleOnlinePaymentMethodChange('plin', config)}
+                    />
+                    <OnlinePaymentConfigurator
+                        label="Mercado Pago"
+                        type="mercadopago"
+                        config={settings.paymentMethods?.mercadopago || { enabled: false }}
+                        onChange={(config) => handleOnlinePaymentMethodChange('mercadopago', config)}
+                        placeholderPhone="Alias (Opcional)"
                     />
                 </div>
             </div>
