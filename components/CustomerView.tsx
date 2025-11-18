@@ -398,10 +398,6 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
         const finalCart: ProductoPedido[] = cart.map(({ cartItemId, ...rest }) => rest);
         
         // Determine the actual online payment method if 'payNow' is selected
-        // Prioritize Yape, then Plin, then MercadoPago if multiple are enabled (or let user choose in a real scenario, 
-        // but simplifying here to pick the first active one or we could add a selector)
-        // Actually, let's make paymentMethod state handle "online" types too if paymentChoice is payNow.
-        
         let effectivePaymentMethod: MetodoPago = paymentMethod;
 
         if (paymentChoice === 'payNow') {
@@ -410,10 +406,6 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
             else if (paymentMethodsEnabled.mercadopago) effectivePaymentMethod = 'mercadopago';
         }
 
-        // If the user selected a specific method via UI (future improvement), we'd use that. 
-        // For now, if multiple are enabled, we might need a sub-selection step, but let's reuse the paymentMethod state for online too.
-        // Let's fix the Payment Choice UI to actually set the specific online method if multiples are available.
-        
         if (paymentChoice === 'payNow' && paymentMethod !== 'yape' && paymentMethod !== 'plin' && paymentMethod !== 'mercadopago') {
              // Fallback default
              if (paymentMethodsEnabled.yape) effectivePaymentMethod = 'yape';
@@ -899,10 +891,6 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
         // In handlePlaceOrder we set method to 'yape'|'plin'|'mercadopago' if payNow.
         // If order.metodoPago matches one of them, use that config.
         
-        // Wait, `newOrderId` is state, but we need to look at the `paymentMethod` state variable 
-        // or fetch the order from store to know what was actually saved if we want to be 100% robust.
-        // But effectively `paymentMethod` holds the selected online method if paymentChoice is payNow.
-        
         let onlinePaymentConfig: any = null;
         let methodLabel = '';
 
@@ -931,6 +919,14 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
         // Specific check for MP Payment Link field
         const mpPaymentLink = methodLabel === 'Mercado Pago' ? onlinePaymentConfig?.paymentLink : null;
 
+        // Helper to ensure absolute URL
+        const ensureAbsoluteUrl = (url: string | undefined) => {
+            if (!url) return '#';
+            if (url.startsWith('http://') || url.startsWith('https://')) {
+                return url;
+            }
+            return `https://${url}`;
+        };
 
         const handleSimulatePayment = () => {
             dispatch({ type: 'CONFIRM_CUSTOMER_PAYMENT', payload: newOrderId });
@@ -963,7 +959,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                                 
                                 {mpPaymentLink ? (
                                     <a 
-                                        href={mpPaymentLink} 
+                                        href={ensureAbsoluteUrl(mpPaymentLink)} 
                                         target="_blank" 
                                         rel="noopener noreferrer" 
                                         className="block w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-center mb-4 shadow-lg transition-transform hover:-translate-y-0.5"
@@ -985,7 +981,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                                 {/* Only show phone/alias if no payment link button was shown above, or as fallback info */}
                                 {!mpPaymentLink && (
                                     isMpLink ? (
-                                         <a href={onlinePaymentConfig?.phoneNumber} target="_blank" rel="noreferrer" className="block mt-2 text-primary font-bold underline text-sm break-all">
+                                         <a href={ensureAbsoluteUrl(onlinePaymentConfig?.phoneNumber)} target="_blank" rel="noreferrer" className="block mt-2 text-primary font-bold underline text-sm break-all">
                                             Ir al Link de Pago
                                          </a>
                                     ) : (
