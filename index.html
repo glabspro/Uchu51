@@ -29,21 +29,23 @@
             surface: '#FFFFFF',
             primary: {
               DEFAULT: 'hsl(var(--color-primary-h), var(--color-primary-s), var(--color-primary-l))',
-              dark: 'hsl(var(--color-primary-h), var(--color-primary-s), calc(var(--color-primary-l) * 0.92))',
+              dark: 'hsl(var(--color-primary-h), var(--color-primary-s), calc(var(--color-primary-l) * 0.9))',
             },
             accent: 'hsl(var(--color-secondary-h), var(--color-secondary-s), var(--color-secondary-l))',
             text: {
-              primary: '#272F31', // Palette Dark
-              secondary: '#5F6A6C', // Lighter Palette Dark
+              primary: '#272F31', // Safari Gunmetal
+              secondary: '#5F6A6C', 
             },
-            success: '#16A34A', // Keep standard accessible green for UI feedback
+            success: '#16A34A', 
             danger: '#DC2626',
-            warning: '#FFB40B', // Palette Yellow
-            // New palette colors
-            'gunmetal': '#272F31', // Palette Dark
-            'midnight-green': '#014325', // Palette Green
-            'ivory-cream': '#FDF6E3', // Keep as legacy or map to off-white
-            'sand-yellow': '#FFB40B', // Palette Yellow
+            warning: '#FFB40B', // Safari Yellow
+            
+            // Specific Palette Colors for Food Safari
+            'gunmetal': '#272F31', 
+            'safari-green': '#014325', 
+            'safari-orange': '#F64D00',
+            'safari-yellow': '#FFB40B',
+            'ivory-cream': '#FDF6E3', 
             'light-silver': '#D3DBDD',
           }
         }
@@ -137,7 +139,7 @@
     }
   }
   .animate-pulse-glow {
-    --glow-color: 249, 115, 22; /* Default: Primary color */
+    --glow-color: 246, 77, 0; /* Default: Primary Safari Orange */
     animation: pulse-glow 2.5s infinite ease-in-out;
   }
 

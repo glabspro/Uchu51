@@ -61,7 +61,7 @@ const getContrastRatio = (color1: string, color2: string): number => {
 
 // --- Palette Definitions ---
 const palettes = [
-    { name: 'Safari', primary: '#F64D00', secondary: '#FFB40B', background: '#FFFFFF' },
+    { name: 'Food Safari', primary: '#F64D00', secondary: '#FFB40B', background: '#FFFFFF' },
     { name: 'Clásico Criollo', primary: '#C81E1E', secondary: '#FBBF24', background: '#FFFBEB' },
     { name: 'Costa Marina', primary: '#0D9488', secondary: '#FDE68A', background: '#F0F9FF' },
     { name: 'Andino Terroso', primary: '#E85D04', secondary: '#6B7280', background: '#F5F5F4' },
@@ -234,12 +234,24 @@ const LocalSettings: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'palettes' | 'custom'>('palettes');
     
     useEffect(() => {
-        setSettings(state.restaurantSettings!);
-        setTablesInput(state.restaurantSettings?.tables.join(', ') || '');
+        if (state.restaurantSettings) {
+            setSettings(state.restaurantSettings);
+            setTablesInput(state.restaurantSettings.tables.join(', ') || '');
+        }
     }, [state.restaurantSettings]);
 
     const handleModuleChange = (module: 'delivery' | 'local' | 'retiro', value: boolean) => {
-        setSettings(prev => ({ ...prev, modules: { ...prev.modules, [module]: value } }));
+        setSettings(prev => {
+            // Ensure we have a complete modules object to start with to avoid partial updates overwriting existing state unexpectedly
+            const currentModules = prev.modules || { delivery: true, local: true, retiro: true };
+            return {
+                ...prev,
+                modules: {
+                    ...currentModules,
+                    [module]: value
+                }
+            };
+        });
     };
     
     const handlePaymentMethodChange = (method: 'efectivo' | 'tarjeta', value: boolean) => {

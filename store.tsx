@@ -16,9 +16,9 @@ const MOCK_RESTAURANT_SETTINGS: RestaurantSettings = {
   drivers: ['Driver A', 'Driver B'],
   tables: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
   branding: {
-    primaryColor: '#F64D00', // Palette Orange
-    secondaryColor: '#FFB40B', // Palette Yellow
-    backgroundColor: '#FFFFFF', // Palette White
+    primaryColor: '#F64D00', // Food Safari Orange
+    secondaryColor: '#FFB40B', // Food Safari Yellow
+    backgroundColor: '#FFFFFF', // White Surface
     logoUrl: null,
   },
   modules: {

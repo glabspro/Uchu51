@@ -55,10 +55,12 @@ const TabButton: React.FC<{
 
 const KitchenBoard: React.FC<KitchenBoardProps> = () => {
     const { state, dispatch } = useAppContext();
-    const { orders, turno } = state;
+    const { orders, turno, restaurantSettings } = state;
     const [draggedOrderId, setDraggedOrderId] = useState<string | null>(null);
     const [announcedOrders, setAnnouncedOrders] = useState<Set<string>>(new Set());
-    const [activeTab, setActiveTab] = useState<AreaPreparacion>('delivery');
+    
+    // Default active tab logic based on available modules
+    const [activeTab, setActiveTab] = useState<AreaPreparacion>('salon');
 
     const updateOrderStatus = (orderId: string, newStatus: EstadoPedido, user: UserRole) => {
         dispatch({ type: 'UPDATE_ORDER_STATUS', payload: { orderId, newStatus, user } });
@@ -124,6 +126,26 @@ const KitchenBoard: React.FC<KitchenBoardProps> = () => {
             default: return [];
         }
     };
+    
+    // Ensure activeTab is valid based on settings and automatically switch if the current one is disabled
+    useEffect(() => {
+        const modules = restaurantSettings?.modules;
+        if (!modules) return;
+
+        // If currently selected tab is disabled, switch to the first available one
+        if (activeTab === 'delivery' && modules.delivery === false) {
+             if (modules.local !== false) setActiveTab('salon');
+             else if (modules.retiro !== false) setActiveTab('retiro');
+        }
+        if (activeTab === 'retiro' && modules.retiro === false) {
+             if (modules.local !== false) setActiveTab('salon');
+             else if (modules.delivery !== false) setActiveTab('delivery');
+        }
+        if (activeTab === 'salon' && modules.local === false) {
+             if (modules.delivery !== false) setActiveTab('delivery');
+             else if (modules.retiro !== false) setActiveTab('retiro');
+        }
+    }, [restaurantSettings, activeTab]);
 
     const filteredOrders = getFilteredOrders();
     
@@ -131,32 +153,39 @@ const KitchenBoard: React.FC<KitchenBoardProps> = () => {
     const assemblingOrders = filteredOrders.filter(o => o.estado === 'en armado' || o.estado === 'listo para armado');
     
     const columnClass = 'w-80 flex-shrink-0 lg:w-auto';
+    const modules = restaurantSettings?.modules;
 
     return (
         <div className="flex flex-col h-full">
             <div className="bg-surface dark:bg-[#34424D] rounded-t-lg shadow-sm flex-shrink-0">
                 <div className="flex space-x-1 border-b border-text-primary/5 dark:border-[#45535D]">
-                    <TabButton 
-                        isActive={activeTab === 'delivery'}
-                        onClick={() => setActiveTab('delivery')}
-                        icon={<TruckIcon className="h-5 w-5" />}
-                        label="Delivery"
-                        count={deliveryOrders.length}
-                    />
-                    <TabButton 
-                        isActive={activeTab === 'retiro'}
-                        onClick={() => setActiveTab('retiro')}
-                        icon={<ShoppingBagIcon className="h-5 w-5" />}
-                        label="Para Llevar"
-                        count={retiroOrders.length}
-                    />
-                    <TabButton 
-                        isActive={activeTab === 'salon'}
-                        onClick={() => setActiveTab('salon')}
-                        icon={<HomeIcon className="h-5 w-5" />}
-                        label="Salón"
-                        count={salonOrders.length}
-                    />
+                    {modules?.delivery !== false && (
+                        <TabButton 
+                            isActive={activeTab === 'delivery'}
+                            onClick={() => setActiveTab('delivery')}
+                            icon={<TruckIcon className="h-5 w-5" />}
+                            label="Delivery"
+                            count={deliveryOrders.length}
+                        />
+                    )}
+                    {modules?.retiro !== false && (
+                        <TabButton 
+                            isActive={activeTab === 'retiro'}
+                            onClick={() => setActiveTab('retiro')}
+                            icon={<ShoppingBagIcon className="h-5 w-5" />}
+                            label="Para Llevar"
+                            count={retiroOrders.length}
+                        />
+                    )}
+                    {modules?.local !== false && (
+                        <TabButton 
+                            isActive={activeTab === 'salon'}
+                            onClick={() => setActiveTab('salon')}
+                            icon={<HomeIcon className="h-5 w-5" />}
+                            label="Salón"
+                            count={salonOrders.length}
+                        />
+                    )}
                 </div>
             </div>
             <div className="flex flex-row gap-4 overflow-x-auto p-4 flex-grow bg-background dark:bg-gunmetal rounded-b-lg lg:grid lg:grid-cols-3 lg:gap-6">

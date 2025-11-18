@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Pedido, Producto, ProductoPedido, Cliente, Salsa, TipoPedido, MetodoPago, Theme, ClienteLeal, LoyaltyProgram, Promocion } from '../types';
 import { useAppContext } from '../store';
-import { ShoppingBagIcon, TrashIcon, CheckCircleIcon, TruckIcon, UserIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon, MapPinIcon, SearchIcon, AdjustmentsHorizontalIcon, MinusIcon, PlusIcon, StarIcon, SunIcon, MoonIcon, ChevronLeftIcon, ChevronRightIcon, WhatsAppIcon, ArrowDownOnSquareIcon, ArrowUpOnSquareIcon, EllipsisVerticalIcon, XMarkIcon, SparklesIcon } from './icons';
+import { ShoppingBagIcon, TrashIcon, CheckCircleIcon, TruckIcon, UserIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon, MapPinIcon, SearchIcon, AdjustmentsHorizontalIcon, MinusIcon, PlusIcon, StarIcon, SunIcon, MoonIcon, ChevronLeftIcon, ChevronRightIcon, WhatsAppIcon, ArrowDownOnSquareIcon, ArrowUpOnSquareIcon, EllipsisVerticalIcon, XMarkIcon, SparklesIcon, HomeIcon } from './icons';
 import SauceModal from './SauceModal';
 import ProductDetailModal from './ProductDetailModal';
 import { Logo } from './Logo';
@@ -490,6 +490,10 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
     };
 
     const showInstallButton = (isIOS || isAndroid) && !isStandalone;
+    
+    // New Logic for specific message
+    const modules = restaurantSettings?.modules;
+    const isOnlyDelivery = modules?.delivery !== false && modules?.retiro === false;
 
     const renderInstallInstructions = () => (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[101] p-4 animate-fade-in-scale">
@@ -545,7 +549,9 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                                                handleAddPromotionToCart(promo); 
                                                setShowPromosModal(false);
                                                if (stage === 'selection') {
-                                                   setOrderType('retiro');
+                                                    // Default to first available order type if not set
+                                                    if (modules?.delivery !== false) setOrderType('delivery');
+                                                    else if (modules?.retiro !== false) setOrderType('retiro');
                                                }
                                                setStage('checkout');
                                            }} 
@@ -596,18 +602,31 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
             <div className="flex-grow flex flex-col items-center justify-center">
                 <h1 className="font-heading text-4xl font-extrabold text-text-primary dark:text-white mb-3">El sabor que te mueve</h1>
                 <p className="text-base text-text-secondary dark:text-light-silver mb-8 max-w-sm">Pide tu comida favorita, preparada al momento.</p>
+                
+                {isOnlyDelivery && (
+                     <div className="w-full bg-primary/10 dark:bg-orange-500/20 p-4 rounded-xl mb-6 text-center border-2 border-primary/20 dark:border-orange-500/30 animate-pulse-glow">
+                        <h3 className="text-xl font-heading font-bold text-primary dark:text-orange-300 mb-1">¡Hoy nos quedamos en casa! 🏠</h3>
+                        <p className="text-text-secondary dark:text-light-silver text-sm">Disfruta de nuestra sazón sin moverte. Te lo llevamos volando.</p>
+                     </div>
+                )}
+
                 <div className="w-full space-y-4">
-                    {restaurantSettings?.modules?.delivery !== false && (
-                         <button onClick={() => handleSelectOrderType('delivery')} className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-4 px-8 rounded-xl text-lg transition-all duration-300 shadow-lg shadow-primary/30 hover:shadow-primary/40 hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-2">
-                            <TruckIcon className="h-6 w-6" />
+                    {modules?.delivery !== false && (
+                         <button onClick={() => handleSelectOrderType('delivery')} className={`w-full bg-primary hover:bg-primary-dark text-white font-bold ${isOnlyDelivery ? 'py-6 text-xl' : 'py-4 text-lg'} px-8 rounded-xl transition-all duration-300 shadow-lg shadow-primary/30 hover:shadow-primary/40 hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-2`}>
+                            <TruckIcon className={`${isOnlyDelivery ? 'h-8 w-8' : 'h-6 w-6'}`} />
                             Pide por Delivery
                         </button>
                     )}
-                   {restaurantSettings?.modules?.retiro !== false && (
+                   {modules?.retiro !== false && (
                      <button onClick={() => handleSelectOrderType('retiro')} className="w-full bg-text-primary dark:bg-[#45535D] hover:bg-text-primary/90 dark:hover:bg-[#56656E] text-white font-bold py-4 px-8 rounded-xl text-lg transition-all duration-300 shadow-lg hover:shadow-text-primary/20 hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-2">
                         <ShoppingBagIcon className="h-6 w-6" />
                         Para Recoger en Tienda
                     </button>
+                   )}
+                   {modules?.delivery === false && modules?.retiro === false && (
+                       <div className="p-4 text-text-secondary dark:text-light-silver bg-surface dark:bg-gunmetal/50 rounded-lg border border-dashed border-text-primary/20">
+                           <p>No hay métodos de pedido disponibles en este momento.</p>
+                       </div>
                    )}
                 </div>
             </div>
