@@ -185,16 +185,13 @@ function appReducer(state: AppState, action: AppAction): AppState {
             return { ...state, orders: state.orders.map(o => o.id === orderId ? { ...o, repartidorAsignado: driverName } : o) };
         }
         case 'SAVE_ORDER': {
-            // Note: This case handles local optimistic updates for 'SAVE_ORDER' dispatch
-            // But we also use 'SAVE_POS_ORDER' for DB-synced orders.
             const orderData = action.payload;
-            // If no ID is present, generate a temp one (UI only)
             const tempId = `PED-${String(Date.now()).slice(-4)}`; 
             const newOrder: Pedido = { 
                 ...orderData, 
                 id: tempId,
                 fecha: new Date().toISOString(), 
-                estado: 'nuevo', // Default, wrapper logic might override
+                estado: 'nuevo', 
                 turno: state.turno, 
                 historial: [{ estado: 'nuevo', fecha: new Date().toISOString(), usuario: 'cliente' }], 
                 areaPreparacion: orderData.tipo === 'local' ? 'salon' : orderData.tipo,
@@ -335,27 +332,52 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
                 // 2. Products
                 const { data: productsData } = await supabase.from('products').select('*').eq('restaurant_id', RESTAURANT_ID);
-                if (productsData) baseDispatch({ type: 'SET_PRODUCTS', payload: productsData });
+                if (productsData) {
+                    // Map snake_case DB columns to camelCase TS properties
+                    const mappedProducts = productsData.map((p: any) => ({
+                        ...p,
+                        imagenUrl: p.imagen_url 
+                    }));
+                    baseDispatch({ type: 'SET_PRODUCTS', payload: mappedProducts });
+                }
 
                 // 3. Salsas
                 const { data: salsasData } = await supabase.from('salsas').select('*').eq('restaurant_id', RESTAURANT_ID);
-                if (salsasData) baseDispatch({ type: 'SET_SAUCES', payload: salsasData });
+                if (salsasData) {
+                     // Map snake_case to camelCase for salsas
+                    const mappedSalsas = salsasData.map((s: any) => ({
+                        ...s,
+                        isAvailable: s.is_available
+                    }));
+                    baseDispatch({ type: 'SET_SAUCES', payload: mappedSalsas });
+                }
                 
-                // 4. Orders (Active only for now/optimization)
+                // 4. Orders
                 const { data: ordersData } = await supabase
                     .from('orders')
                     .select('*')
                     .eq('restaurant_id', RESTAURANT_ID)
                     .order('fecha', { ascending: false })
-                    .limit(100); // Limit to last 100 for performance
+                    .limit(100);
                 if (ordersData) {
-                    // Parse jsonb fields if necessary (Supabase client usually handles it)
                      baseDispatch({ type: 'SET_STATE', payload: { orders: ordersData } });
                 }
 
                 // 5. Customers
                 const { data: customersData } = await supabase.from('customers').select('*').eq('restaurant_id', RESTAURANT_ID);
                 if(customersData) baseDispatch({ type: 'SET_STATE', payload: { customers: customersData } });
+
+                 // 6. Promotions
+                const { data: promotionsData } = await supabase.from('promotions').select('*').eq('restaurant_id', RESTAURANT_ID);
+                if (promotionsData) {
+                    // Map snake_case DB columns to camelCase TS properties
+                    const mappedPromotions = promotionsData.map((p: any) => ({
+                        ...p,
+                        isActive: p.is_active,
+                        imagenUrl: p.imagen_url
+                    }));
+                    baseDispatch({ type: 'SET_PROMOTIONS', payload: mappedPromotions });
+                }
 
                 baseDispatch({ type: 'SET_STATE', payload: { restaurantId: RESTAURANT_ID } });
 
@@ -407,15 +429,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 { event: '*', schema: 'public', table: 'orders', filter: `restaurant_id=eq.${RESTAURANT_ID}` },
                 (payload) => {
                      if (payload.eventType === 'INSERT') {
-                         // Avoid adding if we already have it (optimistic update)
-                         // But the ID might differ if we let DB generate it.
-                         // With our logic, we generate ID locally and send it.
                          const newOrder = payload.new as Pedido;
-                         // Simple check to avoid dupes if ID matches
                          baseDispatch({ type: 'SAVE_POS_ORDER', payload: { orderData: newOrder, mesaNumero: 0 } });
                      } else if (payload.eventType === 'UPDATE') {
                          const updatedOrder = payload.new as Pedido;
-                         // Find and update
                          baseDispatch({ type: 'SAVE_POS_ORDER', payload: { orderData: updatedOrder, mesaNumero: 0 } });
                      }
                 }
@@ -431,23 +448,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     // --- ENHANCED DISPATCH FOR SYNC ---
     const dispatch = useCallback(async (action: AppAction) => {
-        // 1. Optimistic Update
         baseDispatch(action);
 
-        // 2. Async Side Effects (Fire & Forget or Await)
         try {
             switch (action.type) {
                 case 'UPDATE_RESTAURANT_SETTINGS': {
-                    // We need the combined settings. Since state inside callback might be stale,
-                    // we ideally fetch current from state but useReducer doesn't expose it here easily.
-                    // However, React state updates are batched. 
-                    // We will assume the payload contains the diff.
-                    // To be safe, we read the latest from DB or local state ref if we had one.
-                    // For now, we'll do a robust update by spreading.
-                    // Note: 'action.payload' is Partial<RestaurantSettings>.
-                    
-                    // We can't easily access the *result* of the reducer here without a ref.
-                    // Simplest fix: We update the DB with the specific fields present in payload.
                     const updates: any = {};
                     if (action.payload.branding) updates.branding = action.payload.branding;
                     if (action.payload.modules) updates.modules = action.payload.modules;
@@ -478,18 +483,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                         restaurant_id: RESTAURANT_ID,
                     };
                     
-                    // Correct fix: dispatch SAVE_POS_ORDER to utilize its ID-preserving logic for the optimistic update
-                    // Since SAVE_ORDER in reducer ignores ID passed in payload and generates new one.
                     baseDispatch({ type: 'SAVE_POS_ORDER', payload: { orderData: newOrder, mesaNumero: 0 } });
                     
                     await supabase.from('orders').insert(newOrder);
                     break;
                 }
                 case 'SAVE_POS_ORDER': {
-                    // This is usually an update or a new order from POS with ID already handled
                     const { orderData } = action.payload;
-                    
-                    // Check if it exists to decide insert/update
                     const { data: existing } = await supabase.from('orders').select('id').eq('id', orderData.id).single();
                     
                     if (existing) {
@@ -501,12 +501,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 }
                 case 'UPDATE_ORDER_STATUS': {
                     const { orderId, newStatus, user } = action.payload;
-                    // We need to append to history. Fetch current, then update?
-                    // Or just push a jsonb update. Supabase supports appending to array? Not easily in one go without RPC.
-                    // We'll read-modify-write or just rely on the component passing correct history? 
-                    // The reducer updates history optimistically. We can construct the new history entry here.
-                    
-                    // To keep it simple: Fetch current order to get history, then append.
                     const { data: currentOrder } = await supabase.from('orders').select('historial').eq('id', orderId).single();
                     const currentHist = currentOrder?.historial || [];
                     const newHistoryEntry: HistorialEstado = { estado: newStatus, fecha: new Date().toISOString(), usuario: user };
@@ -517,19 +511,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                     }).eq('id', orderId);
                     break;
                 }
-                case 'SET_PRODUCTS': {
-                    // Bulk update not implemented in this snippet, usually products are saved individually via ProductManager
-                    break;
-                }
-                // Add handlers for other data types (products, salsas, etc) as needed
-                // For now, focusing on Settings and Orders as per request.
             }
         } catch (err) {
             console.error("Error syncing action to Supabase:", action, err);
-            // Optionally dispatch an error toast
             baseDispatch({ type: 'ADD_TOAST', payload: { message: 'Error de sincronización', type: 'danger' } });
         }
-    }, [state.restaurantSettings, state.turno]); // Deps might need tuning
+    }, [state.restaurantSettings, state.turno]);
 
     return (
         <AppContext.Provider value={{ state, dispatch }}>
