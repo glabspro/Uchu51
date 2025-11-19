@@ -282,6 +282,53 @@ function appReducer(state: AppState, action: AppAction): AppState {
     }
 }
 
+// --- HELPERS FOR DATA MAPPING ---
+const mapOrderFromDb = (dbOrder: any): Pedido => ({
+    id: dbOrder.id,
+    fecha: dbOrder.fecha,
+    tipo: dbOrder.tipo,
+    estado: dbOrder.estado,
+    turno: dbOrder.turno,
+    cliente: dbOrder.cliente,
+    productos: dbOrder.productos,
+    total: dbOrder.total,
+    metodoPago: dbOrder.metodo_pago,
+    pagoConEfectivo: dbOrder.pago_con_efectivo,
+    pagoExacto: dbOrder.pago_exacto,
+    notas: dbOrder.notas,
+    tiempoEstimado: dbOrder.tiempo_estimado,
+    repartidorAsignado: dbOrder.repartidor_asignado,
+    puntosGanados: dbOrder.puntos_ganados,
+    gananciaEstimada: dbOrder.ganancia_estimada,
+    historial: dbOrder.historial,
+    pagoRegistrado: dbOrder.pago_registrado,
+    restaurant_id: dbOrder.restaurant_id,
+    // Derive areaPreparacion if not present, default to reasonable value based on type
+    areaPreparacion: dbOrder.tipo === 'local' ? 'salon' : dbOrder.tipo,
+    estacion: dbOrder.estacion 
+});
+
+const mapOrderToDb = (order: Pedido): any => ({
+    id: order.id,
+    restaurant_id: order.restaurant_id,
+    fecha: order.fecha,
+    tipo: order.tipo,
+    estado: order.estado,
+    turno: order.turno,
+    cliente: order.cliente,
+    productos: order.productos,
+    total: order.total,
+    metodo_pago: order.metodoPago,
+    pago_con_efectivo: order.pagoConEfectivo,
+    pago_exacto: order.pagoExacto,
+    notas: order.notas,
+    tiempo_estimado: order.tiempoEstimado,
+    repartidor_asignado: order.repartidorAsignado,
+    puntos_ganados: order.puntosGanados,
+    ganancia_estimada: order.gananciaEstimada,
+    historial: order.historial,
+    pago_registrado: order.pagoRegistrado
+});
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [state, baseDispatch] = useReducer(appReducer, initialState);
@@ -314,7 +361,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 // 2. Products
                 const { data: productsData } = await supabase.from('products').select('*').eq('restaurant_id', RESTAURANT_ID);
                 if (productsData) {
-                    // Map snake_case DB columns to camelCase TS properties
                     const mappedProducts = productsData.map((p: any) => ({
                         ...p,
                         imagenUrl: p.imagen_url 
@@ -325,7 +371,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 // 3. Salsas
                 const { data: salsasData } = await supabase.from('salsas').select('*').eq('restaurant_id', RESTAURANT_ID);
                 if (salsasData) {
-                     // Map snake_case to camelCase for salsas
                     const mappedSalsas = salsasData.map((s: any) => ({
                         ...s,
                         isAvailable: s.is_available
@@ -340,8 +385,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                     .eq('restaurant_id', RESTAURANT_ID)
                     .order('fecha', { ascending: false })
                     .limit(100);
+                
                 if (ordersData) {
-                     baseDispatch({ type: 'SET_STATE', payload: { orders: ordersData } });
+                    // USE MAPPER HERE
+                     const mappedOrders = ordersData.map(mapOrderFromDb);
+                     baseDispatch({ type: 'SET_STATE', payload: { orders: mappedOrders } });
                 }
 
                 // 5. Customers
@@ -351,7 +399,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                  // 6. Promotions
                 const { data: promotionsData } = await supabase.from('promotions').select('*').eq('restaurant_id', RESTAURANT_ID);
                 if (promotionsData) {
-                    // Map snake_case DB columns to camelCase TS properties
                     const mappedPromotions = promotionsData.map((p: any) => ({
                         ...p,
                         isActive: p.is_active,
@@ -372,7 +419,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
         fetchInitialData();
         
-        // Load theme from local storage
         const storedTheme = localStorage.getItem('theme');
         if (storedTheme === 'dark' || storedTheme === 'light') {
             baseDispatch({ type: 'SET_STATE', payload: { theme: storedTheme } });
@@ -382,7 +428,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     // --- REALTIME SUBSCRIPTIONS ---
     useEffect(() => {
-        // Subscribe to Restaurant Settings changes
         const settingsChannel = supabase.channel('public:restaurants')
             .on(
                 'postgres_changes',
@@ -394,39 +439,36 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                          modules: newData.modules,
                          paymentMethods: newData.payment_methods,
                          tables: newData.tables,
-                         cooks: DEFAULT_SETTINGS.cooks, // Fallbacks
+                         cooks: DEFAULT_SETTINGS.cooks, 
                          drivers: DEFAULT_SETTINGS.drivers,
                     };
-                    console.log("Settings updated from remote:", newSettings);
                     baseDispatch({ type: 'SET_STATE', payload: { restaurantSettings: newSettings } });
                 }
             )
             .subscribe();
 
-         // Subscribe to Orders changes
          const ordersChannel = supabase.channel('public:orders')
             .on(
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'orders', filter: `restaurant_id=eq.${RESTAURANT_ID}` },
                 (payload) => {
+                     // USE MAPPER HERE TOO
                      if (payload.eventType === 'INSERT') {
-                         const newOrder = payload.new as Pedido;
+                         const newOrder = mapOrderFromDb(payload.new);
                          baseDispatch({ type: 'SAVE_POS_ORDER', payload: { orderData: newOrder, mesaNumero: 0 } });
                      } else if (payload.eventType === 'UPDATE') {
-                         const updatedOrder = payload.new as Pedido;
+                         const updatedOrder = mapOrderFromDb(payload.new);
                          baseDispatch({ type: 'SAVE_POS_ORDER', payload: { orderData: updatedOrder, mesaNumero: 0 } });
                      }
                 }
             )
             .subscribe();
             
-        // Subscribe to Salsas changes
         const salsasChannel = supabase.channel('public:salsas')
             .on(
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'salsas', filter: `restaurant_id=eq.${RESTAURANT_ID}` },
                 async () => {
-                     // Re-fetch all salsas on any change to ensure consistent state
                      const { data: salsasData } = await supabase.from('salsas').select('*').eq('restaurant_id', RESTAURANT_ID);
                      if (salsasData) {
                         const mappedSalsas = salsasData.map((s: any) => ({
@@ -484,20 +526,30 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                         restaurant_id: RESTAURANT_ID,
                     };
                     
+                    // Update local state immediately
                     baseDispatch({ type: 'SAVE_POS_ORDER', payload: { orderData: newOrder, mesaNumero: 0 } });
                     
-                    await supabase.from('orders').insert(newOrder);
+                    // Sync to DB using MAPPER
+                    const dbPayload = mapOrderToDb(newOrder);
+                    await supabase.from('orders').insert(dbPayload);
                     break;
                 }
                 case 'SAVE_POS_ORDER': {
-                    const { orderData } = action.payload;
-                    const { data: existing } = await supabase.from('orders').select('id').eq('id', orderData.id).single();
+                    // This action is often used for local updates, but if it comes from UI interactions that need saving:
+                    // Note: The logic in reducer handles local state. Here we persist if it's not a remote update (which we can't easily distinguish here without more complex logic, but typically SAVE_POS_ORDER is used for creating/editing orders in POS).
+                    // However, to avoid loops with realtime, we should be careful. 
+                    // For simplicity in this architecture, we assume SAVE_POS_ORDER from UI triggers persistence.
+                    // Realtime updates trigger SAVE_POS_ORDER too, but those come from `supabase.channel`.
+                    // We can assume if the ID exists, we update.
                     
-                    if (existing) {
-                         await supabase.from('orders').update(orderData).eq('id', orderData.id);
-                    } else {
-                         await supabase.from('orders').insert(orderData);
-                    }
+                    const { orderData } = action.payload;
+                    // We only persist if this action originated from the UI (not from the realtime subscription)
+                    // Since we can't easily tell, we will do an upsert.
+                    
+                    const dbPayload = mapOrderToDb(orderData);
+                    // Check if it exists first to decide on insert vs update is safer for logic but upsert is cleaner
+                    const { error } = await supabase.from('orders').upsert(dbPayload);
+                    if (error) console.error("Error upserting order:", error);
                     break;
                 }
                 case 'UPDATE_ORDER_STATUS': {
@@ -512,12 +564,34 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                     }).eq('id', orderId);
                     break;
                 }
+                case 'CONFIRM_PAYMENT':
+                case 'CONFIRM_DELIVERY_PAYMENT': {
+                    const { orderId, details } = action.payload;
+                    const order = state.orders.find(o => o.id === orderId);
+                    if (!order) return;
+
+                    const newStatus: EstadoPedido = action.type === 'CONFIRM_DELIVERY_PAYMENT' ? 'entregado' : 'pagado';
+                    const pagoRegistrado = {
+                        metodo: details.metodo,
+                        montoTotal: order.total,
+                        montoPagado: details.montoPagado,
+                        vuelto: details.montoPagado ? details.montoPagado - order.total : 0,
+                        fecha: new Date().toISOString()
+                    };
+                    
+                    // MAP TO SNAKE CASE FOR DB UPDATE
+                    await supabase.from('orders').update({
+                        estado: newStatus,
+                        pago_registrado: pagoRegistrado
+                    }).eq('id', orderId);
+                    break;
+                }
             }
         } catch (err) {
             console.error("Error syncing action to Supabase:", action, err);
             baseDispatch({ type: 'ADD_TOAST', payload: { message: 'Error de sincronización', type: 'danger' } });
         }
-    }, [state.restaurantSettings, state.turno]);
+    }, [state.restaurantSettings, state.turno, state.orders]); // Added state.orders dependency to find order in CONFIRM_PAYMENT
 
     return (
         <AppContext.Provider value={{ state, dispatch }}>
