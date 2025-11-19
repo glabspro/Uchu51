@@ -1041,10 +1041,11 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                             pending: window.location.href
                         },
                         auto_return: "approved",
-                        // binary_mode: true, // REMOVED to allow better installment handling
+                        binary_mode: false, // IMPORTANT: Must be false to allow installments
                         statement_descriptor: "UCHU51",
                         payment_methods: {
-                            installments: 12 // Allow up to 12 installments
+                            installments: 12, // Explicitly allow up to 12
+                            default_installments: null // Ensure user can select
                         }
                     })
                 });

@@ -297,7 +297,11 @@ function appReducer(state: AppState, action: AppAction): AppState {
                  newStatus = 'en preparación';
              }
              
-             const updatedCajaSession = { ...state.cajaSession };
+             // DEEP COPY of session to ensure React detects change and UI updates
+             const updatedCajaSession = { 
+                 ...state.cajaSession,
+                 ventasPorMetodo: { ...state.cajaSession.ventasPorMetodo }
+             };
              
              // Only update session stats if we have order details and session is OPEN
              if (order && state.cajaSession.estado === 'abierta') {
@@ -739,6 +743,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                         const currentVentasMethod = session.ventasPorMetodo[details.metodo] || 0;
                         const newVentasMethod = currentVentasMethod + total;
                         
+                        // Important: Ensure we use a new object for the update
                         const newVentasPorMetodo = {
                             ...session.ventasPorMetodo,
                             [details.metodo]: newVentasMethod
