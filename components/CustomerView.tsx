@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Pedido, Producto, ProductoPedido, Cliente, Salsa, TipoPedido, MetodoPago, Theme, ClienteLeal, LoyaltyProgram, Promocion } from '../types';
 import { useAppContext } from '../store';
-import { ShoppingBagIcon, TrashIcon, CheckCircleIcon, TruckIcon, UserIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon, MapPinIcon, SearchIcon, AdjustmentsHorizontalIcon, MinusIcon, PlusIcon, StarIcon, SunIcon, MoonIcon, ChevronLeftIcon, ChevronRightIcon, WhatsAppIcon, ArrowDownOnSquareIcon, ArrowUpOnSquareIcon, EllipsisVerticalIcon, XMarkIcon, SparklesIcon, HomeIcon, GlobeAltIcon } from './icons';
+import { ShoppingBagIcon, TrashIcon, CheckCircleIcon, TruckIcon, UserIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon, MapPinIcon, SearchIcon, AdjustmentsHorizontalIcon, MinusIcon, PlusIcon, StarIcon, SunIcon, MoonIcon, ChevronLeftIcon, ChevronRightIcon, WhatsAppIcon, ArrowDownOnSquareIcon, ArrowUpOnSquareIcon, EllipsisVerticalIcon, XMarkIcon, SparklesIcon, HomeIcon, GlobeAltIcon, LockClosedIcon } from './icons';
 import SauceModal from './SauceModal';
 import ProductDetailModal from './ProductDetailModal';
 import { Logo } from './Logo';
@@ -78,6 +78,15 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
         }
     }, [restaurantSettings]);
 
+    // Detect if Mercado Pago is the ONLY enabled method
+    const isOnlyMercadoPago = useMemo(() => {
+        return paymentMethodsEnabled.mercadopago &&
+               !paymentMethodsEnabled.efectivo &&
+               !paymentMethodsEnabled.tarjeta &&
+               !paymentMethodsEnabled.yape &&
+               !paymentMethodsEnabled.plin;
+    }, [paymentMethodsEnabled]);
+
     const handleLogoClick = () => {
         if (logoClickTimer) {
             clearTimeout(logoClickTimer);
@@ -144,16 +153,23 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
 
     useEffect(() => {
         // Set an initial choice if not set
-        if (paymentChoice === null) {
+        if (isOnlyMercadoPago) {
+            setPaymentChoice('payNow');
+            setPaymentMethod('mercadopago');
+        } else if (paymentChoice === null) {
             if (showPayNow) {
                 setPaymentChoice('payNow');
             } else if (showPayLater) {
                 setPaymentChoice('payLater');
             }
         }
-    }, [showPayNow, showPayLater, paymentChoice]);
+    }, [showPayNow, showPayLater, paymentChoice, isOnlyMercadoPago]);
 
     useEffect(() => {
+        if (isOnlyMercadoPago) {
+            setPaymentMethod('mercadopago');
+            return;
+        }
         if (paymentChoice === 'payLater') {
             if (paymentMethodsEnabled.efectivo) {
                 setPaymentMethod('efectivo');
@@ -161,7 +177,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                 setPaymentMethod('tarjeta');
             }
         }
-    }, [paymentChoice, paymentMethodsEnabled]);
+    }, [paymentChoice, paymentMethodsEnabled, isOnlyMercadoPago]);
 
 
     const getPromoImageUrl = (promo: Promocion, allProducts: Producto[]): string | undefined => {
@@ -402,17 +418,17 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
         let effectivePaymentMethod: MetodoPago = paymentMethod;
 
         if (paymentChoice === 'payNow') {
-            if (paymentMethodsEnabled.yape) effectivePaymentMethod = 'yape';
-            else if (paymentMethodsEnabled.plin) effectivePaymentMethod = 'plin';
-            else if (paymentMethodsEnabled.mercadopago) effectivePaymentMethod = 'mercadopago';
+            if (isOnlyMercadoPago) {
+                effectivePaymentMethod = 'mercadopago';
+            } else {
+                if (paymentMethodsEnabled.yape) effectivePaymentMethod = 'yape';
+                else if (paymentMethodsEnabled.plin) effectivePaymentMethod = 'plin';
+                else if (paymentMethodsEnabled.mercadopago) effectivePaymentMethod = 'mercadopago';
+            }
         }
 
-        if (paymentChoice === 'payNow' && paymentMethod !== 'yape' && paymentMethod !== 'plin' && paymentMethod !== 'mercadopago') {
-             // Fallback default
-             if (paymentMethodsEnabled.yape) effectivePaymentMethod = 'yape';
-             else if (paymentMethodsEnabled.plin) effectivePaymentMethod = 'plin';
-             else if (paymentMethodsEnabled.mercadopago) effectivePaymentMethod = 'mercadopago';
-        } else if (paymentChoice === 'payNow') {
+        // Override if specific selection made
+        if (paymentChoice === 'payNow' && ['yape', 'plin', 'mercadopago'].includes(paymentMethod)) {
              effectivePaymentMethod = paymentMethod;
         }
 
@@ -779,95 +795,118 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                 </div>
                 
                  <div className="bg-surface dark:bg-[#34424D] p-4 rounded-2xl space-y-4">
-                    <h3 className="font-bold text-lg text-text-primary dark:text-ivory-cream">¿Cómo quieres pagar?</h3>
-                    <div className={`grid ${showPayNow && showPayLater ? 'grid-cols-2' : 'grid-cols-1'} gap-3`}>
-                        {showPayNow && (
-                            <button
-                                onClick={() => setPaymentChoice('payNow')}
-                                className={`p-4 rounded-xl border-2 text-center transition-colors ${
-                                    paymentChoice === 'payNow'
-                                        ? 'bg-primary/10 border-primary'
-                                        : 'bg-background dark:bg-gunmetal/50 border-text-primary/10 dark:border-[#45535D] hover:border-primary/50'
-                                }`}
-                            >
-                                <p className={`font-bold ${paymentChoice === 'payNow' ? 'text-primary' : 'text-text-primary dark:text-ivory-cream'}`}>Pagar ahora</p>
-                                <p className="text-xs text-text-secondary dark:text-light-silver">Online (Yape/Plin/MP)</p>
-                            </button>
-                        )}
-                        {showPayLater && (
-                            <button
-                                onClick={() => setPaymentChoice('payLater')}
-                                className={`p-4 rounded-xl border-2 text-center transition-colors ${
-                                    paymentChoice === 'payLater'
-                                        ? 'bg-primary/10 border-primary'
-                                        : 'bg-background dark:bg-gunmetal/50 border-text-primary/10 dark:border-[#45535D] hover:border-primary/50'
-                                }`}
-                            >
-                                <p className={`font-bold ${paymentChoice === 'payLater' ? 'text-primary' : 'text-text-primary dark:text-ivory-cream'}`}>Pagar al recibir</p>
-                                <p className="text-xs text-text-secondary dark:text-light-silver">Efectivo o Tarjeta</p>
-                            </button>
-                        )}
-                    </div>
-
-                    {paymentChoice === 'payNow' && (
-                        <div className="animate-fade-in-up pt-4 space-y-3 border-t border-text-primary/10 dark:border-[#45535D]">
-                            <p className="text-sm text-text-secondary dark:text-light-silver mb-2">Selecciona tu billetera digital:</p>
-                            <div className="grid grid-cols-2 gap-3">
-                                {paymentMethodsEnabled.yape && (
-                                    <button onClick={() => setPaymentMethod('yape')} className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'yape' ? 'bg-primary/10 border-primary text-primary' : 'bg-background dark:bg-gunmetal/50 border-transparent text-text-primary dark:text-ivory-cream'}`}>
-                                        <DevicePhoneMobileIcon className="h-5 w-5"/> <span>Yape</span>
-                                    </button>
-                                )}
-                                {paymentMethodsEnabled.plin && (
-                                    <button onClick={() => setPaymentMethod('plin')} className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'plin' ? 'bg-primary/10 border-primary text-primary' : 'bg-background dark:bg-gunmetal/50 border-transparent text-text-primary dark:text-ivory-cream'}`}>
-                                        <DevicePhoneMobileIcon className="h-5 w-5"/> <span>Plin</span>
-                                    </button>
-                                )}
-                                {paymentMethodsEnabled.mercadopago && (
-                                    <button onClick={() => setPaymentMethod('mercadopago')} className={`col-span-2 flex items-center justify-center gap-2 p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'mercadopago' ? 'bg-primary/10 border-primary text-primary' : 'bg-background dark:bg-gunmetal/50 border-transparent text-text-primary dark:text-ivory-cream'}`}>
-                                        <GlobeAltIcon className="h-5 w-5"/> <span>Mercado Pago</span>
-                                    </button>
-                                )}
+                    <h3 className="font-bold text-lg text-text-primary dark:text-ivory-cream">
+                        {isOnlyMercadoPago ? 'Pago Seguro' : '¿Cómo quieres pagar?'}
+                    </h3>
+                    
+                    {/* SIMPLIFIED FLOW FOR MERCADO PAGO ONLY */}
+                    {isOnlyMercadoPago ? (
+                        <div className="animate-fade-in-up">
+                             <div className="flex flex-col items-center p-6 bg-blue-500/5 border-2 border-blue-500/20 rounded-xl text-center">
+                                <GlobeAltIcon className="h-10 w-10 text-[#009EE3] mb-2" />
+                                <p className="font-bold text-lg text-[#009EE3]">Mercado Pago</p>
+                                <p className="text-sm text-text-secondary dark:text-light-silver mt-1 mb-4">
+                                    Pagarás de forma rápida y segura con tu tarjeta o saldo.
+                                </p>
+                                <div className="flex items-center justify-center gap-2 text-xs font-semibold text-success/80 bg-success/10 px-3 py-1 rounded-full">
+                                    <LockClosedIcon className="h-3 w-3" />
+                                    Pagos procesados de forma 100% segura
+                                </div>
                             </div>
                         </div>
-                    )}
-
-                    {paymentChoice === 'payLater' && (
-                        <div className="animate-fade-in-up pt-4 space-y-3 border-t border-text-primary/10 dark:border-[#45535D]">
-                            <div className="grid grid-cols-2 gap-3">
-                                {paymentMethodsEnabled.efectivo && (
-                                    <button onClick={() => setPaymentMethod('efectivo')} className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'efectivo' ? 'bg-primary/10 border-primary text-primary' : 'bg-background dark:bg-gunmetal/50 border-transparent text-text-primary dark:text-ivory-cream'}`}>
-                                        <CashIcon className="h-5 w-5"/> <span>Efectivo</span>
+                    ) : (
+                        /* STANDARD FLOW WITH MULTIPLE OPTIONS */
+                        <>
+                            <div className={`grid ${showPayNow && showPayLater ? 'grid-cols-2' : 'grid-cols-1'} gap-3`}>
+                                {showPayNow && (
+                                    <button
+                                        onClick={() => setPaymentChoice('payNow')}
+                                        className={`p-4 rounded-xl border-2 text-center transition-colors ${
+                                            paymentChoice === 'payNow'
+                                                ? 'bg-primary/10 border-primary'
+                                                : 'bg-background dark:bg-gunmetal/50 border-text-primary/10 dark:border-[#45535D] hover:border-primary/50'
+                                        }`}
+                                    >
+                                        <p className={`font-bold ${paymentChoice === 'payNow' ? 'text-primary' : 'text-text-primary dark:text-ivory-cream'}`}>Pagar ahora</p>
+                                        <p className="text-xs text-text-secondary dark:text-light-silver">Online (Yape/Plin/MP)</p>
                                     </button>
                                 )}
-                                {paymentMethodsEnabled.tarjeta && (
-                                    <button onClick={() => setPaymentMethod('tarjeta')} className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'tarjeta' ? 'bg-primary/10 border-primary text-primary' : 'bg-background dark:bg-gunmetal/50 border-transparent text-text-primary dark:text-ivory-cream'}`}>
-                                        <CreditCardIcon className="h-5 w-5"/> <span>Tarjeta (POS)</span>
+                                {showPayLater && (
+                                    <button
+                                        onClick={() => setPaymentChoice('payLater')}
+                                        className={`p-4 rounded-xl border-2 text-center transition-colors ${
+                                            paymentChoice === 'payLater'
+                                                ? 'bg-primary/10 border-primary'
+                                                : 'bg-background dark:bg-gunmetal/50 border-text-primary/10 dark:border-[#45535D] hover:border-primary/50'
+                                        }`}
+                                    >
+                                        <p className={`font-bold ${paymentChoice === 'payLater' ? 'text-primary' : 'text-text-primary dark:text-ivory-cream'}`}>Pagar al recibir</p>
+                                        <p className="text-xs text-text-secondary dark:text-light-silver">Efectivo o Tarjeta</p>
                                     </button>
                                 )}
                             </div>
 
-                            {paymentMethod === 'efectivo' && (
-                                <div className="space-y-2 pt-2">
-                                    <label className="flex items-center gap-3 p-3 bg-background dark:bg-gunmetal/50 rounded-lg cursor-pointer">
-                                        <input type="checkbox" checked={isExactCash} onChange={e => setIsExactCash(e.target.checked)} className="h-5 w-5 rounded text-primary focus:ring-primary border-text-primary/20 dark:border-[#56656E] bg-surface dark:bg-gunmetal"/>
-                                        <span className="font-medium text-sm text-text-primary dark:text-ivory-cream">Pagaré con el monto exacto</span>
-                                    </label>
-                                    {!isExactCash && (
-                                        <div>
-                                            <input
-                                                type="number"
-                                                placeholder="¿Con cuánto pagarás?"
-                                                value={cashPaymentAmount}
-                                                onChange={e => setCashPaymentAmount(e.target.value)}
-                                                className={`w-full p-3 rounded-lg bg-background dark:bg-gunmetal/50 border ${formErrors.pagoConEfectivo ? 'border-danger' : 'border-text-primary/10 dark:border-[#56656E]'}`}
-                                            />
-                                            {formErrors.pagoConEfectivo && <p className="text-danger text-xs mt-1">{formErrors.pagoConEfectivo}</p>}
+                            {paymentChoice === 'payNow' && (
+                                <div className="animate-fade-in-up pt-4 space-y-3 border-t border-text-primary/10 dark:border-[#45535D]">
+                                    <p className="text-sm text-text-secondary dark:text-light-silver mb-2">Selecciona tu billetera digital:</p>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {paymentMethodsEnabled.yape && (
+                                            <button onClick={() => setPaymentMethod('yape')} className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'yape' ? 'bg-primary/10 border-primary text-primary' : 'bg-background dark:bg-gunmetal/50 border-transparent text-text-primary dark:text-ivory-cream'}`}>
+                                                <DevicePhoneMobileIcon className="h-5 w-5"/> <span>Yape</span>
+                                            </button>
+                                        )}
+                                        {paymentMethodsEnabled.plin && (
+                                            <button onClick={() => setPaymentMethod('plin')} className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'plin' ? 'bg-primary/10 border-primary text-primary' : 'bg-background dark:bg-gunmetal/50 border-transparent text-text-primary dark:text-ivory-cream'}`}>
+                                                <DevicePhoneMobileIcon className="h-5 w-5"/> <span>Plin</span>
+                                            </button>
+                                        )}
+                                        {paymentMethodsEnabled.mercadopago && (
+                                            <button onClick={() => setPaymentMethod('mercadopago')} className={`col-span-2 flex items-center justify-center gap-2 p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'mercadopago' ? 'bg-primary/10 border-primary text-primary' : 'bg-background dark:bg-gunmetal/50 border-transparent text-text-primary dark:text-ivory-cream'}`}>
+                                                <GlobeAltIcon className="h-5 w-5"/> <span>Mercado Pago</span>
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {paymentChoice === 'payLater' && (
+                                <div className="animate-fade-in-up pt-4 space-y-3 border-t border-text-primary/10 dark:border-[#45535D]">
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {paymentMethodsEnabled.efectivo && (
+                                            <button onClick={() => setPaymentMethod('efectivo')} className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'efectivo' ? 'bg-primary/10 border-primary text-primary' : 'bg-background dark:bg-gunmetal/50 border-transparent text-text-primary dark:text-ivory-cream'}`}>
+                                                <CashIcon className="h-5 w-5"/> <span>Efectivo</span>
+                                            </button>
+                                        )}
+                                        {paymentMethodsEnabled.tarjeta && (
+                                            <button onClick={() => setPaymentMethod('tarjeta')} className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'tarjeta' ? 'bg-primary/10 border-primary text-primary' : 'bg-background dark:bg-gunmetal/50 border-transparent text-text-primary dark:text-ivory-cream'}`}>
+                                                <CreditCardIcon className="h-5 w-5"/> <span>Tarjeta (POS)</span>
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {paymentMethod === 'efectivo' && (
+                                        <div className="space-y-2 pt-2">
+                                            <label className="flex items-center gap-3 p-3 bg-background dark:bg-gunmetal/50 rounded-lg cursor-pointer">
+                                                <input type="checkbox" checked={isExactCash} onChange={e => setIsExactCash(e.target.checked)} className="h-5 w-5 rounded text-primary focus:ring-primary border-text-primary/20 dark:border-[#56656E] bg-surface dark:bg-gunmetal"/>
+                                                <span className="font-medium text-sm text-text-primary dark:text-ivory-cream">Pagaré con el monto exacto</span>
+                                            </label>
+                                            {!isExactCash && (
+                                                <div>
+                                                    <input
+                                                        type="number"
+                                                        placeholder="¿Con cuánto pagarás?"
+                                                        value={cashPaymentAmount}
+                                                        onChange={e => setCashPaymentAmount(e.target.value)}
+                                                        className={`w-full p-3 rounded-lg bg-background dark:bg-gunmetal/50 border ${formErrors.pagoConEfectivo ? 'border-danger' : 'border-text-primary/10 dark:border-[#56656E]'}`}
+                                                    />
+                                                    {formErrors.pagoConEfectivo && <p className="text-danger text-xs mt-1">{formErrors.pagoConEfectivo}</p>}
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
                             )}
-                        </div>
+                        </>
                     )}
                 </div>
             </main>
@@ -1031,7 +1070,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                                         ) : null}
 
                                         {/* Priority 2: Static Payment Link if keys fail or don't exist */}
-                                        {mpPaymentLink && (
+                                        {mpPaymentLink && mpPaymentLink.trim() !== '' && (
                                             <a 
                                                 href={ensureAbsoluteUrl(mpPaymentLink)} 
                                                 target="_blank" 
@@ -1041,6 +1080,12 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                                                 {mpAccessToken ? 'O usa el Link Directo' : 'Ir al Link de Pago'}
                                             </a>
                                         )}
+
+                                        {/* Security Badge for Confirmation Screen */}
+                                        <div className="flex items-center justify-center gap-2 text-xs text-text-secondary dark:text-light-silver mb-4">
+                                             <LockClosedIcon className="h-3 w-3 text-success" />
+                                             <span>Pagos procesados de forma 100% segura</span>
+                                        </div>
                                     </>
                                 ) : (
                                     /* Standard Yape/Plin QR Logic */
