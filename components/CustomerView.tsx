@@ -68,7 +68,6 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
 
     const [loyalCustomer, setLoyalCustomer] = useState<ClienteLeal | null>(null);
     const [isCartAnimating, setIsCartAnimating] = useState(false);
-    const [promosShownThisLoad, setPromosShownThisLoad] = useState(false);
 
     const [logoClickCount, setLogoClickCount] = useState(0);
     const [logoClickTimer, setLogoClickTimer] = useState<number | null>(null);
@@ -193,12 +192,20 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
         }
     }, [customerInfo.telefono, customers]);
 
+    // Control Promotion Modal Appearance using sessionStorage
     useEffect(() => {
-        if (!promosShownThisLoad && activePromotions.length > 0) {
+        const sessionKey = 'uchu_promos_shown';
+        const hasShown = sessionStorage.getItem(sessionKey);
+        
+        // Check if returning from payment to prevent modal overlap
+        const searchParams = new URLSearchParams(window.location.search);
+        const isPaymentReturn = searchParams.has('external_reference') || searchParams.has('collection_status') || searchParams.has('status');
+
+        if (!hasShown && !isPaymentReturn && activePromotions.length > 0) {
             setShowPromosModal(true);
-            setPromosShownThisLoad(true);
+            sessionStorage.setItem(sessionKey, 'true');
         }
-    }, [activePromotions, promosShownThisLoad]);
+    }, [activePromotions]);
     
     const showPayNow = paymentMethodsEnabled.yape || paymentMethodsEnabled.plin || paymentMethodsEnabled.mercadopago;
     const showPayLater = paymentMethodsEnabled.efectivo || paymentMethodsEnabled.tarjeta;
