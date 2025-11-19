@@ -757,6 +757,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
                     // --- CAJA SESSION UPDATE ---
                     // Fetch the latest open session from DB to ensure we have the correct ID even after reload
+                    // This is the CRITICAL FIX for "Money not arriving in box"
                     let sessionId = state.cajaSession.id;
                     let currentSessionState = state.cajaSession;
 
