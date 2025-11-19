@@ -154,15 +154,23 @@ const OnlinePaymentConfigurator: React.FC<{
                                     Pega aquí el link generado en tu panel de Mercado Pago. El cliente será redirigido para pagar.
                                 </p>
                             </div>
-                             <div>
-                                <label className="text-xs font-semibold text-text-secondary dark:text-light-silver">Public Key (Opcional - Para integración futura)</label>
+                             <div className="bg-slate-100 dark:bg-slate-800 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
+                                <label className="text-xs font-semibold text-text-secondary dark:text-light-silver">API Credentials (Para integración dinámica)</label>
                                 <input
                                     type="text"
                                     value={config.publicKey || ''}
                                     onChange={(e) => onChange({ ...config, publicKey: e.target.value })}
-                                    className="w-full bg-surface dark:bg-[#34424D] p-2 mt-1 rounded-md border border-text-primary/10 dark:border-[#45535D]"
-                                    placeholder="TEST-xxxx-xxxx-xxxx"
+                                    className="w-full bg-surface dark:bg-[#34424D] p-2 mt-2 rounded-md border border-text-primary/10 dark:border-[#45535D]"
+                                    placeholder="Public Key (TEST-xxxx...)"
                                 />
+                                <input
+                                    type="text"
+                                    value={config.accessToken || ''}
+                                    onChange={(e) => onChange({ ...config, accessToken: e.target.value })}
+                                    className="w-full bg-surface dark:bg-[#34424D] p-2 mt-2 rounded-md border border-text-primary/10 dark:border-[#45535D]"
+                                    placeholder="Access Token (TEST-xxxx...)"
+                                />
+                                <p className="text-[10px] text-amber-600 mt-1">Nota: Si el Access Token es bloqueado por el navegador (CORS), el sistema usará el Link de Pago como respaldo.</p>
                             </div>
                         </>
                     )}

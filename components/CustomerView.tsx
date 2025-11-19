@@ -38,6 +38,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
     const [showPromosModal, setShowPromosModal] = useState(false);
     const [currentSlide, setCurrentSlide] = useState(0);
     const [isPaymentSimulated, setIsPaymentSimulated] = useState(false);
+    const [isGeneratingPayment, setIsGeneratingPayment] = useState(false);
 
     const [formErrors, setFormErrors] = useState<FormErrors>({});
     const [cashPaymentAmount, setCashPaymentAmount] = useState('');
@@ -888,8 +889,6 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
         const mpConfig = restaurantSettings?.paymentMethods?.mercadopago;
 
         // Decide which config to use. Prioritize based on actual order method.
-        // In handlePlaceOrder we set method to 'yape'|'plin'|'mercadopago' if payNow.
-        // If order.metodoPago matches one of them, use that config.
         
         let onlinePaymentConfig: any = null;
         let methodLabel = '';
@@ -904,20 +903,21 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
             onlinePaymentConfig = mpConfig;
             methodLabel = 'Mercado Pago';
         } else {
-             // Fallback if logic drifted, pick first available
+             // Fallback
              if (yapeConfig?.enabled) { onlinePaymentConfig = yapeConfig; methodLabel = 'Yape'; }
              else if (plinConfig?.enabled) { onlinePaymentConfig = plinConfig; methodLabel = 'Plin'; }
              else if (mpConfig?.enabled) { onlinePaymentConfig = mpConfig; methodLabel = 'Mercado Pago'; }
         }
 
-
         const whatsappMessage = encodeURIComponent(`Hola, acabo de realizar el pedido ${newOrderId}.`);
         const whatsappLink = `https://wa.me/51${onlinePaymentConfig?.phoneNumber || ''}?text=${whatsappMessage}`;
         
-        // If MP, phone might be a link if used as an Alias
         const isMpLink = methodLabel === 'Mercado Pago' && onlinePaymentConfig?.phoneNumber?.startsWith('http');
         // Specific check for MP Payment Link field
         const mpPaymentLink = methodLabel === 'Mercado Pago' ? onlinePaymentConfig?.paymentLink : null;
+        // Check for keys
+        const mpPublicKey = methodLabel === 'Mercado Pago' ? onlinePaymentConfig?.publicKey : null;
+        const mpAccessToken = methodLabel === 'Mercado Pago' ? onlinePaymentConfig?.accessToken : null;
 
         // Helper to ensure absolute URL
         const ensureAbsoluteUrl = (url: string | undefined) => {
@@ -927,6 +927,62 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
             }
             return `https://${url}`;
         };
+        
+        // Function to generate dynamic preference using keys
+        const handleMercadoPagoCheckout = async () => {
+            if (!mpAccessToken) {
+                alert("No se ha configurado un Access Token. Por favor usa el Link de Pago.");
+                return;
+            }
+            
+            setIsGeneratingPayment(true);
+            try {
+                // Construct the item list for the preference
+                const items = [{
+                    title: `Pedido ${newOrderId} en Uchu51`,
+                    description: `Orden completa ${newOrderId}`,
+                    quantity: 1,
+                    currency_id: 'PEN',
+                    unit_price: lastOrderTotal
+                }];
+
+                // Call Mercado Pago API
+                // NOTE: Direct calls from frontend may face CORS issues. 
+                // Ideally this should go through a backend proxy.
+                const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${mpAccessToken}`
+                    },
+                    body: JSON.stringify({
+                        items: items,
+                        back_urls: {
+                            success: window.location.href,
+                            failure: window.location.href,
+                            pending: window.location.href
+                        },
+                        auto_return: "approved",
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.init_point) {
+                    // Redirect to the payment gateway
+                    window.location.href = data.init_point; 
+                } else {
+                    throw new Error(data.message || "Error al generar preferencia");
+                }
+                
+            } catch (error) {
+                console.error("Error generando pago:", error);
+                alert("Hubo un problema conectando con Mercado Pago (Posible bloqueo CORS). Por favor intenta usar el Link de Pago directo si está configurado.");
+            } finally {
+                setIsGeneratingPayment(false);
+            }
+        };
+
 
         const handleSimulatePayment = () => {
             dispatch({ type: 'CONFIRM_CUSTOMER_PAYMENT', payload: newOrderId });
@@ -955,18 +1011,39 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                                 <p className="text-base text-text-secondary dark:text-light-silver mt-1">Pedido <span className="font-bold text-primary">{newOrderId}</span></p>
                                 <h3 className="font-bold mt-4 mb-2">Paga S/.{lastOrderTotal.toFixed(2)} con {methodLabel}</h3>
                                 
-                                {/* Priority: 1. Payment Link Button, 2. QR Code, 3. Alias/Phone */}
-                                
-                                {mpPaymentLink ? (
-                                    <a 
-                                        href={ensureAbsoluteUrl(mpPaymentLink)} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer" 
-                                        className="block w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-center mb-4 shadow-lg transition-transform hover:-translate-y-0.5"
-                                    >
-                                        Pagar Ahora con Mercado Pago
-                                    </a>
+                                {methodLabel === 'Mercado Pago' ? (
+                                    <>
+                                        {/* Priority 1: Dynamic Checkout Button if keys exist */}
+                                        {mpAccessToken ? (
+                                            <button 
+                                                onClick={handleMercadoPagoCheckout}
+                                                disabled={isGeneratingPayment}
+                                                className="w-full bg-[#009EE3] hover:bg-[#007db3] text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg transition-all mb-4 disabled:opacity-70"
+                                            >
+                                                {isGeneratingPayment ? (
+                                                    <span className="animate-pulse">Generando pasarela...</span>
+                                                ) : (
+                                                    <>
+                                                        <GlobeAltIcon className="h-5 w-5"/> Pagar S/.{lastOrderTotal.toFixed(2)} con Mercado Pago
+                                                    </>
+                                                )}
+                                            </button>
+                                        ) : null}
+
+                                        {/* Priority 2: Static Payment Link if keys fail or don't exist */}
+                                        {mpPaymentLink && (
+                                            <a 
+                                                href={ensureAbsoluteUrl(mpPaymentLink)} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer" 
+                                                className={`block w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-center mb-4 shadow-lg transition-transform hover:-translate-y-0.5 ${mpAccessToken ? 'bg-transparent text-blue-500 border border-blue-500 hover:bg-blue-500/10 mt-2' : ''}`}
+                                            >
+                                                {mpAccessToken ? 'O usa el Link Directo' : 'Ir al Link de Pago'}
+                                            </a>
+                                        )}
+                                    </>
                                 ) : (
+                                    /* Standard Yape/Plin QR Logic */
                                     onlinePaymentConfig?.qrUrl ? (
                                         <img src={onlinePaymentConfig?.qrUrl} alt="QR Code" className="w-40 h-40 mx-auto rounded-lg mb-2" />
                                     ) : (
@@ -976,10 +1053,12 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                                     )
                                 )}
 
-                                <p className="mt-2 text-sm">Titular: <span className="font-semibold">{onlinePaymentConfig?.holderName || ''}</span></p>
+                                {methodLabel !== 'Mercado Pago' && (
+                                    <p className="mt-2 text-sm">Titular: <span className="font-semibold">{onlinePaymentConfig?.holderName || ''}</span></p>
+                                )}
                                 
-                                {/* Only show phone/alias if no payment link button was shown above, or as fallback info */}
-                                {!mpPaymentLink && (
+                                {/* Only show phone/alias if not MP or as fallback info */}
+                                {(!mpPaymentLink && !mpAccessToken && methodLabel === 'Mercado Pago') || (methodLabel !== 'Mercado Pago') ? (
                                     isMpLink ? (
                                          <a href={ensureAbsoluteUrl(onlinePaymentConfig?.phoneNumber)} target="_blank" rel="noreferrer" className="block mt-2 text-primary font-bold underline text-sm break-all">
                                             Ir al Link de Pago
@@ -987,7 +1066,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                                     ) : (
                                          <p className="text-sm">Número: <span className="font-semibold">{onlinePaymentConfig?.phoneNumber || ''}</span></p>
                                     )
-                                )}
+                                ) : null}
 
                                 <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="mt-4 w-full bg-green-500 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2">
                                    <WhatsAppIcon className="h-6 w-6"/> Enviar voucher por WhatsApp
