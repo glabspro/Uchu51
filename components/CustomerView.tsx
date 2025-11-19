@@ -81,6 +81,9 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
 
     // Detect Payment Return from Mercado Pago
     useEffect(() => {
+        // Wait for initial data load to prevent race conditions where order doesn't exist yet in state
+        if (isLoading) return;
+
         if (hasProcessedReturn.current) return;
 
         const searchParams = new URLSearchParams(window.location.search);
@@ -117,7 +120,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                 localStorage.removeItem(`order_total_${externalReference}`);
             }
         }
-    }, []);
+    }, [isLoading]);
 
 
     const paymentMethodsEnabled = useMemo(() => {

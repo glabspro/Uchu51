@@ -304,41 +304,27 @@ function appReducer(state: AppState, action: AppAction): AppState {
                  }
              }
              
-             // DEEP COPY of session to ensure React detects change and UI updates
-             const updatedCajaSession = { 
-                 ...state.cajaSession,
-                 ventasPorMetodo: { ...state.cajaSession.ventasPorMetodo }
-             };
-             
-             // Only update session stats if we have order details and session is OPEN
-             if (order && state.cajaSession.estado === 'abierta') {
-                 const currentVentas = updatedCajaSession.ventasPorMetodo[details.metodo] || 0;
-                 updatedCajaSession.ventasPorMetodo[details.metodo] = currentVentas + order.total;
-                 updatedCajaSession.totalVentas += order.total;
-                 updatedCajaSession.gananciaTotal = (updatedCajaSession.gananciaTotal || 0) + (order.gananciaEstimada || 0);
-                 if (details.metodo === 'efectivo') {
-                     updatedCajaSession.totalEfectivoEsperado += order.total;
-                 }
-             }
-
-             // If order missing (e.g., reload page return), we still return state, but dispatch will handle DB fetch
-             if (!order) return state;
+             // We rely on the realtime subscription to update the caja session totals
+             // to ensure single source of truth from DB, but we can optimistically update order status here
+             // The critical logic for Caja update is in the async dispatch
 
              const pagoRegistrado = {
                 metodo: details.metodo,
-                montoTotal: order.total,
-                montoPagado: details.montoPagado || order.total,
-                vuelto: (details.montoPagado && order.total) ? details.montoPagado - order.total : 0,
+                montoTotal: order ? order.total : 0,
+                montoPagado: details.montoPagado || (order ? order.total : 0),
+                vuelto: (order && details.montoPagado && order.total) ? details.montoPagado - order.total : 0,
                 fecha: new Date().toISOString()
              };
+             
+             // If order is missing locally, we can't update it here, but dispatch will handle DB update
+             if (!order) return state;
 
              return {
                 ...state,
                 orders: state.orders.map(o => o.id === orderId ? { ...o, estado: newStatus, pagoRegistrado } : o),
                 orderToPay: null,
                 orderForDeliveryPayment: null,
-                orderForReceipt: { ...order, estado: newStatus, pagoRegistrado },
-                cajaSession: updatedCajaSession
+                orderForReceipt: { ...order, estado: newStatus, pagoRegistrado }
              };
         }
         default:
@@ -488,7 +474,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                         totalVentas: sessionData.total_ventas,
                         ventasPorMetodo: sessionData.detalles_cierre || {},
                         movimientos: sessionData.movimientos || [],
-                        restaurant_id: sessionData.restaurant_id
+                        restaurant_id: sessionData.restaurant_id,
+                        gananciaTotal: sessionData.gananciaTotal || 0
                     };
                     baseDispatch({ type: 'SET_STATE', payload: { cajaSession: mappedSession } });
                 }
@@ -566,18 +553,31 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             )
             .subscribe();
 
-        // Optional: Listen for external Caja changes (e.g., closed from another device)
+        // Realtime Sync for Caja Sessions
         const cajaChannel = supabase.channel('public:caja_sessions')
             .on(
                 'postgres_changes',
                 { event: 'UPDATE', schema: 'public', table: 'caja_sessions', filter: `restaurant_id=eq.${RESTAURANT_ID}` },
                 (payload) => {
                      const newData = payload.new;
-                     if (newData.estado === 'cerrada' && state.cajaSession.estado === 'abierta') {
-                         // If closed externally, reset local session
-                          baseDispatch({ type: 'SET_STATE', payload: { cajaSession: initialState.cajaSession } });
-                     }
-                     // We could also sync totals in real-time here if multiple POS are running
+                     // Map snake_case to camelCase for CajaSession
+                     // This ensures that when one device updates the total, all others receive it immediately.
+                     const mappedSession: Partial<CajaSession> = {
+                        id: newData.id,
+                        estado: newData.estado,
+                        fechaApertura: newData.fecha_apertura,
+                        fechaCierre: newData.fecha_cierre,
+                        saldoInicial: newData.saldo_inicial,
+                        totalEfectivoEsperado: newData.total_efectivo_esperado,
+                        totalVentas: newData.total_ventas,
+                        gananciaTotal: newData.ganancia_total,
+                        ventasPorMetodo: newData.detalles_cierre || {},
+                        movimientos: newData.movimientos || [],
+                        diferencia: newData.diferencia,
+                        efectivoContadoAlCierre: newData.efectivo_contado_al_cierre
+                     };
+                     
+                     baseDispatch({ type: 'UPDATE_CAJA_SESSION_DATA', payload: mappedSession });
                 }
             )
             .subscribe();
@@ -588,7 +588,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             supabase.removeChannel(salsasChannel);
             supabase.removeChannel(cajaChannel);
         };
-    }, [state.cajaSession.estado]);
+    }, []);
 
 
     // --- ENHANCED DISPATCH FOR SYNC ---
@@ -614,8 +614,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                     const isPayNow = ['yape', 'plin', 'mercadopago'].includes(orderData.metodoPago);
                     const isRiskyRetiro = orderData.tipo === 'retiro' && ['efectivo', 'tarjeta'].includes(orderData.metodoPago);
                     
-                    // Force status to 'en preparación' if it's a confirmed online payment (handled by confirm flow usually, but if saved directly as paid...)
-                    // For initial save before payment, it should be 'pendiente confirmar pago'.
                     const initialState: EstadoPedido = isPayNow ? 'pendiente confirmar pago' : isRiskyRetiro ? 'pendiente de confirmación' : 'en preparación';
                     const getAreaPreparacion = (tipo: Pedido['tipo']): AreaPreparacion => tipo === 'local' ? 'salon' : tipo;
                     
@@ -737,7 +735,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                         if (['mercadopago', 'yape', 'plin'].includes(details.metodo)) {
                             newStatus = 'en preparación';
                         } else {
-                            newStatus = 'en preparación'; // Default flow
+                            newStatus = 'en preparación'; // Default flow for paid orders
                         }
                     }
 
@@ -758,28 +756,51 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                     if (error) console.error("Failed to confirm payment in DB:", error);
 
                     // --- CAJA SESSION UPDATE ---
-                    // If we have an active session ID (either from initial load or OPEN_CAJA), update it
-                    if (state.cajaSession.estado === 'abierta' && state.cajaSession.id) {
-                        const session = state.cajaSession;
-                        const currentVentasMethod = session.ventasPorMetodo[details.metodo] || 0;
+                    // Fetch the latest open session from DB to ensure we have the correct ID even after reload
+                    let sessionId = state.cajaSession.id;
+                    let currentSessionState = state.cajaSession;
+
+                    if (!sessionId || state.cajaSession.estado !== 'abierta') {
+                        const { data: activeSession } = await supabase
+                            .from('caja_sessions')
+                            .select('*')
+                            .eq('restaurant_id', RESTAURANT_ID)
+                            .eq('estado', 'abierta')
+                            .maybeSingle();
+                        
+                        if (activeSession) {
+                            sessionId = activeSession.id;
+                            // Map basic needed fields to update logic
+                            currentSessionState = {
+                                ...currentSessionState,
+                                id: activeSession.id,
+                                ventasPorMetodo: activeSession.detalles_cierre || {},
+                                totalVentas: activeSession.total_ventas || 0,
+                                totalEfectivoEsperado: activeSession.total_efectivo_esperado || 0
+                            };
+                        }
+                    }
+
+                    if (sessionId) {
+                        const currentVentasMethod = currentSessionState.ventasPorMetodo[details.metodo] || 0;
                         const newVentasMethod = currentVentasMethod + total;
                         
                         // Important: Ensure we use a new object for the update
                         const newVentasPorMetodo = {
-                            ...session.ventasPorMetodo,
+                            ...currentSessionState.ventasPorMetodo,
                             [details.metodo]: newVentasMethod
                         };
                         
-                        const newTotalVentas = session.totalVentas + total;
+                        const newTotalVentas = currentSessionState.totalVentas + total;
                         const newTotalEfectivo = details.metodo === 'efectivo' 
-                            ? session.totalEfectivoEsperado + total 
-                            : session.totalEfectivoEsperado;
+                            ? currentSessionState.totalEfectivoEsperado + total 
+                            : currentSessionState.totalEfectivoEsperado;
 
                         await supabase.from('caja_sessions').update({
                             total_ventas: newTotalVentas,
                             total_efectivo_esperado: newTotalEfectivo,
                             detalles_cierre: newVentasPorMetodo // Using this column to store the breakdown
-                        }).eq('id', session.id);
+                        }).eq('id', sessionId);
                     }
 
                     break;

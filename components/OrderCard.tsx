@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import type { Pedido, MetodoPago } from '../types';
 import { ClockIcon, UserIcon, PhoneIcon, MapPinIcon, CreditCardIcon, CashIcon, DevicePhoneMobileIcon, GlobeAltIcon } from './icons';
@@ -30,17 +31,17 @@ const getStatusAppearance = (status: Pedido['estado']) => {
 const getPaymentMethodBadge = (method: MetodoPago) => {
     switch (method) {
         case 'mercadopago':
-            return { label: 'MERCADO PAGO', bg: 'bg-[#009EE3]', icon: <GlobeAltIcon className="h-3 w-3 mr-1" /> };
+            return { label: 'MERCADO PAGO', bg: 'bg-[#009EE3]', icon: <GlobeAltIcon className="h-4 w-4 mr-1" /> };
         case 'yape':
-            return { label: 'YAPE', bg: 'bg-[#742284]', icon: <DevicePhoneMobileIcon className="h-3 w-3 mr-1" /> };
+            return { label: 'YAPE', bg: 'bg-[#742284]', icon: <DevicePhoneMobileIcon className="h-4 w-4 mr-1" /> };
         case 'plin':
-            return { label: 'PLIN', bg: 'bg-[#00A1E0]', icon: <DevicePhoneMobileIcon className="h-3 w-3 mr-1" /> };
+            return { label: 'PLIN', bg: 'bg-[#00A1E0]', icon: <DevicePhoneMobileIcon className="h-4 w-4 mr-1" /> };
         case 'tarjeta':
-            return { label: 'TARJETA', bg: 'bg-gray-700', icon: <CreditCardIcon className="h-3 w-3 mr-1" /> };
+            return { label: 'TARJETA', bg: 'bg-slate-700', icon: <CreditCardIcon className="h-4 w-4 mr-1" /> };
         case 'efectivo':
-            return { label: 'EFECTIVO', bg: 'bg-green-600', icon: <CashIcon className="h-3 w-3 mr-1" /> };
+            return { label: 'EFECTIVO', bg: 'bg-green-600', icon: <CashIcon className="h-4 w-4 mr-1" /> };
         default:
-            return { label: 'ONLINE', bg: 'bg-blue-500', icon: <GlobeAltIcon className="h-3 w-3 mr-1" /> };
+            return { label: 'ONLINE', bg: 'bg-blue-500', icon: <GlobeAltIcon className="h-4 w-4 mr-1" /> };
     }
 };
 
@@ -114,7 +115,11 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, children, style }) => {
     }
 
     return (
-        <div style={style} className="bg-surface dark:bg-[#34424D] rounded-2xl shadow-lg dark:shadow-2xl dark:shadow-gunmetal/50 flex flex-col justify-between min-h-[250px] transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group animate-fade-in-up border border-text-primary/5 dark:border-[#45535D]">
+        <div style={style} className="bg-surface dark:bg-[#34424D] rounded-2xl shadow-lg dark:shadow-2xl dark:shadow-gunmetal/50 flex flex-col justify-between min-h-[250px] transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group animate-fade-in-up border border-text-primary/5 dark:border-[#45535D] relative overflow-hidden">
+            
+            {/* Top Banner for Payment Method Visibility */}
+            <div className={`absolute top-0 left-0 right-0 h-1.5 ${paymentBadge.bg}`}></div>
+
             <div className="p-5 flex-grow flex flex-col">
                 <div className="flex justify-between items-start mb-2">
                     <div>
@@ -128,12 +133,13 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, children, style }) => {
                     </div>
                 </div>
                 
-                <div className="flex flex-wrap gap-2 mb-4">
-                    <div className="flex items-center space-x-2">
+                <div className="flex flex-wrap gap-2 mb-4 items-center">
+                    <div className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-lg">
                         <span className={`h-2.5 w-2.5 rounded-full ${statusColor}`}></span>
-                        <span className={`text-xs font-bold uppercase tracking-wider ${statusTextColor}`}>{statusLabel}</span>
+                        <span className={`text-xs font-bold uppercase tracking-wider text-text-primary dark:text-white`}>{statusLabel}</span>
                     </div>
-                    <div className={`flex items-center px-2 py-0.5 rounded text-[10px] font-bold text-white ${paymentBadge.bg}`}>
+                    {/* Enhanced Payment Badge */}
+                    <div className={`flex items-center px-3 py-1 rounded-lg text-xs font-extrabold text-white shadow-sm ${paymentBadge.bg}`}>
                         {paymentBadge.icon}
                         {paymentBadge.label}
                     </div>
@@ -162,7 +168,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, children, style }) => {
                     )}
                 </div>
                  {order.tipo === 'delivery' && order.metodoPago === 'efectivo' && (
-                    <div className="my-2 p-2 bg-blue-500/10 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300 rounded-lg text-sm font-semibold text-center">
+                    <div className="my-2 p-2 bg-blue-500/10 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300 rounded-lg text-sm font-semibold text-center border border-blue-500/20">
                         {order.pagoExacto
                             ? 'Paga con monto exacto'
                             : `Paga con S/. ${order.pagoConEfectivo?.toFixed(2)}`
@@ -170,7 +176,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, children, style }) => {
                     </div>
                 )}
                 {order.notas && (
-                    <div className="my-2 p-3 bg-amber-500/10 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300 rounded-lg text-xs">
+                    <div className="my-2 p-3 bg-amber-500/10 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300 rounded-lg text-xs border border-amber-500/20">
                         <span className="font-bold">Nota:</span> {order.notas}
                     </div>
                 )}
