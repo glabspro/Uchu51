@@ -15,7 +15,8 @@ export interface PaymentMethodDetail {
     qrUrl?: string;
     // New fields for Mercado Pago integration
     paymentLink?: string;
-    publicKey?: string; 
+    publicKey?: string;
+    accessToken?: string;
 }
 
 export interface RestaurantSettings {
@@ -45,6 +46,7 @@ export interface RestaurantSettings {
 export interface Cliente {
     nombre: string;
     telefono: string;
+    email?: string;
     direccion?: string;
     mesa?: number | null;
 }

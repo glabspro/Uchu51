@@ -15,6 +15,7 @@ type Stage = 'selection' | 'catalog' | 'checkout' | 'confirmation';
 type FormErrors = {
     nombre?: string;
     telefono?: string;
+    email?: string;
     direccion?: string;
     pagoConEfectivo?: string;
 };
@@ -35,7 +36,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
 
     const [cart, setCart] = useState<CartItem[]>([]);
     const [orderType, setOrderType] = useState<TipoPedido | null>(null);
-    const [customerInfo, setCustomerInfo] = useState<Cliente>({ nombre: '', telefono: '' });
+    const [customerInfo, setCustomerInfo] = useState<Cliente>({ nombre: '', telefono: '', email: '' });
     const [stage, setStage] = useState<Stage>('selection');
     const [newOrderId, setNewOrderId] = useState('');
     const [lastOrderTotal, setLastOrderTotal] = useState(0);
@@ -427,6 +428,9 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
         } else if (!/^\d{9}$/.test(customerInfo.telefono)) {
             errors.telefono = 'El teléfono debe tener 9 dígitos.';
         }
+        if (customerInfo.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerInfo.email)) {
+             errors.email = 'El email no es válido.';
+        }
         if (orderType === 'delivery' && !customerInfo.direccion?.trim()) {
             errors.direccion = 'La dirección es obligatoria para delivery.';
         }
@@ -490,7 +494,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
         setIsPaymentSimulated(false);
         setMpPaymentStatus(null);
         setCart([]);
-        setCustomerInfo({ nombre: '', telefono: '' });
+        setCustomerInfo({ nombre: '', telefono: '', email: '' });
         setFormErrors({});
         setCashPaymentAmount('');
         setOrderNotes('');
@@ -805,6 +809,12 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                         <input type="tel" placeholder="N° de Celular (9 dígitos)" value={customerInfo.telefono} onChange={e => setCustomerInfo(p => ({...p, telefono: e.target.value.replace(/\D/g, '').slice(0, 9)}))} className={`w-full p-3 rounded-lg bg-background dark:bg-[#45535D] border ${formErrors.telefono ? 'border-danger' : 'border-text-primary/10 dark:border-[#56656E]'}`} />
                         {formErrors.telefono && <p className="text-danger text-xs mt-1">{formErrors.telefono}</p>}
                     </div>
+                    {/* ADDED EMAIL FIELD */}
+                    <div>
+                        <input type="email" placeholder="Email (Opcional - Para pagos online)" value={customerInfo.email || ''} onChange={e => setCustomerInfo(p => ({...p, email: e.target.value}))} className={`w-full p-3 rounded-lg bg-background dark:bg-[#45535D] border ${formErrors.email ? 'border-danger' : 'border-text-primary/10 dark:border-[#56656E]'}`} />
+                        {formErrors.email && <p className="text-danger text-xs mt-1">{formErrors.email}</p>}
+                        <p className="text-xs text-text-secondary dark:text-light-silver mt-1">Recomendado para comprobantes y seguridad.</p>
+                    </div>
                     {orderType === 'delivery' && (
                         <div>
                             <input type="text" placeholder="Dirección de Entrega" value={customerInfo.direccion || ''} onChange={e => setCustomerInfo(p => ({...p, direccion: e.target.value}))} className={`w-full p-3 rounded-lg bg-background dark:bg-[#45535D] border ${formErrors.direccion ? 'border-danger' : 'border-text-primary/10 dark:border-[#56656E]'}`} />
@@ -1000,6 +1010,14 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                     unit_price: lastOrderTotal
                 }];
 
+                const payerInfo = {
+                    name: customerInfo.nombre,
+                    email: customerInfo.email || 'test_user_123456@testuser.com', // Fallback email for Sandbox testing if user doesn't provide one
+                    phone: {
+                        number: customerInfo.telefono
+                    }
+                };
+
                 const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
                     method: 'POST',
                     headers: {
@@ -1008,6 +1026,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                     },
                     body: JSON.stringify({
                         items: items,
+                        payer: payerInfo,
                         // Pass Order ID to recover state on return
                         external_reference: newOrderId,
                         back_urls: {
@@ -1026,12 +1045,13 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                 if (response.ok && data.init_point) {
                     window.location.href = data.init_point; 
                 } else {
+                    console.error("Mercado Pago Error:", data);
                     throw new Error(data.message || "Error al generar preferencia");
                 }
                 
             } catch (error) {
                 console.error("Error generando pago:", error);
-                alert("Hubo un problema conectando con Mercado Pago (Posible bloqueo CORS). Por favor intenta usar el Link de Pago directo si está configurado.");
+                alert("Hubo un problema conectando con Mercado Pago (Posible bloqueo CORS o datos inválidos). Por favor intenta usar el Link de Pago directo si está configurado.");
             } finally {
                 setIsGeneratingPayment(false);
             }
