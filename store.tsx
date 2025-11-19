@@ -103,7 +103,8 @@ const initialState: AppState = {
 type AppAction = Action | 
     { type: 'SET_STATE'; payload: Partial<AppState> } |
     { type: 'SET_LOADING'; payload: boolean } |
-    { type: 'SET_CRITICAL_ERROR'; payload: string | null };
+    { type: 'SET_CRITICAL_ERROR'; payload: string | null } |
+    { type: 'UPDATE_CAJA_SESSION_DATA'; payload: Partial<CajaSession> };
 
 
 const AppContext = createContext<{ state: AppState; dispatch: (action: AppAction) => void }>({
@@ -228,7 +229,14 @@ function appReducer(state: AppState, action: AppAction): AppState {
                 toasts: [...state.toasts, { id: Date.now(), message: `Pago del pedido ${orderId} confirmado.`, type: 'success' }]
             };
         }
+        case 'UPDATE_CAJA_SESSION_DATA': {
+             return {
+                 ...state,
+                 cajaSession: { ...state.cajaSession, ...action.payload }
+             };
+        }
         case 'OPEN_CAJA': {
+            // This is optimistic UI update, DB update happens in async dispatch
             const newSession: CajaSession = {
                 estado: 'abierta',
                 fechaApertura: new Date().toISOString(),
@@ -242,14 +250,45 @@ function appReducer(state: AppState, action: AppAction): AppState {
             };
             return { ...state, cajaSession: newSession };
         }
+        case 'CLOSE_CAJA': {
+             // Optimistic UI update
+             const effectiveCount = action.payload;
+             const diff = effectiveCount - state.cajaSession.totalEfectivoEsperado;
+             
+             return {
+                 ...state,
+                 cajaSession: {
+                     ...state.cajaSession,
+                     estado: 'cerrada',
+                     efectivoContadoAlCierre: effectiveCount,
+                     diferencia: diff,
+                     fechaCierre: new Date().toISOString()
+                 }
+             };
+        }
+        case 'ADD_MOVIMIENTO_CAJA': {
+            const { monto, descripcion, tipo } = action.payload;
+            const newMovimiento: MovimientoCaja = { monto, descripcion, tipo, fecha: new Date().toISOString() };
+            const currentMovimientos = state.cajaSession.movimientos || [];
+            
+            // Calculate new totals locally
+            let newEfectivoEsperado = state.cajaSession.totalEfectivoEsperado;
+            if (tipo === 'ingreso') newEfectivoEsperado += monto;
+            else newEfectivoEsperado -= monto;
+
+            return {
+                ...state,
+                cajaSession: {
+                    ...state.cajaSession,
+                    movimientos: [...currentMovimientos, newMovimiento],
+                    totalEfectivoEsperado: newEfectivoEsperado
+                }
+            };
+        }
         case 'CONFIRM_PAYMENT':
         case 'CONFIRM_DELIVERY_PAYMENT': {
              const { orderId, details } = action.payload;
              const order = state.orders.find(o => o.id === orderId);
-             
-             // Note: We might not have the order in state if this runs immediately after reload,
-             // but the async dispatch will handle the DB update.
-             // This reducer handles optimistic UI updates if the order IS present.
              
              let newStatus: EstadoPedido = 'pagado';
              if (action.type === 'CONFIRM_DELIVERY_PAYMENT') {
@@ -260,7 +299,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
              
              const updatedCajaSession = { ...state.cajaSession };
              
-             // Only update session stats if we have order details
+             // Only update session stats if we have order details and session is OPEN
              if (order && state.cajaSession.estado === 'abierta') {
                  const currentVentas = updatedCajaSession.ventasPorMetodo[details.metodo] || 0;
                  updatedCajaSession.ventasPorMetodo[details.metodo] = currentVentas + order.total;
@@ -401,7 +440,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                     .limit(100);
                 
                 if (ordersData) {
-                    // USE MAPPER HERE
                      const mappedOrders = ordersData.map(mapOrderFromDb);
                      baseDispatch({ type: 'SET_STATE', payload: { orders: mappedOrders } });
                 }
@@ -419,6 +457,29 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                         imagenUrl: p.imagen_url
                     }));
                     baseDispatch({ type: 'SET_PROMOTIONS', payload: mappedPromotions });
+                }
+                
+                // 7. Active Caja Session
+                const { data: sessionData } = await supabase
+                    .from('caja_sessions')
+                    .select('*')
+                    .eq('restaurant_id', RESTAURANT_ID)
+                    .eq('estado', 'abierta')
+                    .maybeSingle();
+
+                if (sessionData) {
+                    const mappedSession: CajaSession = {
+                        id: sessionData.id,
+                        estado: sessionData.estado,
+                        fechaApertura: sessionData.fecha_apertura,
+                        saldoInicial: sessionData.saldo_inicial,
+                        totalEfectivoEsperado: sessionData.total_efectivo_esperado,
+                        totalVentas: sessionData.total_ventas,
+                        ventasPorMetodo: sessionData.detalles_cierre || {},
+                        movimientos: sessionData.movimientos || [],
+                        restaurant_id: sessionData.restaurant_id
+                    };
+                    baseDispatch({ type: 'SET_STATE', payload: { cajaSession: mappedSession } });
                 }
 
                 baseDispatch({ type: 'SET_STATE', payload: { restaurantId: RESTAURANT_ID } });
@@ -466,7 +527,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'orders', filter: `restaurant_id=eq.${RESTAURANT_ID}` },
                 (payload) => {
-                     // USE MAPPER HERE TOO
                      if (payload.eventType === 'INSERT') {
                          const newOrder = mapOrderFromDb(payload.new);
                          baseDispatch({ type: 'SAVE_POS_ORDER', payload: { orderData: newOrder, mesaNumero: 0 } });
@@ -495,12 +555,29 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             )
             .subscribe();
 
+        // Optional: Listen for external Caja changes (e.g., closed from another device)
+        const cajaChannel = supabase.channel('public:caja_sessions')
+            .on(
+                'postgres_changes',
+                { event: 'UPDATE', schema: 'public', table: 'caja_sessions', filter: `restaurant_id=eq.${RESTAURANT_ID}` },
+                (payload) => {
+                     const newData = payload.new;
+                     if (newData.estado === 'cerrada' && state.cajaSession.estado === 'abierta') {
+                         // If closed externally, reset local session
+                          baseDispatch({ type: 'SET_STATE', payload: { cajaSession: initialState.cajaSession } });
+                     }
+                     // We could also sync totals in real-time here if multiple POS are running
+                }
+            )
+            .subscribe();
+
         return () => {
             supabase.removeChannel(settingsChannel);
             supabase.removeChannel(ordersChannel);
             supabase.removeChannel(salsasChannel);
+            supabase.removeChannel(cajaChannel);
         };
-    }, []);
+    }, [state.cajaSession.estado]);
 
 
     // --- ENHANCED DISPATCH FOR SYNC ---
@@ -540,10 +617,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                         restaurant_id: RESTAURANT_ID,
                     };
                     
-                    // Update local state immediately
                     baseDispatch({ type: 'SAVE_POS_ORDER', payload: { orderData: newOrder, mesaNumero: 0 } });
-                    
-                    // Sync to DB using MAPPER
                     const dbPayload = mapOrderToDb(newOrder);
                     await supabase.from('orders').insert(dbPayload);
                     break;
@@ -567,53 +641,121 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                     }).eq('id', orderId);
                     break;
                 }
+                case 'OPEN_CAJA': {
+                    const saldoInicial = action.payload;
+                    const { data, error } = await supabase.from('caja_sessions').insert({
+                        restaurant_id: RESTAURANT_ID,
+                        estado: 'abierta',
+                        fecha_apertura: new Date().toISOString(),
+                        saldo_inicial: saldoInicial,
+                        total_efectivo_esperado: saldoInicial,
+                        detalles_cierre: {} // Will store ventasPorMetodo
+                    }).select().single();
+
+                    if (data) {
+                         // Update local state with real DB ID
+                         baseDispatch({ type: 'UPDATE_CAJA_SESSION_DATA', payload: { id: data.id } });
+                    }
+                    break;
+                }
+                case 'CLOSE_CAJA': {
+                    const efectivoContado = action.payload;
+                    const session = state.cajaSession;
+                    if (!session.id) return;
+
+                    const diff = efectivoContado - session.totalEfectivoEsperado;
+                    
+                    await supabase.from('caja_sessions').update({
+                        estado: 'cerrada',
+                        fecha_cierre: new Date().toISOString(),
+                        diferencia: diff,
+                        // Ensure final totals are synced
+                        total_ventas: session.totalVentas,
+                        total_efectivo_esperado: session.totalEfectivoEsperado,
+                        detalles_cierre: session.ventasPorMetodo
+                    }).eq('id', session.id);
+                    break;
+                }
+                case 'ADD_MOVIMIENTO_CAJA': {
+                    const { monto, descripcion, tipo } = action.payload;
+                    const session = state.cajaSession;
+                    if (!session.id) return;
+
+                    const newMovimiento: MovimientoCaja = { monto, descripcion, tipo, fecha: new Date().toISOString() };
+                    const updatedMovimientos = [...(session.movimientos || []), newMovimiento];
+                    
+                    // Calculate new totals
+                    let newEfectivoEsperado = session.totalEfectivoEsperado;
+                    if (tipo === 'ingreso') newEfectivoEsperado += monto;
+                    else newEfectivoEsperado -= monto;
+
+                    await supabase.from('caja_sessions').update({
+                        movimientos: updatedMovimientos,
+                        total_efectivo_esperado: newEfectivoEsperado
+                    }).eq('id', session.id);
+                    break;
+                }
                 case 'CONFIRM_PAYMENT':
                 case 'CONFIRM_DELIVERY_PAYMENT': {
                     const { orderId, details } = action.payload;
                     
-                    // Fetch local or remote order data to ensure we have totals
                     let total = 0;
                     const localOrder = state.orders.find(o => o.id === orderId);
                     
                     if (localOrder) {
                         total = localOrder.total;
                     } else {
-                        // Fetch from DB if not in local state (e.g. fresh reload)
                         const { data: dbOrder } = await supabase
                             .from('orders')
                             .select('total')
                             .eq('id', orderId)
                             .single();
-                        if (dbOrder) {
-                            total = dbOrder.total;
-                        }
+                        if (dbOrder) total = dbOrder.total;
                     }
                     
-                    // Determine new status
                     let newStatus: EstadoPedido = 'pagado';
-                    if (action.type === 'CONFIRM_DELIVERY_PAYMENT') {
-                        newStatus = 'entregado';
-                    } else {
-                        newStatus = 'en preparación';
-                    }
+                    if (action.type === 'CONFIRM_DELIVERY_PAYMENT') newStatus = 'entregado';
+                    else newStatus = 'en preparación';
 
                     const pagoRegistrado = {
                         metodo: details.metodo,
                         montoTotal: total,
-                        montoPagado: details.montoPagado || total, // Fallback to total if unspecified
+                        montoPagado: details.montoPagado || total,
                         vuelto: (details.montoPagado && total) ? details.montoPagado - total : 0,
                         fecha: new Date().toISOString()
                     };
                     
-                    // MAP TO SNAKE CASE FOR DB UPDATE
                     const { error } = await supabase.from('orders').update({
                         estado: newStatus,
                         pago_registrado: pagoRegistrado
                     }).eq('id', orderId);
 
-                    if (error) {
-                        console.error("Failed to confirm payment in DB:", error);
+                    if (error) console.error("Failed to confirm payment in DB:", error);
+
+                    // --- CAJA SESSION UPDATE ---
+                    // If we have an active session ID (either from initial load or OPEN_CAJA), update it
+                    if (state.cajaSession.estado === 'abierta' && state.cajaSession.id) {
+                        const session = state.cajaSession;
+                        const currentVentasMethod = session.ventasPorMetodo[details.metodo] || 0;
+                        const newVentasMethod = currentVentasMethod + total;
+                        
+                        const newVentasPorMetodo = {
+                            ...session.ventasPorMetodo,
+                            [details.metodo]: newVentasMethod
+                        };
+                        
+                        const newTotalVentas = session.totalVentas + total;
+                        const newTotalEfectivo = details.metodo === 'efectivo' 
+                            ? session.totalEfectivoEsperado + total 
+                            : session.totalEfectivoEsperado;
+
+                        await supabase.from('caja_sessions').update({
+                            total_ventas: newTotalVentas,
+                            total_efectivo_esperado: newTotalEfectivo,
+                            detalles_cierre: newVentasPorMetodo // Using this column to store the breakdown
+                        }).eq('id', session.id);
                     }
+
                     break;
                 }
             }
@@ -621,7 +763,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             console.error("Error syncing action to Supabase:", action, err);
             baseDispatch({ type: 'ADD_TOAST', payload: { message: 'Error de sincronización', type: 'danger' } });
         }
-    }, [state.restaurantSettings, state.turno, state.orders, state.cajaSession]); // Added dependencies
+    }, [state.restaurantSettings, state.turno, state.orders, state.cajaSession]);
 
     return (
         <AppContext.Provider value={{ state, dispatch }}>
