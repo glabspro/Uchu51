@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import type { Pedido } from '../types';
-import { ClockIcon, UserIcon, PhoneIcon, MapPinIcon } from './icons';
+import type { Pedido, MetodoPago } from '../types';
+import { ClockIcon, UserIcon, PhoneIcon, MapPinIcon, CreditCardIcon, CashIcon, DevicePhoneMobileIcon, GlobeAltIcon } from './icons';
 
 interface OrderCardProps {
     order: Pedido;
@@ -24,6 +24,23 @@ const getStatusAppearance = (status: Pedido['estado']) => {
         case 'pagado': return { color: 'bg-blue-500', text: 'text-blue-800 dark:text-blue-200', label: 'Pagado' };
         case 'cancelado': return { color: 'bg-danger', text: 'text-red-800 dark:text-red-200', label: 'Cancelado' };
         default: return { color: 'bg-gray-300', text: 'text-gray-800 dark:text-gray-200', label: 'Estado' };
+    }
+};
+
+const getPaymentMethodBadge = (method: MetodoPago) => {
+    switch (method) {
+        case 'mercadopago':
+            return { label: 'MERCADO PAGO', bg: 'bg-[#009EE3]', icon: <GlobeAltIcon className="h-3 w-3 mr-1" /> };
+        case 'yape':
+            return { label: 'YAPE', bg: 'bg-[#742284]', icon: <DevicePhoneMobileIcon className="h-3 w-3 mr-1" /> };
+        case 'plin':
+            return { label: 'PLIN', bg: 'bg-[#00A1E0]', icon: <DevicePhoneMobileIcon className="h-3 w-3 mr-1" /> };
+        case 'tarjeta':
+            return { label: 'TARJETA', bg: 'bg-gray-700', icon: <CreditCardIcon className="h-3 w-3 mr-1" /> };
+        case 'efectivo':
+            return { label: 'EFECTIVO', bg: 'bg-green-600', icon: <CashIcon className="h-3 w-3 mr-1" /> };
+        default:
+            return { label: 'ONLINE', bg: 'bg-blue-500', icon: <GlobeAltIcon className="h-3 w-3 mr-1" /> };
     }
 };
 
@@ -82,6 +99,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, children, style }) => {
 
     const timerColor = getTimerColor(tiempoTranscurrido, order.tiempoEstimado);
     const { color: statusColor, text: statusTextColor, label: statusLabel } = getStatusAppearance(order.estado);
+    const paymentBadge = getPaymentMethodBadge(order.metodoPago);
 
     let mapsLink = '';
     if (order.tipo === 'delivery' && order.cliente.direccion && order.cliente.direccion.startsWith('Lat:')) {
@@ -98,7 +116,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, children, style }) => {
     return (
         <div style={style} className="bg-surface dark:bg-[#34424D] rounded-2xl shadow-lg dark:shadow-2xl dark:shadow-gunmetal/50 flex flex-col justify-between min-h-[250px] transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group animate-fade-in-up border border-text-primary/5 dark:border-[#45535D]">
             <div className="p-5 flex-grow flex flex-col">
-                <div className="flex justify-between items-start mb-3">
+                <div className="flex justify-between items-start mb-2">
                     <div>
                         <h3 className="font-heading font-extrabold text-xl text-text-primary dark:text-ivory-cream">{order.id}</h3>
                         <p className="text-sm font-semibold text-primary dark:text-orange-400">
@@ -109,9 +127,16 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, children, style }) => {
                        <ClockIcon className="h-5 w-5 mr-2"/> {formatTime(tiempoTranscurrido)}
                     </div>
                 </div>
-                 <div className="flex items-center space-x-2 mb-4">
-                    <span className={`h-2.5 w-2.5 rounded-full ${statusColor}`}></span>
-                    <span className={`text-xs font-bold uppercase tracking-wider ${statusTextColor}`}>{statusLabel}</span>
+                
+                <div className="flex flex-wrap gap-2 mb-4">
+                    <div className="flex items-center space-x-2">
+                        <span className={`h-2.5 w-2.5 rounded-full ${statusColor}`}></span>
+                        <span className={`text-xs font-bold uppercase tracking-wider ${statusTextColor}`}>{statusLabel}</span>
+                    </div>
+                    <div className={`flex items-center px-2 py-0.5 rounded text-[10px] font-bold text-white ${paymentBadge.bg}`}>
+                        {paymentBadge.icon}
+                        {paymentBadge.label}
+                    </div>
                 </div>
 
                 <div className="space-y-2 text-sm text-text-secondary dark:text-light-silver mb-4">

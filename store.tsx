@@ -290,11 +290,18 @@ function appReducer(state: AppState, action: AppAction): AppState {
              const { orderId, details } = action.payload;
              const order = state.orders.find(o => o.id === orderId);
              
+             // Logic to determine next status based on payment method and delivery type
              let newStatus: EstadoPedido = 'pagado';
              if (action.type === 'CONFIRM_DELIVERY_PAYMENT') {
                  newStatus = 'entregado';
              } else {
-                 newStatus = 'en preparación';
+                 // For online payments (MP, Yape, etc), skip 'confirmado' and go straight to kitchen
+                 if (['mercadopago', 'yape', 'plin'].includes(details.metodo)) {
+                    newStatus = 'en preparación';
+                 } else {
+                     // Default for cash/card in local might be 'en preparación' as well if paid upfront
+                     newStatus = 'en preparación';
+                 }
              }
              
              // DEEP COPY of session to ensure React detects change and UI updates
@@ -314,14 +321,14 @@ function appReducer(state: AppState, action: AppAction): AppState {
                  }
              }
 
-             // If order missing, return state (DB sync will handle data)
+             // If order missing (e.g., reload page return), we still return state, but dispatch will handle DB fetch
              if (!order) return state;
 
              const pagoRegistrado = {
                 metodo: details.metodo,
                 montoTotal: order.total,
-                montoPagado: details.montoPagado,
-                vuelto: details.montoPagado ? details.montoPagado - order.total : 0,
+                montoPagado: details.montoPagado || order.total,
+                vuelto: (details.montoPagado && order.total) ? details.montoPagado - order.total : 0,
                 fecha: new Date().toISOString()
              };
 
@@ -606,6 +613,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                     const orderData = action.payload;
                     const isPayNow = ['yape', 'plin', 'mercadopago'].includes(orderData.metodoPago);
                     const isRiskyRetiro = orderData.tipo === 'retiro' && ['efectivo', 'tarjeta'].includes(orderData.metodoPago);
+                    
+                    // Force status to 'en preparación' if it's a confirmed online payment (handled by confirm flow usually, but if saved directly as paid...)
+                    // For initial save before payment, it should be 'pendiente confirmar pago'.
                     const initialState: EstadoPedido = isPayNow ? 'pendiente confirmar pago' : isRiskyRetiro ? 'pendiente de confirmación' : 'en preparación';
                     const getAreaPreparacion = (tipo: Pedido['tipo']): AreaPreparacion => tipo === 'local' ? 'salon' : tipo;
                     
@@ -704,11 +714,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                     const { orderId, details } = action.payload;
                     
                     let total = 0;
+                    // Try to find order in local state first
                     const localOrder = state.orders.find(o => o.id === orderId);
                     
                     if (localOrder) {
                         total = localOrder.total;
                     } else {
+                        // If not found (e.g. reload), fetch from DB to ensure we have the total for Caja
                         const { data: dbOrder } = await supabase
                             .from('orders')
                             .select('total')
@@ -718,8 +730,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                     }
                     
                     let newStatus: EstadoPedido = 'pagado';
-                    if (action.type === 'CONFIRM_DELIVERY_PAYMENT') newStatus = 'entregado';
-                    else newStatus = 'en preparación';
+                    if (action.type === 'CONFIRM_DELIVERY_PAYMENT') {
+                        newStatus = 'entregado';
+                    } else {
+                        // FORCE 'en preparación' for online payments to skip Reception
+                        if (['mercadopago', 'yape', 'plin'].includes(details.metodo)) {
+                            newStatus = 'en preparación';
+                        } else {
+                            newStatus = 'en preparación'; // Default flow
+                        }
+                    }
 
                     const pagoRegistrado = {
                         metodo: details.metodo,
@@ -729,6 +749,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                         fecha: new Date().toISOString()
                     };
                     
+                    // Update DB Status
                     const { error } = await supabase.from('orders').update({
                         estado: newStatus,
                         pago_registrado: pagoRegistrado

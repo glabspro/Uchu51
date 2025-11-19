@@ -730,7 +730,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
             </header>
 
             {!searchTerm && (
-                <nav className="flex-shrink-0 border-b border-text-primary/10 dark:border-[#45535D] p-2 sticky top-28 z-40 bg-surface/80 dark:bg-[#34424D]/80 backdrop-blur-sm">
+                <nav className="flex-shrink-0 border-b border-text-primary/10 dark:border-[#45535D] p-2 sticky top-28 z-40 bg-surface/80 dark:bg-[#45535D]/80 backdrop-blur-sm">
                     <div className="flex space-x-2 overflow-x-auto pb-1">
                         {categories.map(cat => (
                             <button key={cat} onClick={() => setActiveCategory(cat)} className={`py-2 px-4 rounded-full font-semibold whitespace-nowrap text-sm transition-colors ${activeCategory === cat ? 'bg-primary text-white shadow-sm' : 'bg-background dark:bg-[#45535D] text-text-primary dark:text-ivory-cream hover:bg-text-primary/5'}`}>
