@@ -606,10 +606,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                     };
                     
                     // MAP TO SNAKE CASE FOR DB UPDATE
-                    await supabase.from('orders').update({
+                    const { error } = await supabase.from('orders').update({
                         estado: newStatus,
                         pago_registrado: pagoRegistrado
                     }).eq('id', orderId);
+
+                    if (error) {
+                        console.error("Failed to confirm payment in DB:", error);
+                    }
                     break;
                 }
             }

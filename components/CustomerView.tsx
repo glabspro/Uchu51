@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import type { Pedido, Producto, ProductoPedido, Cliente, Salsa, TipoPedido, MetodoPago, Theme, ClienteLeal, LoyaltyProgram, Promocion } from '../types';
 import { useAppContext } from '../store';
 import { ShoppingBagIcon, TrashIcon, CheckCircleIcon, TruckIcon, UserIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon, MapPinIcon, SearchIcon, AdjustmentsHorizontalIcon, MinusIcon, PlusIcon, StarIcon, SunIcon, MoonIcon, ChevronLeftIcon, ChevronRightIcon, WhatsAppIcon, ArrowDownOnSquareIcon, ArrowUpOnSquareIcon, EllipsisVerticalIcon, XMarkIcon, SparklesIcon, HomeIcon, GlobeAltIcon, LockClosedIcon } from './icons';
@@ -32,7 +32,7 @@ const MercadoPagoLogo = ({ className }: { className?: string }) => (
 // FIX: Change to named export to fix import issue
 export const CustomerView: React.FC<CustomerViewProps> = () => {
     const { state, dispatch } = useAppContext();
-    const { products, customers, loyaltyPrograms, promotions, theme, installPrompt, restaurantSettings } = state;
+    const { products, customers, loyaltyPrograms, promotions, theme, installPrompt, restaurantSettings, isLoading } = state;
 
     const [cart, setCart] = useState<CartItem[]>([]);
     const [orderType, setOrderType] = useState<TipoPedido | null>(null);
@@ -49,13 +49,13 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
     const [isPaymentSimulated, setIsPaymentSimulated] = useState(false);
     const [isGeneratingPayment, setIsGeneratingPayment] = useState(false);
     const [mpPaymentStatus, setMpPaymentStatus] = useState<'pending' | 'approved' | 'rejected' | null>(null);
+    const hasProcessedReturn = useRef(false);
 
     const [formErrors, setFormErrors] = useState<FormErrors>({});
     const [cashPaymentAmount, setCashPaymentAmount] = useState('');
     const [isExactCash, setIsExactCash] = useState(false);
     const [orderNotes, setOrderNotes] = useState('');
     
-    const [editingCartItemForSauces, setEditingCartItemForSauces] = useState<CartItem | null>(null);
     const [selectedProduct, setSelectedProduct] = useState<Producto | null>(null);
 
     const [isLocating, setIsLocating] = useState(false);
@@ -82,6 +82,8 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
 
     // Detect Payment Return from Mercado Pago
     useEffect(() => {
+        if (hasProcessedReturn.current) return;
+
         const searchParams = new URLSearchParams(window.location.search);
         const collectionStatus = searchParams.get('collection_status');
         const externalReference = searchParams.get('external_reference');
@@ -89,6 +91,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
 
         // If returning from Mercado Pago
         if (externalReference && (collectionStatus || status)) {
+            hasProcessedReturn.current = true;
             const finalStatus = collectionStatus || status;
             
             // Restore basic state to show the confirmation screen
@@ -99,12 +102,9 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
 
             if (finalStatus === 'approved') {
                 setMpPaymentStatus('approved');
-                setIsPaymentSimulated(true); // Visual success
                 // Automatically update system status
-                // We delay slightly to ensure the UI is ready or to simulate processing
-                setTimeout(() => {
-                   onConfirmPayment(externalReference, { metodo: 'mercadopago', montoPagado: 0 }); // Amount is handled in backend/context
-                }, 1000);
+                onConfirmPayment(externalReference, { metodo: 'mercadopago', montoPagado: 0 }); // Amount handled in context
+                setTimeout(() => setIsPaymentSimulated(true), 500); // Visual confirmation
             } else if (finalStatus === 'rejected' || finalStatus === 'failure') {
                 setMpPaymentStatus('rejected');
             } else {
@@ -115,7 +115,6 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
             const storedTotal = localStorage.getItem(`order_total_${externalReference}`);
             if (storedTotal) {
                 setLastOrderTotal(parseFloat(storedTotal));
-                // Clean up
                 localStorage.removeItem(`order_total_${externalReference}`);
             }
         }
@@ -161,7 +160,6 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
         }
     };
 
-    const activeProgram = useMemo(() => loyaltyPrograms.find(p => p.isActive), [loyaltyPrograms]);
     const activePromotions = useMemo(() => promotions.filter(p => p.isActive), [promotions]);
 
     const nextSlide = () => {
@@ -499,6 +497,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
         setCashPaymentAmount('');
         setOrderNotes('');
         setIsExactCash(false);
+        hasProcessedReturn.current = false;
     };
 
     const handleSelectOrderType = (type: TipoPedido) => {
@@ -1035,11 +1034,10 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                             pending: window.location.href
                         },
                         auto_return: "approved",
-                        binary_mode: true, // Forces Instant Payment (Approved/Rejected) - Ideal for simulating Yape/Card logic
+                        // binary_mode: true, // REMOVED to allow better installment handling
                         statement_descriptor: "UCHU51",
                         payment_methods: {
-                            installments: 12, // Allow up to 12 installments
-                            default_installments: 1
+                            installments: 12 // Allow up to 12 installments
                         }
                     })
                 });
