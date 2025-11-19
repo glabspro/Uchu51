@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import type { Pedido, EstadoPedido, UserRole } from '../types';
 import { useAppContext } from '../store';
 import OrderCard from './OrderCard';
-import { UserIcon, TruckIcon, CashIcon } from './icons';
+import { UserIcon, TruckIcon, CashIcon, CheckCircleIcon } from './icons';
 
 interface DeliveryBoardProps {}
 
@@ -99,12 +100,26 @@ const DeliveryBoard: React.FC<DeliveryBoardProps> = () => {
                         <div className="text-center font-semibold text-text-secondary dark:text-light-silver mb-2">
                             Repartidor: {order.repartidorAsignado}
                         </div>
-                        <button
-                            onClick={() => onInitiateDeliveryPayment(order)}
-                            className="w-full bg-success hover:brightness-105 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-success/30 hover:-translate-y-0.5 active:scale-95"
-                        >
-                            <CashIcon className="h-5 w-5 mr-2" /> Registrar Pago
-                        </button>
+                        {order.pagoRegistrado ? (
+                             <div className="space-y-2">
+                                <div className="text-center text-xs font-bold text-success bg-success/10 p-1 rounded">
+                                    PAGADO ({order.pagoRegistrado.metodo.toUpperCase()})
+                                </div>
+                                <button
+                                    onClick={() => updateOrderStatus(order.id, 'entregado', 'repartidor')}
+                                    className="w-full bg-success hover:brightness-105 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-success/30 hover:-translate-y-0.5 active:scale-95"
+                                >
+                                    <CheckCircleIcon className="h-5 w-5 mr-2" /> Confirmar Entrega
+                                </button>
+                            </div>
+                        ) : (
+                            <button
+                                onClick={() => onInitiateDeliveryPayment(order)}
+                                className="w-full bg-primary hover:brightness-105 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5 active:scale-95"
+                            >
+                                <CashIcon className="h-5 w-5 mr-2" /> Registrar Pago
+                            </button>
+                        )}
                     </OrderCard>
                 ))}
             </DeliveryColumn>

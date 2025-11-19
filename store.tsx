@@ -248,7 +248,18 @@ function appReducer(state: AppState, action: AppAction): AppState {
              const order = state.orders.find(o => o.id === orderId);
              if (!order) return state;
 
-             const newStatus: EstadoPedido = action.type === 'CONFIRM_DELIVERY_PAYMENT' ? 'entregado' : 'pagado';
+             // LOGIC CHANGE: If paying via Delivery Board, it's delivered.
+             // If confirming payment upfront (MP/Yape), it goes to Kitchen ('en preparación').
+             let newStatus: EstadoPedido = 'pagado';
+             
+             if (action.type === 'CONFIRM_DELIVERY_PAYMENT') {
+                 newStatus = 'entregado'; // Delivery payment means it's handed over
+             } else {
+                 // This is an upfront payment (e.g. Mercado Pago, Yape from web or POS)
+                 // It should skip 'recepcion' and go to 'cocina'.
+                 newStatus = 'en preparación';
+             }
+
              const pagoRegistrado = {
                 metodo: details.metodo,
                 montoTotal: order.total,
@@ -258,6 +269,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
              };
             
              const updatedCajaSession = { ...state.cajaSession };
+             // Always register money if session is open, even if status is 'en preparación'
              if (state.cajaSession.estado === 'abierta') {
                  const currentVentas = updatedCajaSession.ventasPorMetodo[details.metodo] || 0;
                  updatedCajaSession.ventasPorMetodo[details.metodo] = currentVentas + order.total;
@@ -535,19 +547,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                     break;
                 }
                 case 'SAVE_POS_ORDER': {
-                    // This action is often used for local updates, but if it comes from UI interactions that need saving:
-                    // Note: The logic in reducer handles local state. Here we persist if it's not a remote update (which we can't easily distinguish here without more complex logic, but typically SAVE_POS_ORDER is used for creating/editing orders in POS).
-                    // However, to avoid loops with realtime, we should be careful. 
-                    // For simplicity in this architecture, we assume SAVE_POS_ORDER from UI triggers persistence.
-                    // Realtime updates trigger SAVE_POS_ORDER too, but those come from `supabase.channel`.
-                    // We can assume if the ID exists, we update.
-                    
                     const { orderData } = action.payload;
-                    // We only persist if this action originated from the UI (not from the realtime subscription)
-                    // Since we can't easily tell, we will do an upsert.
-                    
                     const dbPayload = mapOrderToDb(orderData);
-                    // Check if it exists first to decide on insert vs update is safer for logic but upsert is cleaner
                     const { error } = await supabase.from('orders').upsert(dbPayload);
                     if (error) console.error("Error upserting order:", error);
                     break;
@@ -570,7 +571,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                     const order = state.orders.find(o => o.id === orderId);
                     if (!order) return;
 
-                    const newStatus: EstadoPedido = action.type === 'CONFIRM_DELIVERY_PAYMENT' ? 'entregado' : 'pagado';
+                    // LOGIC UPDATE:
+                    // If it's DELIVERY payment (at door), it marks as 'entregado'.
+                    // If it's ONLINE payment confirmation (MP/Yape), it goes to 'en preparación' to skip reception.
+                    let newStatus: EstadoPedido = 'pagado';
+                    if (action.type === 'CONFIRM_DELIVERY_PAYMENT') {
+                        newStatus = 'entregado';
+                    } else {
+                        newStatus = 'en preparación';
+                    }
+
                     const pagoRegistrado = {
                         metodo: details.metodo,
                         montoTotal: order.total,
@@ -591,7 +601,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             console.error("Error syncing action to Supabase:", action, err);
             baseDispatch({ type: 'ADD_TOAST', payload: { message: 'Error de sincronización', type: 'danger' } });
         }
-    }, [state.restaurantSettings, state.turno, state.orders]); // Added state.orders dependency to find order in CONFIRM_PAYMENT
+    }, [state.restaurantSettings, state.turno, state.orders, state.cajaSession]); // Added dependencies
 
     return (
         <AppContext.Provider value={{ state, dispatch }}>
