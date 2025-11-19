@@ -20,6 +20,14 @@ type FormErrors = {
 };
 type PaymentChoice = 'payNow' | 'payLater';
 
+// Mercadopago Logo Component for this view
+const MercadoPagoLogo = ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <path d="M16.34 9.32C16.34 9.32 14.28 8.09 12 8.09C9.72 8.09 7.67 9.33 7.67 9.33C7.26 9.58 6.74 9.54 6.39 9.18L4.81 7.6C4.42 7.21 4.42 6.58 4.81 6.19C5.2 5.8 5.83 5.8 6.22 6.19L7.26 7.23C7.26 7.23 8.45 6.54 10.1 6.25V2H13.9V6.24C15.55 6.53 16.74 7.23 16.74 7.23L17.78 6.19C18.17 5.8 18.8 5.8 19.19 6.19C19.58 6.58 19.58 7.21 19.19 7.6L17.61 9.18C17.26 9.53 16.74 9.58 16.34 9.32ZM14.15 13.5C14.15 13.5 13.55 13.25 12 13.25C10.45 13.25 9.85 13.5 9.85 13.5C9.35 13.71 9 14.21 9 14.75V19H15V14.75C15 14.21 14.65 13.71 14.15 13.5ZM22 12C22 17.52 17.52 22 12 22C6.48 22 2 17.52 2 12C2 6.48 6.48 2 12 2C17.52 2 22 6.48 22 12Z" fillOpacity="0" />
+        <path d="M12 10.5C14.66 10.5 16.93 11.63 16.93 11.63C17.33 11.89 17.85 11.84 18.2 11.49L19.78 9.91C20.17 9.52 20.17 8.89 19.78 8.5C19.39 8.11 18.76 8.11 18.37 8.5L17.33 9.54C17.33 9.54 16.14 8.84 14.49 8.55V4.31H9.51V8.54C7.86 8.84 6.67 9.53 6.67 9.53L5.63 8.49C5.24 8.1 4.61 8.1 4.22 8.49C3.83 8.88 3.83 9.51 4.22 9.9L5.8 11.48C6.15 11.83 6.67 11.88 7.07 11.62C7.07 11.62 9.34 10.5 12 10.5ZM15 14.75C15 14.21 14.65 13.71 14.15 13.5C14.15 13.5 13.55 13.25 12 13.25C10.45 13.25 9.85 13.5 9.85 13.5C9.35 13.71 9 14.21 9 14.75V19H15V14.75Z" />
+    </svg>
+);
+
 // FIX: Change to named export to fix import issue
 export const CustomerView: React.FC<CustomerViewProps> = () => {
     const { state, dispatch } = useAppContext();
@@ -803,7 +811,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                     {isOnlyMercadoPago ? (
                         <div className="animate-fade-in-up">
                              <div className="flex flex-col items-center p-6 bg-blue-500/5 border-2 border-blue-500/20 rounded-xl text-center">
-                                <GlobeAltIcon className="h-10 w-10 text-[#009EE3] mb-2" />
+                                <MercadoPagoLogo className="h-12 w-auto text-[#009EE3] mb-3" />
                                 <p className="font-bold text-lg text-[#009EE3]">Mercado Pago</p>
                                 <p className="text-sm text-text-secondary dark:text-light-silver mt-1 mb-4">
                                     Pagarás de forma rápida y segura con tu tarjeta o saldo.
@@ -862,7 +870,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                                         )}
                                         {paymentMethodsEnabled.mercadopago && (
                                             <button onClick={() => setPaymentMethod('mercadopago')} className={`col-span-2 flex items-center justify-center gap-2 p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'mercadopago' ? 'bg-primary/10 border-primary text-primary' : 'bg-background dark:bg-gunmetal/50 border-transparent text-text-primary dark:text-ivory-cream'}`}>
-                                                <GlobeAltIcon className="h-5 w-5"/> <span>Mercado Pago</span>
+                                                <MercadoPagoLogo className="h-5 w-auto"/> <span>Mercado Pago</span>
                                             </button>
                                         )}
                                     </div>
@@ -1045,25 +1053,28 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                                 <p className="text-sm text-text-secondary dark:text-light-silver">Tu pedido <span className="font-bold text-primary">{newOrderId}</span> ya está en preparación.</p>
                             </div>
                         ) : (
-                            <div className="mt-6 p-4 bg-surface dark:bg-[#34424D] rounded-2xl w-full max-w-sm">
-                                <h2 className="text-2xl font-heading font-bold text-text-primary dark:text-white">¡Pedido Recibido!</h2>
-                                <p className="text-base text-text-secondary dark:text-light-silver mt-1">Pedido <span className="font-bold text-primary">{newOrderId}</span></p>
-                                <h3 className="font-bold mt-4 mb-2">Paga S/.{lastOrderTotal.toFixed(2)} con {methodLabel}</h3>
+                            <div className="mt-6 p-6 bg-surface dark:bg-[#34424D] rounded-2xl w-full max-w-sm border border-text-primary/5 dark:border-[#45535D]">
+                                <h2 className="text-xl font-heading font-bold text-text-primary dark:text-white">¡Pedido Recibido!</h2>
+                                <p className="text-base text-text-secondary dark:text-light-silver mt-1 mb-6">Pedido <span className="font-bold text-primary">{newOrderId}</span></p>
                                 
-                                {methodLabel === 'Mercado Pago' ? (
-                                    <>
+                                {isOnlyMercadoPago ? (
+                                    // --- EXCLUSIVE MERCADO PAGO FLOW ---
+                                    <div className="animate-fade-in-up">
+                                        <p className="text-sm text-text-secondary dark:text-light-silver mb-2">Total a pagar:</p>
+                                        <p className="text-3xl font-mono font-extrabold text-[#009EE3] mb-6">S/.{lastOrderTotal.toFixed(2)}</p>
+
                                         {/* Priority 1: Dynamic Checkout Button if keys exist */}
                                         {mpAccessToken ? (
                                             <button 
                                                 onClick={handleMercadoPagoCheckout}
                                                 disabled={isGeneratingPayment}
-                                                className="w-full bg-[#009EE3] hover:bg-[#007db3] text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg transition-all mb-4 disabled:opacity-70"
+                                                className="w-full bg-[#009EE3] hover:bg-[#007db3] text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg transition-all mb-3 disabled:opacity-70"
                                             >
                                                 {isGeneratingPayment ? (
                                                     <span className="animate-pulse">Generando pasarela...</span>
                                                 ) : (
                                                     <>
-                                                        <GlobeAltIcon className="h-5 w-5"/> Pagar S/.{lastOrderTotal.toFixed(2)} con Mercado Pago
+                                                        <MercadoPagoLogo className="h-5 w-auto"/> Pagar Ahora
                                                     </>
                                                 )}
                                             </button>
@@ -1075,56 +1086,67 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                                                 href={ensureAbsoluteUrl(mpPaymentLink)} 
                                                 target="_blank" 
                                                 rel="noopener noreferrer" 
-                                                className={`block w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl text-center mb-4 shadow-lg transition-transform hover:-translate-y-0.5 ${mpAccessToken ? 'bg-transparent text-blue-500 border border-blue-500 hover:bg-blue-500/10 mt-2' : ''}`}
+                                                className={`block w-full font-bold py-3 px-4 rounded-xl text-center mb-4 transition-transform hover:-translate-y-0.5 border-2 border-[#009EE3] text-[#009EE3] hover:bg-[#009EE3]/10`}
                                             >
-                                                {mpAccessToken ? 'O usa el Link Directo' : 'Ir al Link de Pago'}
+                                                {mpAccessToken ? 'Link de Pago Alternativo' : 'Pagar con Link'}
                                             </a>
                                         )}
 
-                                        {/* Security Badge for Confirmation Screen */}
-                                        <div className="flex items-center justify-center gap-2 text-xs text-text-secondary dark:text-light-silver mb-4">
-                                             <LockClosedIcon className="h-3 w-3 text-success" />
-                                             <span>Pagos procesados de forma 100% segura</span>
-                                        </div>
-                                    </>
+                                        {/* Completion Action */}
+                                        <button
+                                            onClick={handleSimulatePayment}
+                                            className="mt-6 text-sm font-semibold text-text-secondary hover:text-primary dark:text-light-silver dark:hover:text-white underline decoration-dotted underline-offset-4"
+                                        >
+                                            Confirmar transacción completada
+                                        </button>
+                                    </div>
                                 ) : (
-                                    /* Standard Yape/Plin QR Logic */
-                                    onlinePaymentConfig?.qrUrl ? (
-                                        <img src={onlinePaymentConfig?.qrUrl} alt="QR Code" className="w-40 h-40 mx-auto rounded-lg mb-2" />
-                                    ) : (
-                                        <div className="w-40 h-40 mx-auto rounded-lg bg-gray-200 flex items-center justify-center mb-2">
-                                            <p className="text-xs text-gray-500">Sin QR</p>
-                                        </div>
-                                    )
-                                )}
+                                    // --- STANDARD FLOW (YAPE/PLIN/MIXED) ---
+                                    <>
+                                        <h3 className="font-bold mb-2">Paga S/.{lastOrderTotal.toFixed(2)} con {methodLabel}</h3>
+                                        
+                                        {/* Display QR if available and not Mercado Pago (unless specific logic) */}
+                                        {methodLabel !== 'Mercado Pago' && onlinePaymentConfig?.qrUrl ? (
+                                            <img src={onlinePaymentConfig?.qrUrl} alt="QR Code" className="w-40 h-40 mx-auto rounded-lg mb-2" />
+                                        ) : (
+                                            methodLabel !== 'Mercado Pago' && (
+                                                <div className="w-40 h-40 mx-auto rounded-lg bg-gray-200 flex items-center justify-center mb-2">
+                                                    <p className="text-xs text-text-secondary">Sin QR</p>
+                                                </div>
+                                            )
+                                        )}
 
-                                {methodLabel !== 'Mercado Pago' && (
-                                    <p className="mt-2 text-sm">Titular: <span className="font-semibold">{onlinePaymentConfig?.holderName || ''}</span></p>
-                                )}
-                                
-                                {/* Only show phone/alias if not MP or as fallback info */}
-                                {(!mpPaymentLink && !mpAccessToken && methodLabel === 'Mercado Pago') || (methodLabel !== 'Mercado Pago') ? (
-                                    isMpLink ? (
-                                         <a href={ensureAbsoluteUrl(onlinePaymentConfig?.phoneNumber)} target="_blank" rel="noreferrer" className="block mt-2 text-primary font-bold underline text-sm break-all">
-                                            Ir al Link de Pago
-                                         </a>
-                                    ) : (
-                                         <p className="text-sm">Número: <span className="font-semibold">{onlinePaymentConfig?.phoneNumber || ''}</span></p>
-                                    )
-                                ) : null}
+                                        {/* Standard Fields */}
+                                        {methodLabel !== 'Mercado Pago' && (
+                                            <p className="mt-2 text-sm">Titular: <span className="font-semibold">{onlinePaymentConfig?.holderName || ''}</span></p>
+                                        )}
+                                        
+                                        {/* Phone/Link Display Logic for Non-MP or Mixed */}
+                                        {(!mpPaymentLink && !mpAccessToken && methodLabel === 'Mercado Pago') || (methodLabel !== 'Mercado Pago') ? (
+                                            isMpLink ? (
+                                                 <a href={ensureAbsoluteUrl(onlinePaymentConfig?.phoneNumber)} target="_blank" rel="noreferrer" className="block mt-2 text-primary font-bold underline text-sm break-all">
+                                                    Ir al Link de Pago
+                                                 </a>
+                                            ) : (
+                                                 <p className="text-sm">Número: <span className="font-semibold">{onlinePaymentConfig?.phoneNumber || ''}</span></p>
+                                            )
+                                        ) : null}
 
-                                <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="mt-4 w-full bg-green-500 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2">
-                                   <WhatsAppIcon className="h-6 w-6"/> Enviar voucher por WhatsApp
-                                </a>
-                                <button
-                                    onClick={handleSimulatePayment}
-                                    className="mt-2 w-full bg-transparent border-2 border-dashed border-text-secondary/50 text-text-secondary dark:text-light-silver font-bold py-2 px-4 rounded-xl flex items-center justify-center gap-2 hover:border-primary hover:text-primary transition-colors"
-                                >
-                                    Ya realicé el pago
-                                </button>
-                                <p className="text-xs text-text-secondary/60 dark:text-light-silver/50 mt-1">
-                                    (Al hacer clic, notificas al restaurante que pagaste)
-                                </p>
+                                        <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="mt-4 w-full bg-green-500 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-green-600 transition-colors">
+                                           <WhatsAppIcon className="h-6 w-6"/> Enviar voucher por WhatsApp
+                                        </a>
+                                        
+                                        <button
+                                            onClick={handleSimulatePayment}
+                                            className="mt-2 w-full bg-transparent border-2 border-dashed border-text-secondary/50 text-text-secondary dark:text-light-silver font-bold py-2 px-4 rounded-xl flex items-center justify-center gap-2 hover:border-primary hover:text-primary transition-colors"
+                                        >
+                                            Ya realicé el pago
+                                        </button>
+                                        <p className="text-xs text-text-secondary/60 dark:text-light-silver/50 mt-1">
+                                            (Al hacer clic, notificas al restaurante que pagaste)
+                                        </p>
+                                    </>
+                                )}
                             </div>
                         )}
                     </>
