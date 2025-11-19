@@ -1036,7 +1036,11 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                         },
                         auto_return: "approved",
                         binary_mode: true, // Forces Instant Payment (Approved/Rejected) - Ideal for simulating Yape/Card logic
-                        statement_descriptor: "UCHU51"
+                        statement_descriptor: "UCHU51",
+                        payment_methods: {
+                            installments: 12, // Allow up to 12 installments
+                            default_installments: 1
+                        }
                     })
                 });
 

@@ -246,31 +246,22 @@ function appReducer(state: AppState, action: AppAction): AppState {
         case 'CONFIRM_DELIVERY_PAYMENT': {
              const { orderId, details } = action.payload;
              const order = state.orders.find(o => o.id === orderId);
-             if (!order) return state;
-
-             // LOGIC CHANGE: If paying via Delivery Board, it's delivered.
-             // If confirming payment upfront (MP/Yape), it goes to Kitchen ('en preparación').
-             let newStatus: EstadoPedido = 'pagado';
              
+             // Note: We might not have the order in state if this runs immediately after reload,
+             // but the async dispatch will handle the DB update.
+             // This reducer handles optimistic UI updates if the order IS present.
+             
+             let newStatus: EstadoPedido = 'pagado';
              if (action.type === 'CONFIRM_DELIVERY_PAYMENT') {
-                 newStatus = 'entregado'; // Delivery payment means it's handed over
+                 newStatus = 'entregado';
              } else {
-                 // This is an upfront payment (e.g. Mercado Pago, Yape from web or POS)
-                 // It should skip 'recepcion' and go to 'cocina'.
                  newStatus = 'en preparación';
              }
-
-             const pagoRegistrado = {
-                metodo: details.metodo,
-                montoTotal: order.total,
-                montoPagado: details.montoPagado,
-                vuelto: details.montoPagado ? details.montoPagado - order.total : 0,
-                fecha: new Date().toISOString()
-             };
-            
+             
              const updatedCajaSession = { ...state.cajaSession };
-             // Always register money if session is open, even if status is 'en preparación'
-             if (state.cajaSession.estado === 'abierta') {
+             
+             // Only update session stats if we have order details
+             if (order && state.cajaSession.estado === 'abierta') {
                  const currentVentas = updatedCajaSession.ventasPorMetodo[details.metodo] || 0;
                  updatedCajaSession.ventasPorMetodo[details.metodo] = currentVentas + order.total;
                  updatedCajaSession.totalVentas += order.total;
@@ -279,6 +270,17 @@ function appReducer(state: AppState, action: AppAction): AppState {
                      updatedCajaSession.totalEfectivoEsperado += order.total;
                  }
              }
+
+             // If order missing, return state (DB sync will handle data)
+             if (!order) return state;
+
+             const pagoRegistrado = {
+                metodo: details.metodo,
+                montoTotal: order.total,
+                montoPagado: details.montoPagado,
+                vuelto: details.montoPagado ? details.montoPagado - order.total : 0,
+                fecha: new Date().toISOString()
+             };
 
              return {
                 ...state,
@@ -568,12 +570,26 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 case 'CONFIRM_PAYMENT':
                 case 'CONFIRM_DELIVERY_PAYMENT': {
                     const { orderId, details } = action.payload;
-                    const order = state.orders.find(o => o.id === orderId);
-                    if (!order) return;
-
-                    // LOGIC UPDATE:
-                    // If it's DELIVERY payment (at door), it marks as 'entregado'.
-                    // If it's ONLINE payment confirmation (MP/Yape), it goes to 'en preparación' to skip reception.
+                    
+                    // Fetch local or remote order data to ensure we have totals
+                    let total = 0;
+                    const localOrder = state.orders.find(o => o.id === orderId);
+                    
+                    if (localOrder) {
+                        total = localOrder.total;
+                    } else {
+                        // Fetch from DB if not in local state (e.g. fresh reload)
+                        const { data: dbOrder } = await supabase
+                            .from('orders')
+                            .select('total')
+                            .eq('id', orderId)
+                            .single();
+                        if (dbOrder) {
+                            total = dbOrder.total;
+                        }
+                    }
+                    
+                    // Determine new status
                     let newStatus: EstadoPedido = 'pagado';
                     if (action.type === 'CONFIRM_DELIVERY_PAYMENT') {
                         newStatus = 'entregado';
@@ -583,9 +599,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
                     const pagoRegistrado = {
                         metodo: details.metodo,
-                        montoTotal: order.total,
-                        montoPagado: details.montoPagado,
-                        vuelto: details.montoPagado ? details.montoPagado - order.total : 0,
+                        montoTotal: total,
+                        montoPagado: details.montoPagado || total, // Fallback to total if unspecified
+                        vuelto: (details.montoPagado && total) ? details.montoPagado - total : 0,
                         fecha: new Date().toISOString()
                     };
                     
