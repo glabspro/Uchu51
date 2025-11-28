@@ -38,6 +38,29 @@ const DEFAULT_SETTINGS: RestaurantSettings = {
   }
 };
 
+// --- DEFAULT CATEGORY IMAGES ---
+const getCategoryDefaultImage = (category: string, name: string): string => {
+    const lowerName = name.toLowerCase();
+    const lowerCat = category.toLowerCase();
+
+    // Specific Name Matches
+    if (lowerName.includes('lomo')) return 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80';
+    if (lowerName.includes('tallarin') || lowerName.includes('tallarín')) return 'https://images.unsplash.com/photo-1552611052-33e04de081de?auto=format&fit=crop&w=800&q=80';
+    if (lowerName.includes('royal')) return 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&w=800&q=80';
+    if (lowerName.includes('alitas')) return 'https://images.unsplash.com/photo-1567620832903-9fc6debc209f?auto=format&fit=crop&w=800&q=80';
+    if (lowerName.includes('broaster')) return 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?auto=format&fit=crop&w=800&q=80';
+
+    // Category Matches
+    if (lowerCat.includes('hamburguesa')) return 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=800&q=80';
+    if (lowerCat.includes('saltado')) return 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=800&q=80';
+    if (lowerCat.includes('bebida')) return 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=800&q=80';
+    if (lowerCat.includes('postre')) return 'https://images.unsplash.com/photo-1563729768474-d77dbb933a9e?auto=format&fit=crop&w=800&q=80';
+    if (lowerCat.includes('picar')) return 'https://images.unsplash.com/photo-1605851868187-2c930263f336?auto=format&fit=crop&w=800&q=80';
+
+    // Generic Fallback
+    return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80';
+};
+
 interface AppState {
     orders: Pedido[];
     products: Producto[];
@@ -413,7 +436,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 if (productsData) {
                     const mappedProducts = productsData.map((p: any) => ({
                         ...p,
-                        imagenUrl: p.imagen_url 
+                        // AUTOMATIC FALLBACK: Use provided URL or generate a default one based on category
+                        imagenUrl: p.imagen_url || getCategoryDefaultImage(p.categoria, p.nombre)
                     }));
                     baseDispatch({ type: 'SET_PRODUCTS', payload: mappedProducts });
                 }
@@ -735,7 +759,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                         if (['mercadopago', 'yape', 'plin'].includes(details.metodo)) {
                             newStatus = 'en preparación';
                         } else {
-                            newStatus = 'en preparación'; // Default flow for paid orders
+                            newStatus = 'en preparación'; // Default for cash/card in local might be 'en preparación' as well if paid upfront
                         }
                     }
 

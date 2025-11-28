@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import type { Pedido, Producto, ProductoPedido, Cliente, Salsa, TipoPedido, MetodoPago, Theme, ClienteLeal, LoyaltyProgram, Promocion } from '../types';
 import { useAppContext } from '../store';
@@ -745,15 +744,37 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
             )}
 
             <main className="flex-grow overflow-y-auto p-4">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {filteredProducts.map(product => (
-                        <button key={product.id} onClick={() => setSelectedProduct(product)} className="bg-surface dark:bg-[#34424D] rounded-lg shadow-md p-2 text-center transition-transform hover:-translate-y-1 hover:shadow-lg flex flex-col border border-text-primary/5 dark:border-[#45535D] relative disabled:opacity-50" disabled={product.stock <= 0}>
-                            <div className="h-24 w-full bg-background dark:bg-[#45535D] rounded-md overflow-hidden relative">
-                                <img src={product.imagenUrl} alt={product.nombre} className={`w-full h-full object-cover product-image-${product.id}`} />
-                                {product.stock <= 0 && <div className="absolute inset-0 bg-black/50 flex items-center justify-center"><span className="bg-danger text-white font-bold text-xs px-2 py-1 rounded">AGOTADO</span></div>}
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pb-20">
+                    {filteredProducts.map((product, i) => (
+                        <button 
+                            key={product.id} 
+                            onClick={() => setSelectedProduct(product)} 
+                            className="group relative bg-surface dark:bg-[#34424D] rounded-2xl shadow-lg hover:shadow-2xl hover:shadow-primary/20 dark:hover:shadow-black/50 transition-all duration-300 transform hover:-translate-y-1 flex flex-col overflow-hidden border border-text-primary/5 dark:border-[#45535D] animate-fade-in-scale text-left disabled:opacity-70 disabled:cursor-not-allowed"
+                            style={{ animationDelay: `${i * 50}ms` }}
+                            disabled={product.stock <= 0}
+                        >
+                            <div className="h-40 w-full bg-background dark:bg-[#45535D] overflow-hidden relative">
+                                <img src={product.imagenUrl} alt={product.nombre} className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 ${product.stock <= 0 ? 'filter grayscale' : ''}`} />
+                                {product.stock <= 0 && (
+                                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center">
+                                        <span className="bg-danger text-white font-bold text-xs px-3 py-1.5 rounded-full uppercase tracking-wider shadow-lg transform -rotate-6">Agotado</span>
+                                    </div>
+                                )}
+                                {/* Add Button Overlay - Visible on Hover/Active */}
+                                {product.stock > 0 && (
+                                    <div className="absolute bottom-2 right-2 bg-white dark:bg-gunmetal text-primary rounded-full p-2 shadow-lg opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                                        <PlusIcon className="h-5 w-5" />
+                                    </div>
+                                )}
                             </div>
-                            <p className="font-semibold text-sm mt-2 flex-grow text-text-primary dark:text-ivory-cream leading-tight">{product.nombre}</p>
-                            <p className="font-bold text-text-secondary dark:text-light-silver mt-1">S/.{product.precio.toFixed(2)}</p>
+                            
+                            <div className="p-4 flex flex-col flex-grow">
+                                <h3 className="font-heading font-bold text-sm text-text-primary dark:text-ivory-cream leading-tight mb-1 line-clamp-2">{product.nombre}</h3>
+                                {product.descripcion && <p className="text-xs text-text-secondary dark:text-light-silver line-clamp-2 mb-3 leading-relaxed">{product.descripcion}</p>}
+                                <div className="mt-auto pt-2 flex justify-between items-center border-t border-text-primary/5 dark:border-[#56656E]">
+                                    <span className="font-mono font-extrabold text-lg text-primary dark:text-orange-400">S/.{product.precio.toFixed(2)}</span>
+                                </div>
+                            </div>
                         </button>
                     ))}
                 </div>
