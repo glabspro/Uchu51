@@ -259,7 +259,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
 
 
     const groupedProducts = useMemo(() => {
-        return products.reduce((acc, product) => {
+        const grouped = products.reduce((acc, product) => {
             const category = product.categoria;
             if (!acc[category]) {
                 acc[category] = [];
@@ -267,17 +267,54 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
             acc[category].push(product);
             return acc;
         }, {} as Record<string, Producto[]>);
-    }, [products]);
+
+        // Inject Promotions as a pseudo-category
+        if (activePromotions.length > 0) {
+            const promoProducts = activePromotions.map(promo => {
+                let displayPrice = 0;
+                // Calculate display price for the card
+                if (promo.tipo === 'combo_fijo') {
+                    displayPrice = promo.condiciones.precioFijo || 0;
+                } else if (promo.tipo === 'dos_por_uno' && promo.condiciones.productoId_2x1) {
+                    const targetProduct = products.find(p => p.id === promo.condiciones.productoId_2x1);
+                    displayPrice = targetProduct ? targetProduct.precio : 0;
+                } else if (promo.tipo === 'descuento_porcentaje') {
+                    // For general discount, show 0 or handle differently
+                    displayPrice = 0; 
+                }
+
+                return {
+                    id: promo.id,
+                    nombre: promo.nombre,
+                    categoria: 'Promociones',
+                    precio: displayPrice,
+                    costo: 0,
+                    stock: 999, // Always available
+                    descripcion: promo.descripcion,
+                    imagenUrl: getPromoImageUrl(promo, products) || '',
+                    restaurant_id: promo.restaurant_id,
+                    isPromo: true, // Special flag to handle click
+                    originalPromo: promo
+                } as unknown as Producto;
+            });
+            grouped['Promociones'] = promoProducts;
+        }
+
+        return grouped;
+    }, [products, activePromotions]);
 
     const filteredProducts = useMemo(() => {
         if (!searchTerm) {
             return groupedProducts[activeCategory] || [];
         }
-        return products.filter(p => p.nombre.toLowerCase().includes(searchTerm.toLowerCase()));
+        
+        // Search across all categories including promotions
+        const allItems = Object.values(groupedProducts).flat();
+        return allItems.filter(p => p.nombre.toLowerCase().includes(searchTerm.toLowerCase()));
     }, [products, searchTerm, activeCategory, groupedProducts]);
 
     const categories = useMemo(() => {
-        const productCategories = Object.keys(groupedProducts);
+        const productCategories = Object.keys(groupedProducts).filter(c => c !== 'Promociones'); // Filter out to re-order
         return activePromotions.length > 0 ? ['Promociones', ...productCategories] : productCategories;
     }, [groupedProducts, activePromotions]);
     
@@ -374,7 +411,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                 return sum + (productInfo ? productInfo.precio * comboProd.cantidad : 0);
             }, 0);
 
-            const discountRatio = (promo.condiciones.precioFijo ?? totalOriginalPrice) / (totalOriginalPrice || 1);
+            const discountRatio = totalOriginalPrice > 0 ? (promo.condiciones.precioFijo ?? totalOriginalPrice) / totalOriginalPrice : 1;
 
             promo.condiciones.productos.forEach(comboProd => {
                 const productInfo = products.find(p => p.id === comboProd.productoId);
@@ -424,6 +461,9 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
         
         if (itemsToAdd.length > 0) {
             setCart(currentCart => [...currentCart, ...itemsToAdd]);
+            // Optional: Show animation or feedback
+            setIsCartAnimating(true);
+            setTimeout(() => setIsCartAnimating(false), 500);
         }
     };
 
@@ -748,7 +788,14 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                     {filteredProducts.map((product, i) => (
                         <button 
                             key={product.id} 
-                            onClick={() => setSelectedProduct(product)} 
+                            onClick={() => {
+                                // If it is a promo disguised as a product
+                                if ((product as any).isPromo) {
+                                    handleAddPromotionToCart((product as any).originalPromo);
+                                } else {
+                                    setSelectedProduct(product);
+                                }
+                            }} 
                             className="group relative bg-surface dark:bg-[#34424D] rounded-2xl shadow-lg hover:shadow-2xl hover:shadow-primary/20 dark:hover:shadow-black/50 transition-all duration-300 transform hover:-translate-y-1 flex flex-col overflow-hidden border border-text-primary/5 dark:border-[#45535D] animate-fade-in-scale text-left disabled:opacity-70 disabled:cursor-not-allowed"
                             style={{ animationDelay: `${i * 50}ms` }}
                             disabled={product.stock <= 0}
@@ -766,13 +813,21 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                                         <PlusIcon className="h-5 w-5" />
                                     </div>
                                 )}
+                                {/* Promo Tag */}
+                                {(product as any).isPromo && (
+                                    <div className="absolute top-2 left-2 bg-teal-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md animate-pulse">
+                                        PROMO
+                                    </div>
+                                )}
                             </div>
                             
                             <div className="p-4 flex flex-col flex-grow">
                                 <h3 className="font-heading font-bold text-sm text-text-primary dark:text-ivory-cream leading-tight mb-1 line-clamp-2">{product.nombre}</h3>
                                 {product.descripcion && <p className="text-xs text-text-secondary dark:text-light-silver line-clamp-2 mb-3 leading-relaxed">{product.descripcion}</p>}
                                 <div className="mt-auto pt-2 flex justify-between items-center border-t border-text-primary/5 dark:border-[#56656E]">
-                                    <span className="font-mono font-extrabold text-lg text-primary dark:text-orange-400">S/.{product.precio.toFixed(2)}</span>
+                                    <span className="font-mono font-extrabold text-lg text-primary dark:text-orange-400">
+                                        {(product as any).isPromo && product.precio === 0 ? '2x1' : `S/.${product.precio.toFixed(2)}`}
+                                    </span>
                                 </div>
                             </div>
                         </button>

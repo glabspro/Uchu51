@@ -88,18 +88,65 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
         return currentOrder.productos.some(p => !p.sentToKitchen);
     }, [currentOrder]);
     
+    // Calculate grouped products and inject promotions
     const groupedProducts = useMemo(() => {
-        return products.reduce((acc, product) => {
+        const grouped = products.reduce((acc, product) => {
             const category = product.categoria;
             if (!acc[category]) acc[category] = [];
             acc[category].push(product);
             return acc;
         }, {} as Record<string, Producto[]>);
-    }, [products]);
 
-    const categories = useMemo(() => Object.keys(groupedProducts), [groupedProducts]);
+        // Inject Promotions
+        const activePromotions = promotions.filter(p => p.isActive);
+        if (activePromotions.length > 0) {
+            const promoProducts = activePromotions.map(promo => {
+                let displayPrice = 0;
+                if (promo.tipo === 'combo_fijo') {
+                    displayPrice = promo.condiciones.precioFijo || 0;
+                } else if (promo.tipo === 'dos_por_uno' && promo.condiciones.productoId_2x1) {
+                    const targetProduct = products.find(p => p.id === promo.condiciones.productoId_2x1);
+                    displayPrice = targetProduct ? targetProduct.precio : 0;
+                }
+
+                // Create a pseudo-product object
+                return {
+                    id: promo.id,
+                    nombre: promo.nombre,
+                    categoria: 'Promociones',
+                    precio: displayPrice,
+                    costo: 0,
+                    stock: 999,
+                    descripcion: promo.descripcion,
+                    imagenUrl: promo.imagenUrl || '',
+                    restaurant_id: promo.restaurant_id,
+                    isPromo: true, // Special flag
+                    originalPromo: promo // Reference to original promo object
+                } as unknown as Producto;
+            });
+            grouped['Promociones'] = promoProducts;
+        }
+
+        return grouped;
+    }, [products, promotions]);
+
+    const categories = useMemo(() => {
+        const productCategories = Object.keys(groupedProducts).filter(c => c !== 'Promociones');
+        const activePromotions = promotions.filter(p => p.isActive);
+        return activePromotions.length > 0 ? ['Promociones', ...productCategories] : productCategories;
+    }, [groupedProducts, promotions]);
+
     const activeProgram = useMemo(() => loyaltyPrograms.find(p => p.isActive), [loyaltyPrograms]);
     
+    useEffect(() => {
+        const activePromotions = promotions.filter(p => p.isActive);
+        if (activePromotions.length > 0) {
+            setActiveCategory('Promociones');
+        } else {
+            setActiveCategory('Hamburguesas');
+        }
+    }, [promotions]);
+
     const calculateTotal = (productos: ProductoPedido[]): number => {
         return productos.reduce((sum, p) => {
             const itemPrice = p.precio;
@@ -170,6 +217,12 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
 
     const handleProductClick = (product: Producto) => {
         if (product.stock <= 0) return;
+
+        // Check if it is a promotion
+        if ((product as any).isPromo) {
+            handleApplyPromotion((product as any).originalPromo);
+            return;
+        }
 
         if (['Bebidas', 'Postres'].includes(product.categoria)) {
             const newItem: ProductoPedido = {
@@ -329,37 +382,54 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
     };
 
     const handleApplyPromotion = (promotion: Promocion) => {
-        if (!currentOrder) return;
-        let updatedProductos = [...currentOrder.productos];
-    
+        // Initialize order if null
+        let currentProds = currentOrder ? [...currentOrder.productos] : [];
+        if (!currentOrder) {
+             const newOrderShell: Pedido = {
+                id: '', fecha: new Date().toISOString(), tipo: 'local', estado: 'nuevo', turno: 'tarde',
+                cliente: {
+                    nombre: assignedCustomer?.nombre || `Mesa ${mesa.numero}`,
+                    telefono: assignedCustomer?.telefono || '',
+                    mesa: mesa.numero
+                },
+                productos: [], total: 0, metodoPago: 'efectivo', tiempoEstimado: 15, historial: [], areaPreparacion: 'salon', notas: '',
+                restaurant_id: state.restaurantId!,
+             };
+             setCurrentOrder(newOrderShell);
+             // Since we just created it, we can continue logic below but currentProds is empty
+        }
+
         switch (promotion.tipo) {
             case 'dos_por_uno': {
                 const productId = promotion.condiciones.productoId_2x1;
                 if (!productId) break;
-    
-                const productIndices = updatedProductos
-                    .map((p, index) => ({ p, index }))
-                    .filter(({ p }) => p.id === productId && !p.promocionId)
-                    .map(({ index }) => index);
-    
-                if (productIndices.length >= 2) {
-                    const originalProduct = products.find(p => p.id === productId);
-                    if(!originalProduct) break;
-
-                    const freeItemIndex = productIndices[1];
-                    updatedProductos[freeItemIndex] = {
-                        ...updatedProductos[freeItemIndex],
+                
+                const originalProduct = products.find(p => p.id === productId);
+                if (originalProduct) {
+                    // Add two items: one full price (marked as promo), one free
+                    const item1: ProductoPedido = {
+                        id: originalProduct.id,
+                        nombre: originalProduct.nombre,
+                        cantidad: 1,
+                        precio: originalProduct.precio,
+                        precioOriginal: originalProduct.precio,
+                        promocionId: promotion.id,
+                        imagenUrl: originalProduct.imagenUrl,
+                        sentToKitchen: false,
+                        salsas: []
+                    };
+                    const item2: ProductoPedido = {
+                        id: originalProduct.id,
+                        nombre: `${originalProduct.nombre} (GRATIS)`,
+                        cantidad: 1,
                         precio: 0,
                         precioOriginal: originalProduct.precio,
                         promocionId: promotion.id,
+                        imagenUrl: originalProduct.imagenUrl,
                         sentToKitchen: false,
+                        salsas: []
                     };
-                     const firstItemIndex = productIndices[0];
-                     updatedProductos[firstItemIndex] = {
-                        ...updatedProductos[firstItemIndex],
-                        promocionId: promotion.id,
-                        sentToKitchen: false,
-                    };
+                    updateCurrentOrder([...currentProds, item1, item2]);
                 }
                 break;
             }
@@ -370,33 +440,31 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                     return sum + (productInfo ? productInfo.precio * comboProd.cantidad : 0);
                 }, 0);
                 
-                const discountRatio = precioFijo / totalOriginalPrice;
-    
+                const discountRatio = totalOriginalPrice > 0 ? precioFijo / totalOriginalPrice : 1;
+                
+                const newItems: ProductoPedido[] = [];
                 comboProducts.forEach(comboProd => {
-                    let remainingQty = comboProd.cantidad;
-                    updatedProductos = updatedProductos.map(orderProd => {
-                        if (remainingQty > 0 && orderProd.id === comboProd.productoId && !orderProd.promocionId) {
-                            const originalProduct = products.find(p => p.id === comboProd.productoId);
-                            if(originalProduct){
-                                remainingQty -= orderProd.cantidad; // simplistic; assumes whole item gets promo
-                                return {
-                                    ...orderProd,
-                                    precio: originalProduct.precio * discountRatio,
-                                    precioOriginal: originalProduct.precio,
-                                    promocionId: promotion.id,
-                                    sentToKitchen: false,
-                                };
-                            }
-                        }
-                        return orderProd;
-                    });
+                    const productInfo = products.find(p => p.id === comboProd.productoId);
+                    if (productInfo) {
+                        newItems.push({
+                            id: productInfo.id,
+                            nombre: productInfo.nombre,
+                            cantidad: comboProd.cantidad,
+                            precio: productInfo.precio * discountRatio,
+                            precioOriginal: productInfo.precio,
+                            promocionId: promotion.id,
+                            imagenUrl: productInfo.imagenUrl,
+                            sentToKitchen: false,
+                            salsas: []
+                        });
+                    }
                 });
+                
+                updateCurrentOrder([...currentProds, ...newItems]);
                 break;
             }
-            // Add other promotion types here
         }
         
-        updateCurrentOrder(updatedProductos);
         setIsApplyPromotionModalOpen(false);
     };
     
@@ -619,7 +687,12 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                     <div className="flex-grow overflow-y-auto pt-4 pr-2">
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                             {(groupedProducts[activeCategory] || []).map(product => (
-                                <button key={product.id} onClick={() => handleProductClick(product)} className="bg-surface dark:bg-zinc-800 rounded-lg shadow-md p-2 text-center transition-transform hover:-translate-y-1 hover:shadow-lg flex flex-col border border-text-primary/5 dark:border-zinc-700 relative disabled:opacity-50 disabled:cursor-not-allowed" disabled={product.stock <= 0}>
+                                <button 
+                                    key={product.id} 
+                                    onClick={() => handleProductClick(product)} 
+                                    className="bg-surface dark:bg-zinc-800 rounded-lg shadow-md p-2 text-center transition-transform hover:-translate-y-1 hover:shadow-lg flex flex-col border border-text-primary/5 dark:border-zinc-700 relative disabled:opacity-50 disabled:cursor-not-allowed" 
+                                    disabled={product.stock <= 0}
+                                >
                                     <div className="h-24 w-full bg-background dark:bg-zinc-700 rounded-md overflow-hidden relative">
                                         <img src={product.imagenUrl} alt={product.nombre} className={`w-full h-full object-cover ${product.stock <= 0 ? 'filter grayscale' : ''}`} />
                                          {product.stock <= 0 && (
@@ -627,9 +700,17 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                                                 <span className="bg-danger text-white font-bold text-xs px-2 py-1 rounded">AGOTADO</span>
                                             </div>
                                         )}
+                                        {/* Promo Tag */}
+                                        {(product as any).isPromo && (
+                                            <div className="absolute top-1 left-1 bg-teal-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-md animate-pulse">
+                                                PROMO
+                                            </div>
+                                        )}
                                     </div>
                                     <p className="font-semibold text-sm mt-2 flex-grow text-text-primary dark:text-zinc-200 leading-tight">{product.nombre}</p>
-                                    <p className="font-bold text-text-secondary dark:text-zinc-400 mt-1">S/.{product.precio.toFixed(2)}</p>
+                                    <p className="font-bold text-text-secondary dark:text-zinc-400 mt-1">
+                                        {(product as any).isPromo && product.precio === 0 ? '2x1' : `S/.${product.precio.toFixed(2)}`}
+                                    </p>
                                 </button>
                             ))}
                         </div>

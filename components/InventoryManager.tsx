@@ -48,7 +48,11 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ products, setProduc
                             {sortedProducts.map(product => (
                                 <tr key={product.id} className="hover:bg-text-primary/5 dark:hover:bg-zinc-700/30">
                                     <td className="p-4 font-medium text-text-primary dark:text-zinc-200">{product.nombre}</td>
-                                    <td className="p-4 text-text-secondary dark:text-zinc-400">{product.categoria}</td>
+                                    <td className="p-4 text-text-secondary dark:text-zinc-400">
+                                        <span className="bg-text-primary/5 dark:bg-zinc-800 px-2 py-1 rounded text-xs font-bold uppercase tracking-wide">
+                                            {product.categoria}
+                                        </span>
+                                    </td>
                                     <td className={`p-4 text-center font-bold text-lg ${product.stock < 10 ? 'text-danger' : 'text-text-primary dark:text-zinc-200'}`}>
                                         {product.stock}
                                     </td>
