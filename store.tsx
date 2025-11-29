@@ -101,7 +101,8 @@ const initialState: AppState = {
     loyaltyPrograms: [],
     cajaSession: { estado: 'cerrada', saldoInicial: 0, ventasPorMetodo: {}, totalVentas: 0, totalEfectivoEsperado: 0, fechaApertura: '', gananciaTotal: 0, movimientos: [], restaurant_id: '' },
     cajaHistory: [],
-    view: 'recepcion',
+    // CHANGED: Default view is now 'caja' for better workflow
+    view: 'caja',
     turno: 'tarde',
     theme: 'light',
     appView: 'customer',
@@ -635,10 +636,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 }
                 case 'SAVE_ORDER': {
                     const orderData = action.payload;
-                    const isPayNow = ['yape', 'plin', 'mercadopago'].includes(orderData.metodoPago);
-                    const isRiskyRetiro = orderData.tipo === 'retiro' && ['efectivo', 'tarjeta'].includes(orderData.metodoPago);
+                    // CHANGED LOGIC: All orders now go straight to kitchen ('en preparación')
+                    // Skipping 'pendiente confirmar pago' and 'pendiente de confirmación' (Recepción)
+                    const initialState: EstadoPedido = 'en preparación';
                     
-                    const initialState: EstadoPedido = isPayNow ? 'pendiente confirmar pago' : isRiskyRetiro ? 'pendiente de confirmación' : 'en preparación';
                     const getAreaPreparacion = (tipo: Pedido['tipo']): AreaPreparacion => tipo === 'local' ? 'salon' : tipo;
                     
                     const generatedId = `PED-${String(Date.now()).slice(-4)}`;
@@ -755,11 +756,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                     if (action.type === 'CONFIRM_DELIVERY_PAYMENT') {
                         newStatus = 'entregado';
                     } else {
-                        // FORCE 'en preparación' for online payments to skip Reception
+                        // With Direct Kitchen flow, payments usually happen AFTER prep or at the same time
+                        // We keep 'en preparación' if it's an online payment that happened early
+                        // Or shift to 'pagado' if it's a counter payment
+                        // User requested simplicity, so if they pay, we can just ensure it doesn't get stuck.
+                        // Force 'en preparación' to be safe so it stays on kitchen board if not delivered yet.
                         if (['mercadopago', 'yape', 'plin'].includes(details.metodo)) {
                             newStatus = 'en preparación';
                         } else {
-                            newStatus = 'en preparación'; // Default for cash/card in local might be 'en preparación' as well if paid upfront
+                            newStatus = 'en preparación'; 
                         }
                     }
 
@@ -781,7 +786,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
                     // --- CAJA SESSION UPDATE ---
                     // Fetch the latest open session from DB to ensure we have the correct ID even after reload
-                    // This is the CRITICAL FIX for "Money not arriving in box"
                     let sessionId = state.cajaSession.id;
                     let currentSessionState = state.cajaSession;
 

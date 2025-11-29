@@ -1,3 +1,4 @@
+
 import React from 'react';
 import type { View, Theme } from '../types';
 import { ChartBarIcon, FireIcon, HomeIcon, TruckIcon, LogoutIcon, ShoppingBagIcon, CreditCardIcon, ChevronDoubleLeftIcon, ChevronDoubleRightIcon, AdjustmentsHorizontalIcon, DocumentTextIcon } from './icons';
@@ -35,15 +36,16 @@ const Sidebar: React.FC<SidebarProps> = () => {
     const onLogout = () => dispatch({ type: 'LOGOUT' });
     const onToggle = () => dispatch({ type: 'TOGGLE_SIDEBAR' });
     
+    // Updated Navigation Order: Caja -> Dashboard -> Salón -> Delivery -> Retiro -> Cocina -> Gestión
     const allNavItems = [
-        { id: 'dashboard' as View, label: 'Dashboard', icon: <ChartBarIcon className="h-6 w-6" /> },
-        { id: 'recepcion' as View, label: 'Recepción', icon: <DocumentTextIcon className="h-6 w-6" /> },
-        { id: 'local' as View, label: 'Salón', icon: <HomeIcon className="h-6 w-6" /> },
-        { id: 'cocina' as View, label: 'Cocina', icon: <FireIcon className="h-6 w-6" /> },
-        { id: 'retiro' as View, label: 'Retiro', icon: <ShoppingBagIcon className="h-6 w-6" /> },
-        { id: 'delivery' as View, label: 'Delivery', icon: <TruckIcon className="h-6 w-6" /> },
-        { id: 'gestion' as View, label: 'Gestión', icon: <AdjustmentsHorizontalIcon className="h-6 w-6" /> },
         { id: 'caja' as View, label: 'Caja', icon: <CreditCardIcon className="h-6 w-6" /> },
+        { id: 'dashboard' as View, label: 'Dashboard', icon: <ChartBarIcon className="h-6 w-6" /> },
+        { id: 'local' as View, label: 'Salón', icon: <HomeIcon className="h-6 w-6" /> },
+        { id: 'delivery' as View, label: 'Delivery', icon: <TruckIcon className="h-6 w-6" /> },
+        { id: 'retiro' as View, label: 'Retiro', icon: <ShoppingBagIcon className="h-6 w-6" /> },
+        { id: 'cocina' as View, label: 'Cocina', icon: <FireIcon className="h-6 w-6" /> },
+        { id: 'gestion' as View, label: 'Gestión', icon: <AdjustmentsHorizontalIcon className="h-6 w-6" /> },
+        // Recepción removed
     ];
 
     const enabledModules = restaurantSettings?.modules;

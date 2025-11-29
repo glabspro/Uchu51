@@ -3,12 +3,12 @@ import React, { useState, useEffect } from 'react';
 import type { Pedido, EstadoPedido, UserRole } from '../types';
 import { useAppContext } from '../store';
 import OrderCard from './OrderCard';
-import { UserIcon, TruckIcon, CashIcon, CheckCircleIcon } from './icons';
+import { UserIcon, TruckIcon, CashIcon, CheckCircleIcon, FireIcon } from './icons';
 
 interface DeliveryBoardProps {}
 
 const DeliveryColumn: React.FC<{ title: string; children: React.ReactNode; count: number; }> = ({ title, children, count }) => (
-    <div className="bg-background dark:bg-[#34424D]/50 rounded-2xl w-full md:w-1/3 flex-shrink-0 shadow-sm flex flex-col border border-text-primary/5 dark:border-[#45535D]">
+    <div className="bg-background dark:bg-[#34424D]/50 rounded-2xl w-full md:w-1/4 flex-shrink-0 shadow-sm flex flex-col border border-text-primary/5 dark:border-[#45535D]">
         <h2 className="text-lg font-heading font-bold text-text-primary dark:text-ivory-cream bg-text-primary/10 dark:bg-[#45535D]/50 px-4 py-3 rounded-t-2xl flex items-center justify-between">
             {title}
             <span className="bg-black/10 text-xs font-bold rounded-full px-2.5 py-1">{count}</span>
@@ -38,7 +38,8 @@ const DeliveryBoard: React.FC<DeliveryBoardProps> = () => {
         dispatch({ type: 'INITIATE_DELIVERY_PAYMENT', payload: order });
     };
 
-    const componentOrders = orders.filter(o => o.tipo === 'delivery' && ['listo', 'en camino', 'entregado', 'pagado'].includes(o.estado) && o.turno === turno);
+    // Included 'en preparación', 'en armado', 'listo para armado' to visualize kitchen status
+    const componentOrders = orders.filter(o => o.tipo === 'delivery' && ['en preparación', 'en armado', 'listo para armado', 'listo', 'en camino', 'entregado', 'pagado'].includes(o.estado) && o.turno === turno);
 
     const speak = (text: string) => {
         if ('speechSynthesis' in window) {
@@ -64,12 +65,23 @@ const DeliveryBoard: React.FC<DeliveryBoardProps> = () => {
         }
     }, [componentOrders, announcedOrders]);
 
+    const kitchenOrders = componentOrders.filter(o => ['en preparación', 'en armado', 'listo para armado'].includes(o.estado));
     const readyOrders = componentOrders.filter(o => o.estado === 'listo');
     const onTheWayOrders = componentOrders.filter(o => o.estado === 'en camino');
     const deliveredOrders = componentOrders.filter(o => o.estado === 'entregado' || o.estado === 'pagado');
 
     return (
         <div className="flex flex-col md:flex-row gap-6">
+            <DeliveryColumn title="En Cocina" count={kitchenOrders.length}>
+                {kitchenOrders.map((order, i) => (
+                    <OrderCard key={order.id} order={order} style={{ '--delay': `${i * 50}ms` } as React.CSSProperties}>
+                        <div className="flex items-center justify-center p-2 bg-amber-500/10 text-amber-600 rounded-lg font-bold">
+                            <FireIcon className="h-5 w-5 mr-2" /> Preparando
+                        </div>
+                    </OrderCard>
+                ))}
+            </DeliveryColumn>
+            
             <DeliveryColumn title="Listos para Enviar" count={readyOrders.length}>
                 {readyOrders.map((order, i) => (
                     <OrderCard key={order.id} order={order} style={{ '--delay': `${i * 50}ms` } as React.CSSProperties}>
