@@ -272,31 +272,36 @@ const primaryPresets = ['#F64D00', '#F97316', '#EF4444', '#D97706', '#166534', '
 const secondaryPresets = ['#FFB40B', '#F4D47C', '#84CC16', '#3B82F6', '#A855F7', '#6366F1', '#EC4899'];
 const backgroundPresets = ['#FFFFFF', '#FDF6E3', '#F3F4F6', '#FEFCE8', '#EFF6FF', '#F0FDF4', '#111827'];
 
+interface LocalSettingsProps {
+    customSettings?: RestaurantSettings;
+    onSave?: (settings: RestaurantSettings) => void;
+}
 
-const LocalSettings: React.FC = () => {
+const LocalSettings: React.FC<LocalSettingsProps> = ({ customSettings, onSave }) => {
     const { state, dispatch } = useAppContext();
-    const [settings, setSettings] = useState<RestaurantSettings>(state.restaurantSettings!);
-    const [tablesInput, setTablesInput] = useState(state.restaurantSettings?.tables.join(', ') || '');
+    const activeSettings = customSettings || state.restaurantSettings!;
+    
+    const [settings, setSettings] = useState<RestaurantSettings>(activeSettings);
+    const [tablesInput, setTablesInput] = useState(activeSettings.tables.join(', ') || '');
     const [isSaving, setIsSaving] = useState(false);
     const [activeTab, setActiveTab] = useState<'palettes' | 'custom'>('palettes');
     
     useEffect(() => {
-        if (state.restaurantSettings) {
+        if (customSettings) {
+            setSettings(customSettings);
+            setTablesInput(customSettings.tables.join(', ') || '');
+        } else if (state.restaurantSettings) {
             setSettings(state.restaurantSettings);
             setTablesInput(state.restaurantSettings.tables.join(', ') || '');
         }
-    }, [state.restaurantSettings]);
+    }, [customSettings, state.restaurantSettings]);
 
     const handleModuleChange = (module: 'delivery' | 'local' | 'retiro', value: boolean) => {
         setSettings(prev => {
-            // Ensure we have a complete modules object to start with to avoid partial updates overwriting existing state unexpectedly
             const currentModules = prev.modules || { delivery: true, local: true, retiro: true };
             return {
                 ...prev,
-                modules: {
-                    ...currentModules,
-                    [module]: value
-                }
+                modules: { ...currentModules, [module]: value }
             };
         });
     };
@@ -332,12 +337,16 @@ const LocalSettings: React.FC = () => {
         
         const finalSettings: RestaurantSettings = { ...settings, tables: uniqueTables };
 
-        dispatch({ type: 'UPDATE_RESTAURANT_SETTINGS', payload: finalSettings });
+        if (onSave) {
+            onSave(finalSettings);
+        } else {
+            dispatch({ type: 'UPDATE_RESTAURANT_SETTINGS', payload: finalSettings });
+            setTimeout(() => {
+                dispatch({ type: 'ADD_TOAST', payload: { message: 'Ajustes guardados correctamente', type: 'success' } });
+            }, 500);
+        }
         
-        setTimeout(() => {
-            setIsSaving(false);
-            dispatch({ type: 'ADD_TOAST', payload: { message: 'Ajustes guardados correctamente', type: 'success' } });
-        }, 500);
+        setTimeout(() => setIsSaving(false), 500);
     };
 
     const branding = settings.branding || {};
