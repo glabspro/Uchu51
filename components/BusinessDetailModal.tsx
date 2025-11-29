@@ -26,7 +26,7 @@ const TabButton: React.FC<{ isActive: boolean; onClick: () => void; icon: React.
 
 const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({ restaurant, onClose, onUpdate }) => {
     const { state, dispatch } = useAppContext();
-    const { employees } = state;
+    const { employees, restaurantSettings: globalSettings } = state;
     const [activeTab, setActiveTab] = useState<'info' | 'staff' | 'settings'>('info');
     
     // Employee Management State within Modal
@@ -56,6 +56,17 @@ const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({ restaurant, o
         // In a real app, we would save this to the specific restaurant record in DB
         console.log("Saving settings for restaurant:", restaurant.id, newSettings);
         dispatch({ type: 'ADD_TOAST', payload: { message: 'Configuración guardada (Simulado)', type: 'success' } });
+    };
+
+    // Prepare safe settings object by merging specific settings with global defaults/current state
+    // This ensures LocalSettings never receives an empty object that causes crashes
+    const mergedSettings: RestaurantSettings = {
+        ...globalSettings!, // Start with global defaults (assumes loaded in store)
+        ...restaurant.settings, // Override with specific restaurant settings if they exist
+        // Ensure critical arrays are present if both above fail
+        tables: restaurant.settings?.tables || globalSettings?.tables || [],
+        modules: restaurant.settings?.modules || globalSettings?.modules || {},
+        paymentMethods: restaurant.settings?.paymentMethods || globalSettings?.paymentMethods || {}
     };
 
     return (
@@ -106,9 +117,9 @@ const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({ restaurant, o
                                     <div>
                                         <label className="block text-sm font-medium text-text-secondary mb-1">Plan Actual</label>
                                         <select defaultValue={restaurant.plan_id} className="w-full bg-background dark:bg-zinc-700 border border-text-primary/10 rounded-lg p-2.5">
-                                            <option value="basic">Básico</option>
-                                            <option value="pro">Profesional</option>
-                                            <option value="enterprise">Enterprise</option>
+                                            <option value="basic">Básico (Solo POS)</option>
+                                            <option value="pro">Profesional (Inventario + Roles)</option>
+                                            <option value="enterprise">Enterprise (Multi-local + API)</option>
                                         </select>
                                     </div>
                                 </div>
@@ -181,7 +192,7 @@ const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({ restaurant, o
 
                     {activeTab === 'settings' && (
                         <LocalSettings 
-                            customSettings={restaurant.settings || state.restaurantSettings} // Pass specific settings if available
+                            customSettings={mergedSettings}
                             onSave={handleSettingsSave}
                         />
                     )}

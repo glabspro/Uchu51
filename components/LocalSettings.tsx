@@ -281,18 +281,31 @@ const LocalSettings: React.FC<LocalSettingsProps> = ({ customSettings, onSave })
     const { state, dispatch } = useAppContext();
     const activeSettings = customSettings || state.restaurantSettings!;
     
-    const [settings, setSettings] = useState<RestaurantSettings>(activeSettings);
-    const [tablesInput, setTablesInput] = useState(activeSettings.tables.join(', ') || '');
+    // Ensure default empty objects if activeSettings properties are missing (e.g. fresh DB record)
+    const [settings, setSettings] = useState<RestaurantSettings>({
+        ...activeSettings,
+        tables: activeSettings.tables || [],
+        branding: activeSettings.branding || {},
+        modules: activeSettings.modules || {},
+        paymentMethods: activeSettings.paymentMethods || {}
+    });
+
+    const [tablesInput, setTablesInput] = useState((activeSettings.tables || []).join(', '));
     const [isSaving, setIsSaving] = useState(false);
     const [activeTab, setActiveTab] = useState<'palettes' | 'custom'>('palettes');
     
     useEffect(() => {
-        if (customSettings) {
-            setSettings(customSettings);
-            setTablesInput(customSettings.tables.join(', ') || '');
-        } else if (state.restaurantSettings) {
-            setSettings(state.restaurantSettings);
-            setTablesInput(state.restaurantSettings.tables.join(', ') || '');
+        const sourceSettings = customSettings || state.restaurantSettings;
+        if (sourceSettings) {
+            setSettings({
+                ...sourceSettings,
+                tables: sourceSettings.tables || [],
+                branding: sourceSettings.branding || {},
+                modules: sourceSettings.modules || {},
+                paymentMethods: sourceSettings.paymentMethods || {}
+            });
+            // Safe access to tables with fallback
+            setTablesInput((sourceSettings.tables || []).join(', '));
         }
     }, [customSettings, state.restaurantSettings]);
 
@@ -332,7 +345,8 @@ const LocalSettings: React.FC<LocalSettingsProps> = ({ customSettings, onSave })
     
     const handleSave = () => {
         setIsSaving(true);
-        const tables = tablesInput.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n) && n > 0);
+        // Safe split incase input is messed up, default to empty array
+        const tables = tablesInput ? tablesInput.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n) && n > 0) : [];
         const uniqueTables = [...new Set(tables)].sort((a: number, b: number) => a - b);
         
         const finalSettings: RestaurantSettings = { ...settings, tables: uniqueTables };
@@ -358,7 +372,7 @@ const LocalSettings: React.FC<LocalSettingsProps> = ({ customSettings, onSave })
     };
 
     return (
-        <div className="animate-fade-in-up space-y-8 max-h-[calc(100vh-22rem)] overflow-y-auto pr-3">
+        <div className="animate-fade-in-up space-y-8 pr-3">
             <div>
                 <h3 className="text-xl font-bold text-text-primary dark:text-ivory-cream mb-4">Apariencia y Marca</h3>
                 <div className="bg-background dark:bg-gunmetal/50 p-4 rounded-xl border border-text-primary/5 dark:border-[#45535D]">
