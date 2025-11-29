@@ -5,6 +5,7 @@ import { ChartBarIcon, FireIcon, HomeIcon, TruckIcon, LogoutIcon, ShoppingBagIco
 import { Logo } from './Logo';
 import { LogoIcon } from './LogoIcon';
 import { useAppContext } from '../store';
+import { ROLE_PERMISSIONS } from '../constants';
 
 interface SidebarProps {}
 
@@ -37,7 +38,6 @@ const Sidebar: React.FC<SidebarProps> = () => {
     const onLock = () => dispatch({ type: 'LOCK_TERMINAL' });
     const onToggle = () => dispatch({ type: 'TOGGLE_SIDEBAR' });
     
-    // Updated Navigation Order: Caja -> Dashboard -> Salón -> Delivery -> Retiro -> Cocina -> Gestión
     const allNavItems = [
         { id: 'caja' as View, label: 'Caja', icon: <CreditCardIcon className="h-6 w-6" /> },
         { id: 'dashboard' as View, label: 'Dashboard', icon: <ChartBarIcon className="h-6 w-6" /> },
@@ -48,16 +48,23 @@ const Sidebar: React.FC<SidebarProps> = () => {
         { id: 'gestion' as View, label: 'Gestión', icon: <AdjustmentsHorizontalIcon className="h-6 w-6" /> },
     ];
 
+    const currentRole = activeEmployee?.role || 'admin';
+    const allowedViews = ROLE_PERMISSIONS[currentRole] || [];
+
     const enabledModules = restaurantSettings?.modules;
 
-    const visibleNavItems = enabledModules 
-        ? allNavItems.filter(item => {
+    const visibleNavItems = allNavItems.filter(item => {
+        // First check RBAC
+        if (!allowedViews.includes(item.id)) return false;
+
+        // Then check Module Configuration
+        if (enabledModules) {
             if (item.id === 'local') return enabledModules.local !== false;
             if (item.id === 'delivery') return enabledModules.delivery !== false;
             if (item.id === 'retiro') return enabledModules.retiro !== false;
-            return true;
-        })
-        : allNavItems;
+        }
+        return true;
+    });
     
     const getRoleColorClass = (role: string) => {
         switch (role) {

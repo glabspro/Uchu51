@@ -10,6 +10,7 @@ import type {
     Employee
 } from './types';
 import { supabase } from './utils/supabase';
+import { DEFAULT_VIEW_BY_ROLE } from './constants';
 
 // --- CONSTANTS ---
 const RESTAURANT_ID = 'd290f1ee-6c54-4b01-90e6-d701748f0851';
@@ -189,13 +190,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
         }
         case 'EMPLOYEE_LOGIN_SUCCESS': {
             const employee = action.payload;
-            let initialView: View = 'dashboard';
-            
-            // Route based on role
-            if (employee.role === 'kitchen') initialView = 'cocina';
-            else if (employee.role === 'delivery') initialView = 'delivery';
-            else if (employee.role === 'waiter') initialView = 'local';
-            else if (employee.role === 'cashier') initialView = 'caja';
+            const initialView = DEFAULT_VIEW_BY_ROLE[employee.role] || 'local';
             
             const newState = {
                 ...state,
@@ -404,9 +399,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
              let localOrder = state.orders.find(o => o.id === orderId);
              
              if (!localOrder) {
-                 // In a real app we might fetch here, but synchronous reducer can't await. 
-                 // The side effect dispatch handles the DB fetch. 
-                 // Here we just update if we have it locally.
+                 // handled in side effect
              } else {
                  total = localOrder.total;
              }
@@ -430,7 +423,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
                 fecha: new Date().toISOString()
              };
 
-             // Note: Deep logic for caja session updates handled in side-effect dispatch
              return {
                 ...state,
                 orders: state.orders.map(o => o.id === orderId ? { ...o, estado: newStatus, pagoRegistrado } : o),
@@ -734,8 +726,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         baseDispatch(action);
         
         // IMPORTANT: Use the Ref to access state inside async operations
-        // This prevents the dispatch function from being recreated on every state change
-        // which was causing the infinite loop/white screen.
         const currentState = stateRef.current; 
 
         try {

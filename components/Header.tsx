@@ -1,6 +1,7 @@
+
 import React from 'react';
 import type { Turno, View } from '../types';
-import { SunIcon, MoonIcon } from './icons';
+import { SunIcon, MoonIcon, ArrowPathIcon } from './icons'; 
 import { useAppContext } from '../store';
 
 const viewTitles: { [key in View]: string } = {
@@ -14,10 +15,9 @@ const viewTitles: { [key in View]: string } = {
     caja: 'Caja',
 };
 
-
 const Header: React.FC = () => {
     const { state, dispatch } = useAppContext();
-    const { turno, theme, view } = state;
+    const { turno, theme, view, activeEmployee } = state;
 
     const onTurnoChange = (newTurno: Turno) => {
         dispatch({ type: 'SET_TURNO', payload: newTurno });
@@ -25,6 +25,10 @@ const Header: React.FC = () => {
 
     const onToggleTheme = () => {
         dispatch({ type: 'TOGGLE_THEME' });
+    };
+    
+    const onSwitchUser = () => {
+        dispatch({ type: 'LOCK_TERMINAL' });
     };
     
     const currentTitle = viewTitles[view] || 'Uchu51';
@@ -38,6 +42,18 @@ const Header: React.FC = () => {
                     
                     {/* Controls */}
                     <div className="flex items-center space-x-4">
+                        {/* Switch User Button (Visible for employees) */}
+                        {activeEmployee && (
+                            <button 
+                                onClick={onSwitchUser}
+                                className="flex items-center gap-2 bg-text-primary/5 hover:bg-text-primary/10 dark:bg-[#45535D] dark:hover:bg-[#56656E] px-3 py-1.5 rounded-full transition-colors text-sm font-semibold"
+                                title="Cambiar Usuario / Bloquear"
+                            >
+                                <ArrowPathIcon className="h-4 w-4" />
+                                <span className="hidden sm:inline">Cambiar Usuario</span>
+                            </button>
+                        )}
+
                         <button onClick={onToggleTheme} className="flex items-center justify-center h-10 w-10 rounded-full text-text-secondary hover:bg-surface dark:hover:bg-[#45535D] hover:text-primary dark:text-light-silver dark:hover:text-amber-400 transition-colors">
                             {theme === 'light' ? <MoonIcon className="h-6 w-6" /> : <SunIcon className="h-6 w-6" />}
                         </button>
