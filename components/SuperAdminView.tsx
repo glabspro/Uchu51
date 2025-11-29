@@ -191,11 +191,16 @@ const SuperAdminView: React.FC = () => {
                                             <td className="p-4 font-bold text-text-primary dark:text-zinc-200">{emp.name}</td>
                                             <td className="p-4">
                                                 <span className={`px-2 py-1 rounded-full text-xs font-bold uppercase
-                                                    ${emp.role === 'admin' ? 'bg-purple-100 text-purple-700' : 
-                                                      emp.role === 'kitchen' ? 'bg-orange-100 text-orange-700' :
-                                                      emp.role === 'delivery' ? 'bg-blue-100 text-blue-700' : 
-                                                      'bg-gray-100 text-gray-700'}`}>
-                                                    {emp.role === 'waiter' ? 'Mozo' : emp.role}
+                                                    ${emp.role === 'admin' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' : 
+                                                      emp.role === 'kitchen' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300' :
+                                                      emp.role === 'delivery' ? 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300' : 
+                                                      emp.role === 'cashier' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' :
+                                                      'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'}`}>
+                                                    {emp.role === 'waiter' ? 'Mozo' : 
+                                                     emp.role === 'cashier' ? 'Caja' :
+                                                     emp.role === 'kitchen' ? 'Cocina' :
+                                                     emp.role === 'delivery' ? 'Delivery' :
+                                                     emp.role === 'admin' ? 'Admin' : emp.role}
                                                 </span>
                                             </td>
                                             <td className="p-4 text-center">

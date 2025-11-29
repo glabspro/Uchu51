@@ -147,7 +147,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
         case 'LOGIN_INTERNAL_SUCCESS':
             return {
                 ...state,
-                appView: 'super_admin', // Changed: Redirect to Super Admin configuration view
+                appView: 'super_admin',
                 currentUserRole: 'admin',
                 restaurantId: RESTAURANT_ID,
                 loginError: null,
@@ -167,7 +167,12 @@ function appReducer(state: AppState, action: AppAction): AppState {
                 appView: 'admin',
                 activeEmployee: employee,
                 view: initialView,
-                loginError: null
+                loginError: null,
+                toasts: [...state.toasts, {
+                    id: Date.now(),
+                    message: `¡Bienvenido, ${employee.name}! Éxito en tu turno 🚀`,
+                    type: 'success'
+                }]
             };
         }
         case 'LOCK_TERMINAL':
@@ -357,7 +362,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
                  total = localOrder.total;
              } else {
                  // In case of reload, the order might not be in the reduced local list immediately, so we trust DB (or fetch it)
-                 // For now, assume consistent if UI calls this.
              }
              
              let newStatus: EstadoPedido = 'pagado';
@@ -379,7 +383,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
                 fecha: new Date().toISOString()
              };
              
-             if (!localOrder) return state; // Safety check
+             if (!localOrder) return state;
 
              return {
                 ...state,
@@ -444,9 +448,7 @@ const mapOrderToDb = (order: Pedido): any => ({
 });
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    // Use a ref to store the stable dispatch function to prevent infinite re-renders in consumers
     const dispatchRef = useRef<(action: AppAction) => void>(() => {});
-    
     const [state, baseDispatch] = useReducer(appReducer, initialState);
 
     // --- DATA FETCHING ---
@@ -677,7 +679,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }, []);
 
 
-    // --- ENHANCED DISPATCH FOR SYNC ---
     const dispatch = useCallback(async (action: AppAction) => {
         baseDispatch(action);
 
@@ -697,10 +698,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 }
                 case 'ADD_NEW_CUSTOMER': {
                     const customerData = action.payload;
-                    // Optimistic update already handled by baseDispatch, this is persistence
-                    // However, we rely on Supabase returning the real ID to properly link orders later if needed.
-                    // The baseDispatch for ADD_NEW_CUSTOMER just adds it to local state.
-                    // Realtime subscription will handle the final sync back from DB.
                     const { error } = await supabase.from('customers').insert({
                         restaurant_id: RESTAURANT_ID,
                         telefono: customerData.telefono,
@@ -779,9 +776,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                     
                     baseDispatch({ type: 'SAVE_POS_ORDER', payload: { orderData: newOrder, mesaNumero: 0 } });
                     
-                    // Fetch order total from DB if checking for existing order to ensure sync,
-                    // but here we are creating a new one.
-                    
                     const dbPayload = mapOrderToDb(newOrder);
                     await supabase.from('orders').insert(dbPayload);
                     break;
@@ -796,7 +790,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 case 'UPDATE_ORDER_STATUS': {
                     const { orderId, newStatus, user } = action.payload;
                     
-                    // Fetch current history to append properly if local state is stale (though reducer updates local state first)
                     const { data: currentOrder } = await supabase.from('orders').select('historial').eq('id', orderId).single();
                     const currentHist = currentOrder?.historial || [];
                     
@@ -863,12 +856,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 case 'CONFIRM_DELIVERY_PAYMENT': {
                     const { orderId, details } = action.payload;
                     
-                    // Robustness check: Ensure we have the latest order total
                     let total = 0;
                     let localOrder = state.orders.find(o => o.id === orderId);
                     
                     if (!localOrder) {
-                        // Order might not be in local state if page reloaded
                         const { data: dbOrder } = await supabase
                             .from('orders')
                             .select('*')
@@ -889,7 +880,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                         if (['mercadopago', 'yape', 'plin'].includes(details.metodo)) {
                             newStatus = 'en preparación';
                         } else {
-                            newStatus = 'en preparación'; // Payment confirmed at POS, sends to kitchen
+                            newStatus = 'en preparación'; 
                         }
                     }
 
@@ -908,7 +899,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
                     if (error) console.error("Failed to confirm payment in DB:", error);
 
-                    // Update Cash Session if active
                     let sessionId = state.cajaSession.id;
                     let currentSessionState = state.cajaSession;
 
@@ -942,7 +932,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                         };
                         
                         const newTotalVentas = currentSessionState.totalVentas + total;
-                        // Only add to expected cash if method is cash
                         const newTotalEfectivo = details.metodo === 'efectivo' 
                             ? currentSessionState.totalEfectivoEsperado + total 
                             : currentSessionState.totalEfectivoEsperado;

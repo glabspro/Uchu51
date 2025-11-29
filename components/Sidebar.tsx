@@ -46,7 +46,6 @@ const Sidebar: React.FC<SidebarProps> = () => {
         { id: 'retiro' as View, label: 'Retiro', icon: <ShoppingBagIcon className="h-6 w-6" /> },
         { id: 'cocina' as View, label: 'Cocina', icon: <FireIcon className="h-6 w-6" /> },
         { id: 'gestion' as View, label: 'Gestión', icon: <AdjustmentsHorizontalIcon className="h-6 w-6" /> },
-        // Recepción removed
     ];
 
     const enabledModules = restaurantSettings?.modules;
@@ -60,6 +59,16 @@ const Sidebar: React.FC<SidebarProps> = () => {
         })
         : allNavItems;
     
+    const getRoleColorClass = (role: string) => {
+        switch (role) {
+            case 'admin': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-200';
+            case 'kitchen': return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-200';
+            case 'delivery': return 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-200';
+            case 'cashier': return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200';
+            default: return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200'; // Waiter/Default
+        }
+    };
+    
     return (
         <aside className={`hidden md:flex ${isSidebarCollapsed ? 'w-20' : 'w-64'} bg-surface dark:bg-[#34424D] flex-col flex-shrink-0 border-r border-text-primary/5 dark:border-[#45535D] transition-all duration-300 ease-in-out`}>
             <div className={`h-16 flex items-center border-b border-text-primary/5 dark:border-[#45535D] transition-all duration-300 ${isSidebarCollapsed ? 'justify-center px-2' : 'px-6'}`}>
@@ -71,13 +80,19 @@ const Sidebar: React.FC<SidebarProps> = () => {
             {/* Active User Info */}
             {!isSidebarCollapsed && activeEmployee && (
                 <div className="px-4 pt-4 pb-2">
-                    <div className="bg-primary/10 dark:bg-[#2C3B45] rounded-lg p-3 flex items-center gap-3">
-                        <div className="bg-primary text-white p-2 rounded-full">
+                    <div className={`rounded-lg p-3 flex items-center gap-3 ${getRoleColorClass(activeEmployee.role)}`}>
+                        <div className="bg-white/20 p-2 rounded-full backdrop-blur-sm">
                             <UserIcon className="h-4 w-4" />
                         </div>
                         <div className="overflow-hidden">
-                            <p className="text-sm font-bold text-text-primary dark:text-white truncate">{activeEmployee.name}</p>
-                            <p className="text-xs text-text-secondary dark:text-zinc-400 capitalize">{activeEmployee.role}</p>
+                            <p className="text-sm font-bold truncate">{activeEmployee.name}</p>
+                            <p className="text-xs opacity-80 capitalize">
+                                {activeEmployee.role === 'waiter' ? 'Mozo' : 
+                                 activeEmployee.role === 'cashier' ? 'Caja' :
+                                 activeEmployee.role === 'kitchen' ? 'Cocina' :
+                                 activeEmployee.role === 'delivery' ? 'Delivery' :
+                                 activeEmployee.role === 'admin' ? 'Admin' : activeEmployee.role}
+                            </p>
                         </div>
                     </div>
                 </div>
