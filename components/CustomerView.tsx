@@ -217,7 +217,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
     }, [activePromotions]);
     
     const showPayNow = paymentMethodsEnabled.yape || paymentMethodsEnabled.plin || paymentMethodsEnabled.mercadopago;
-    const showPayLater = paymentMethodsEnabled.efectivo || paymentMethodsEnabled.tarjeta;
+    const showPayLater = paymentMethodsEnabled.efectivo || paymentMethodsEnabled.tarjeta || paymentMethodsEnabled.yape || paymentMethodsEnabled.plin;
 
     useEffect(() => {
         if (isOnlyMercadoPago) {
@@ -963,7 +963,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                                         }`}
                                     >
                                         <p className={`font-bold ${paymentChoice === 'payLater' ? 'text-primary' : 'text-text-primary dark:text-ivory-cream'}`}>Pagar al recibir</p>
-                                        <p className="text-xs text-text-secondary dark:text-light-silver">Efectivo o Tarjeta</p>
+                                        <p className="text-xs text-text-secondary dark:text-light-silver">Efectivo, Tarjeta o Billeteras</p>
                                     </button>
                                 )}
                             </div>
@@ -1041,13 +1041,35 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                                 <div className="animate-fade-in-up pt-4 space-y-3 border-t border-text-primary/10 dark:border-[#45535D]">
                                     <div className="grid grid-cols-2 gap-3">
                                         {paymentMethodsEnabled.efectivo && (
-                                            <button onClick={() => setPaymentMethod('efectivo')} className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'efectivo' ? 'bg-primary/10 border-primary text-primary' : 'bg-background dark:bg-gunmetal/50 border-transparent text-text-primary dark:text-ivory-cream'}`}>
+                                            <button 
+                                                onClick={() => setPaymentMethod('efectivo')} 
+                                                className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'efectivo' ? 'bg-green-500/10 border-green-500 text-green-600 dark:text-green-400' : 'bg-background dark:bg-gunmetal/50 border-transparent text-text-primary dark:text-ivory-cream hover:border-green-500/30'}`}
+                                            >
                                                 <CashIcon className="h-5 w-5"/> <span>Efectivo</span>
                                             </button>
                                         )}
                                         {paymentMethodsEnabled.tarjeta && (
-                                            <button onClick={() => setPaymentMethod('tarjeta')} className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'tarjeta' ? 'bg-primary/10 border-primary text-primary' : 'bg-background dark:bg-gunmetal/50 border-transparent text-text-primary dark:text-ivory-cream'}`}>
-                                                <CreditCardIcon className="h-5 w-5"/> <span>Tarjeta (POS)</span>
+                                            <button 
+                                                onClick={() => setPaymentMethod('tarjeta')} 
+                                                className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'tarjeta' ? 'bg-slate-500/10 border-slate-500 text-slate-600 dark:text-slate-300' : 'bg-background dark:bg-gunmetal/50 border-transparent text-text-primary dark:text-ivory-cream hover:border-slate-500/30'}`}
+                                            >
+                                                <CreditCardIcon className="h-5 w-5"/> <span>Tarjeta</span>
+                                            </button>
+                                        )}
+                                        {paymentMethodsEnabled.yape && (
+                                            <button 
+                                                onClick={() => setPaymentMethod('yape')} 
+                                                className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'yape' ? 'bg-[#742284]/10 border-[#742284] text-[#742284]' : 'bg-background dark:bg-gunmetal/50 border-transparent text-text-primary dark:text-ivory-cream hover:border-[#742284]/30'}`}
+                                            >
+                                                <YapeLogo className="h-6 w-auto"/>
+                                            </button>
+                                        )}
+                                        {paymentMethodsEnabled.plin && (
+                                            <button 
+                                                onClick={() => setPaymentMethod('plin')} 
+                                                className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'plin' ? 'bg-[#00A1E0]/10 border-[#00A1E0] text-[#00A1E0]' : 'bg-background dark:bg-gunmetal/50 border-transparent text-text-primary dark:text-ivory-cream hover:border-[#00A1E0]/30'}`}
+                                            >
+                                                <PlinLogo className="h-6 w-auto"/>
                                             </button>
                                         )}
                                     </div>
@@ -1070,6 +1092,12 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                                                     {formErrors.pagoConEfectivo && <p className="text-danger text-xs mt-1">{formErrors.pagoConEfectivo}</p>}
                                                 </div>
                                             )}
+                                        </div>
+                                    )}
+                                    
+                                    {(paymentMethod === 'yape' || paymentMethod === 'plin') && (
+                                        <div className="p-3 bg-background dark:bg-gunmetal/50 rounded-lg border border-dashed border-text-primary/20 text-center text-sm text-text-secondary dark:text-light-silver">
+                                            <p>Ten lista tu app de {paymentMethod === 'yape' ? 'Yape' : 'Plin'} para pagar al repartidor.</p>
                                         </div>
                                     )}
                                 </div>
@@ -1113,7 +1141,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                 subMessage = "Hubo un problema con tu pago. Inténtalo de nuevo.";
                 icon = <XMarkIcon className="h-20 w-20 text-danger mx-auto mb-4" />;
             }
-        } else if (['yape', 'plin'].includes(paymentMethod)) {
+        } else if (['yape', 'plin'].includes(paymentMethod) && paymentChoice === 'payNow') {
              statusMessage = "¡Casi listo!";
              subMessage = `Realiza el ${paymentMethod} ahora para confirmar tu pedido.`;
         }
@@ -1269,7 +1297,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                 ) : (
                     // Standard footer
                     <div className="space-y-3 w-full max-w-sm">
-                        {!isPaymentSimulated && ['yape', 'plin'].includes(paymentMethod) && (
+                        {!isPaymentSimulated && ['yape', 'plin'].includes(paymentMethod) && paymentChoice === 'payNow' && (
                              <button onClick={handleSimulateLocalPayment} disabled={isGeneratingPayment} className={`w-full bg-text-primary dark:bg-[#45535D] text-white font-bold py-3 rounded-xl shadow-lg border-2 border-dashed border-white/20 ${isGeneratingPayment ? 'opacity-70' : ''}`}>
                                 {isGeneratingPayment ? 'Verificando...' : 'Ya realicé el pago'}
                                 <p className="text-[10px] font-normal opacity-80">(Al hacer clic, notificas al restaurante que pagaste)</p>
