@@ -309,7 +309,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
         }
         
         // Search across all categories including promotions
-        const allItems = Object.values(groupedProducts).flat();
+        const allItems = Object.values(groupedProducts).flat() as Producto[];
         return allItems.filter(p => p.nombre.toLowerCase().includes(searchTerm.toLowerCase()));
     }, [products, searchTerm, activeCategory, groupedProducts]);
 
@@ -762,7 +762,10 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                         <ChevronLeftIcon className="h-6 w-6" />
                         Volver
                     </button>
-                    <h2 className="font-bold text-lg capitalize">{orderType}</h2>
+                    {/* Improved Title with Gradient and Font Size */}
+                    <h2 className="font-heading font-black text-3xl capitalize text-transparent bg-clip-text bg-gradient-to-r from-primary to-warning drop-shadow-sm">
+                        {orderType}
+                    </h2>
                     <div className="w-20"></div>
                 </div>
                 <div className="relative mt-4">
@@ -772,10 +775,23 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
             </header>
 
             {!searchTerm && (
-                <nav className="flex-shrink-0 border-b border-text-primary/10 dark:border-[#45535D] p-2 sticky top-28 z-40 bg-surface/80 dark:bg-[#45535D]/80 backdrop-blur-sm">
-                    <div className="flex space-x-2 overflow-x-auto pb-1">
+                <nav className="flex-shrink-0 border-b border-text-primary/10 dark:border-[#45535D] p-3 sticky top-32 z-40 bg-surface/90 dark:bg-[#45535D]/90 backdrop-blur-sm">
+                    {/* Hide Scrollbar with [&::-webkit-scrollbar]:hidden */}
+                    <div className="flex space-x-3 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden">
                         {categories.map(cat => (
-                            <button key={cat} onClick={() => setActiveCategory(cat)} className={`py-2 px-4 rounded-full font-semibold whitespace-nowrap text-sm transition-colors ${activeCategory === cat ? 'bg-primary text-white shadow-sm' : 'bg-background dark:bg-[#45535D] text-text-primary dark:text-ivory-cream hover:bg-text-primary/5'}`}>
+                            <button
+                                key={cat}
+                                onClick={() => setActiveCategory(cat)}
+                                className={`
+                                    relative py-2.5 px-6 rounded-full font-bold whitespace-nowrap text-sm transition-all duration-300 ease-out
+                                    ${activeCategory === cat
+                                        ? 'bg-gradient-to-r from-primary to-warning text-white shadow-lg shadow-primary/30 transform scale-105'
+                                        : 'bg-background dark:bg-[#34424D] text-text-secondary dark:text-light-silver hover:bg-text-primary/5 border border-text-primary/5'
+                                    }
+                                `}
+                            >
+                                {/* Add Sparkle Icon for Promotions Tab */}
+                                {cat === 'Promociones' && <SparklesIcon className="inline-block w-4 h-4 mr-1 -mt-0.5" />}
                                 {cat}
                             </button>
                         ))}
