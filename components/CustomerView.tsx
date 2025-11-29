@@ -5,6 +5,7 @@ import { useAppContext } from '../store';
 import { ShoppingBagIcon, TrashIcon, CheckCircleIcon, TruckIcon, UserIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon, MapPinIcon, SearchIcon, AdjustmentsHorizontalIcon, MinusIcon, PlusIcon, StarIcon, SunIcon, MoonIcon, ChevronLeftIcon, ChevronRightIcon, WhatsAppIcon, ArrowDownOnSquareIcon, ArrowUpOnSquareIcon, EllipsisVerticalIcon, XMarkIcon, SparklesIcon, HomeIcon, GlobeAltIcon, LockClosedIcon } from './icons';
 import SauceModal from './SauceModal';
 import ProductDetailModal from './ProductDetailModal';
+import PromoCustomizationModal from './PromoCustomizationModal';
 import { Logo } from './Logo';
 
 
@@ -70,6 +71,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
     const [orderNotes, setOrderNotes] = useState('');
     
     const [selectedProduct, setSelectedProduct] = useState<Producto | null>(null);
+    const [promoCustomization, setPromoCustomization] = useState<{ items: any[], name: string } | null>(null);
 
     const [isLocating, setIsLocating] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -404,7 +406,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
     };
 
     const handleAddPromotionToCart = (promo: Promocion) => {
-        let itemsToAdd: CartItem[] = [];
+        let itemsToAdd: (CartItem & { category?: string })[] = [];
         const promoId = promo.id;
 
         if (promo.tipo === 'combo_fijo' && promo.condiciones.productos) {
@@ -428,7 +430,8 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                             precioOriginal: productInfo.precio,
                             imagenUrl: productInfo.imagenUrl,
                             salsas: [],
-                            promocionId: promoId
+                            promocionId: promoId,
+                            category: productInfo.categoria // Pass category to check if sauce allowed
                         });
                     }
                 }
@@ -445,7 +448,8 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                     precioOriginal: productInfo.precio,
                     imagenUrl: productInfo.imagenUrl,
                     salsas: [],
-                    promocionId: promoId
+                    promocionId: promoId,
+                    category: productInfo.categoria
                 });
                 itemsToAdd.push({
                     id: productInfo.id,
@@ -456,16 +460,30 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                     precioOriginal: productInfo.precio,
                     imagenUrl: productInfo.imagenUrl,
                     salsas: [],
-                    promocionId: promoId
+                    promocionId: promoId,
+                    category: productInfo.categoria
                 });
             }
         }
         
         if (itemsToAdd.length > 0) {
-            setCart(currentCart => [...currentCart, ...itemsToAdd]);
-            setIsCartAnimating(true);
-            setTimeout(() => setIsCartAnimating(false), 500);
+            // Open modal instead of adding directly
+            setPromoCustomization({ items: itemsToAdd, name: promo.nombre });
         }
+    };
+
+    const handleConfirmPromoCart = (finalItems: ProductoPedido[]) => {
+        // Map back to CartItem and add to cart
+        const cartItems: CartItem[] = finalItems.map(item => ({
+            ...item,
+            cartItemId: Date.now() + Math.random() // Ensure unique IDs
+        }));
+        
+        setCart(currentCart => [...currentCart, ...cartItems]);
+        setPromoCustomization(null);
+        
+        setIsCartAnimating(true);
+        setTimeout(() => setIsCartAnimating(false), 500);
     };
 
     const validateForm = (): boolean => {
@@ -1319,6 +1337,23 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
 
     return (
         <div className="h-full bg-background dark:bg-gunmetal flex flex-col font-sans">
+            {selectedProduct && (
+                <ProductDetailModal
+                    product={selectedProduct}
+                    onClose={() => setSelectedProduct(null)}
+                    onAddToCart={handleAddToCartWithAnimation}
+                />
+            )}
+            
+            {promoCustomization && (
+                <PromoCustomizationModal
+                    promoName={promoCustomization.name}
+                    initialItems={promoCustomization.items}
+                    onClose={() => setPromoCustomization(null)}
+                    onConfirm={handleConfirmPromoCart}
+                />
+            )}
+
             {stage === 'selection' && renderSelectionScreen()}
             {stage === 'catalog' && renderCatalogScreen()}
             {stage === 'checkout' && renderCheckoutScreen()}
