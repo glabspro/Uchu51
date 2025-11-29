@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../store';
 import { Logo } from './Logo';
-import { LockClosedIcon, UserIcon } from './icons';
+import { LockClosedIcon, HomeIcon } from './icons';
 
 const StaffLogin: React.FC = () => {
     const { state, dispatch } = useAppContext();
@@ -38,6 +38,10 @@ const StaffLogin: React.FC = () => {
         }
     };
 
+    const handleBackToHome = () => {
+        dispatch({ type: 'LOGOUT' });
+    };
+
     // Auto-submit when pin is 4 digits
     React.useEffect(() => {
         if (pin.length === 4) {
@@ -46,8 +50,18 @@ const StaffLogin: React.FC = () => {
     }, [pin]);
 
     return (
-        <div className="min-h-screen bg-background dark:bg-gunmetal flex flex-col items-center justify-center p-4">
-            <div className="mb-8 animate-fade-in-up">
+        <div className="min-h-screen bg-background dark:bg-gunmetal flex flex-col items-center justify-center p-4 relative">
+            
+            {/* Back Button positioned absolutely for desktop, relative flow for mobile */}
+            <button 
+                onClick={handleBackToHome}
+                className="absolute top-4 left-4 flex items-center gap-2 text-text-secondary dark:text-zinc-400 hover:text-primary dark:hover:text-orange-400 transition-colors font-semibold px-4 py-2 rounded-lg hover:bg-surface dark:hover:bg-zinc-800"
+            >
+                <HomeIcon className="h-5 w-5" />
+                <span className="hidden sm:inline">Volver a la Tienda</span>
+            </button>
+
+            <div className="mb-8 animate-fade-in-up mt-12 sm:mt-0">
                 <Logo className="h-16 w-auto" variant={state.theme === 'dark' ? 'light' : 'default'} />
                 <p className="text-center text-text-secondary dark:text-zinc-400 mt-2 font-semibold">Acceso de Personal</p>
             </div>
@@ -110,9 +124,12 @@ const StaffLogin: React.FC = () => {
                 </div>
             </div>
             
-            <p className="mt-8 text-sm text-text-secondary dark:text-zinc-500">
-                Uchu51 - Sistema de Gestión v1.0
-            </p>
+            <button 
+                onClick={handleBackToHome}
+                className="mt-8 text-sm font-bold text-text-secondary dark:text-zinc-500 hover:text-primary dark:hover:text-white transition-colors flex items-center gap-2 sm:hidden"
+            >
+                <HomeIcon className="h-4 w-4" /> Volver a la Tienda
+            </button>
         </div>
     );
 };
