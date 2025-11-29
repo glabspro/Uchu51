@@ -984,19 +984,55 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                                 <div className="animate-fade-in-up pt-4 space-y-3 border-t border-text-primary/10 dark:border-[#45535D]">
                                     <p className="text-sm text-text-secondary dark:text-light-silver mb-2">Selecciona tu billetera digital:</p>
                                     <div className="grid grid-cols-2 gap-3">
+                                        {/* Yape Button */}
                                         {paymentMethodsEnabled.yape && (
-                                            <button onClick={() => setPaymentMethod('yape')} className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'yape' ? 'bg-primary/10 border-primary text-primary' : 'bg-background dark:bg-gunmetal/50 border-transparent text-text-primary dark:text-ivory-cream'}`}>
-                                                <DevicePhoneMobileIcon className="h-5 w-5"/> <span>Yape</span>
+                                            <button 
+                                                onClick={() => setPaymentMethod('yape')} 
+                                                className={`relative overflow-hidden group p-4 rounded-xl border-2 transition-all duration-300 hover:shadow-lg ${paymentMethod === 'yape' ? 'border-[#742284] bg-[#742284] text-white shadow-md' : 'border-[#742284]/30 bg-[#742284]/5 text-[#742284] hover:bg-[#742284]/10'}`}
+                                            >
+                                                <div className="flex flex-col items-center justify-center gap-2 relative z-10">
+                                                    <DevicePhoneMobileIcon className="h-8 w-8" />
+                                                    <span className="font-bold text-lg">Yape</span>
+                                                </div>
+                                                {paymentMethod === 'yape' && (
+                                                    <div className="absolute top-2 right-2">
+                                                        <CheckCircleIcon className="h-5 w-5 text-white" />
+                                                    </div>
+                                                )}
                                             </button>
                                         )}
+                                        {/* Plin Button */}
                                         {paymentMethodsEnabled.plin && (
-                                            <button onClick={() => setPaymentMethod('plin')} className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'plin' ? 'bg-primary/10 border-primary text-primary' : 'bg-background dark:bg-gunmetal/50 border-transparent text-text-primary dark:text-ivory-cream'}`}>
-                                                <DevicePhoneMobileIcon className="h-5 w-5"/> <span>Plin</span>
+                                            <button 
+                                                onClick={() => setPaymentMethod('plin')} 
+                                                className={`relative overflow-hidden group p-4 rounded-xl border-2 transition-all duration-300 hover:shadow-lg ${paymentMethod === 'plin' ? 'border-[#00A1E0] bg-[#00A1E0] text-white shadow-md' : 'border-[#00A1E0]/30 bg-[#00A1E0]/5 text-[#00A1E0] hover:bg-[#00A1E0]/10'}`}
+                                            >
+                                                <div className="flex flex-col items-center justify-center gap-2 relative z-10">
+                                                    <DevicePhoneMobileIcon className="h-8 w-8" />
+                                                    <span className="font-bold text-lg">Plin</span>
+                                                </div>
+                                                {paymentMethod === 'plin' && (
+                                                    <div className="absolute top-2 right-2">
+                                                        <CheckCircleIcon className="h-5 w-5 text-white" />
+                                                    </div>
+                                                )}
                                             </button>
                                         )}
+                                        {/* Mercado Pago Button */}
                                         {paymentMethodsEnabled.mercadopago && (
-                                            <button onClick={() => setPaymentMethod('mercadopago')} className={`col-span-2 flex items-center justify-center gap-2 p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'mercadopago' ? 'bg-primary/10 border-primary text-primary' : 'bg-background dark:bg-gunmetal/50 border-transparent text-text-primary dark:text-ivory-cream'}`}>
-                                                <MercadoPagoLogo className="h-5 w-auto"/> <span>Mercado Pago</span>
+                                            <button 
+                                                onClick={() => setPaymentMethod('mercadopago')} 
+                                                className={`col-span-2 relative overflow-hidden group p-4 rounded-xl border-2 transition-all duration-300 hover:shadow-lg ${paymentMethod === 'mercadopago' ? 'border-[#009EE3] bg-[#009EE3] text-white shadow-md' : 'border-[#009EE3]/30 bg-[#009EE3]/5 text-[#009EE3] hover:bg-[#009EE3]/10'}`}
+                                            >
+                                                <div className="flex flex-row items-center justify-center gap-3 relative z-10">
+                                                    <MercadoPagoLogo className="h-8 w-auto" />
+                                                    <span className="font-bold text-lg">Mercado Pago</span>
+                                                </div>
+                                                {paymentMethod === 'mercadopago' && (
+                                                    <div className="absolute top-3 right-3">
+                                                        <CheckCircleIcon className="h-5 w-5 text-white" />
+                                                    </div>
+                                                )}
                                             </button>
                                         )}
                                     </div>
@@ -1057,273 +1093,3 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
     );
 
     const renderConfirmationScreen = () => {
-        const yapeConfig = restaurantSettings?.paymentMethods?.yape;
-        const plinConfig = restaurantSettings?.paymentMethods?.plin;
-        const mpConfig = restaurantSettings?.paymentMethods?.mercadopago;
-        
-        let onlinePaymentConfig: any = null;
-        let methodLabel = '';
-
-        if (paymentMethod === 'yape') {
-            onlinePaymentConfig = yapeConfig;
-            methodLabel = 'Yape';
-        } else if (paymentMethod === 'plin') {
-            onlinePaymentConfig = plinConfig;
-            methodLabel = 'Plin';
-        } else if (paymentMethod === 'mercadopago') {
-            onlinePaymentConfig = mpConfig;
-            methodLabel = 'Mercado Pago';
-        } else {
-             if (yapeConfig?.enabled) { onlinePaymentConfig = yapeConfig; methodLabel = 'Yape'; }
-             else if (plinConfig?.enabled) { onlinePaymentConfig = plinConfig; methodLabel = 'Plin'; }
-             else if (mpConfig?.enabled) { onlinePaymentConfig = mpConfig; methodLabel = 'Mercado Pago'; }
-        }
-
-        const whatsappMessage = encodeURIComponent(`Hola, acabo de realizar el pedido ${newOrderId}.`);
-        const whatsappLink = `https://wa.me/51${onlinePaymentConfig?.phoneNumber || ''}?text=${whatsappMessage}`;
-        
-        const isMpLink = methodLabel === 'Mercado Pago' && onlinePaymentConfig?.phoneNumber?.startsWith('http');
-        const mpPaymentLink = methodLabel === 'Mercado Pago' ? onlinePaymentConfig?.paymentLink : null;
-        const mpPublicKey = methodLabel === 'Mercado Pago' ? onlinePaymentConfig?.publicKey : null;
-        const mpAccessToken = methodLabel === 'Mercado Pago' ? onlinePaymentConfig?.accessToken : null;
-
-        const ensureAbsoluteUrl = (url: string | undefined) => {
-            if (!url) return '#';
-            if (url.startsWith('http://') || url.startsWith('https://')) {
-                return url;
-            }
-            return `https://${url}`;
-        };
-        
-        const handleMercadoPagoCheckout = async () => {
-            if (!mpAccessToken) {
-                alert("No se ha configurado un Access Token. Por favor usa el Link de Pago.");
-                return;
-            }
-            
-            setIsGeneratingPayment(true);
-            try {
-                const items = [{
-                    title: `Pedido ${newOrderId} en Uchu51`,
-                    description: `Orden completa ${newOrderId}`,
-                    quantity: 1,
-                    currency_id: 'PEN',
-                    unit_price: lastOrderTotal
-                }];
-
-                const payerInfo = {
-                    name: customerInfo.nombre,
-                    email: customerInfo.email || 'test_user_123456@testuser.com', // Fallback email for Sandbox testing if user doesn't provide one
-                    phone: {
-                        number: customerInfo.telefono
-                    }
-                };
-
-                const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${mpAccessToken}`
-                    },
-                    body: JSON.stringify({
-                        items: items,
-                        payer: payerInfo,
-                        // Pass Order ID to recover state on return
-                        external_reference: newOrderId,
-                        back_urls: {
-                            success: window.location.href,
-                            failure: window.location.href,
-                            pending: window.location.href
-                        },
-                        auto_return: "approved",
-                        binary_mode: false, // IMPORTANT: Must be false to allow installments
-                        statement_descriptor: "UCHU51",
-                        payment_methods: {
-                            installments: 12, // Explicitly allow up to 12
-                            default_installments: null // Ensure user can select
-                        }
-                    })
-                });
-
-                const data = await response.json();
-                
-                if (response.ok && data.init_point) {
-                    window.location.href = data.init_point; 
-                } else {
-                    console.error("Mercado Pago Error:", data);
-                    throw new Error(data.message || "Error al generar preferencia");
-                }
-                
-            } catch (error) {
-                console.error("Error generando pago:", error);
-                alert("Hubo un problema conectando con Mercado Pago (Posible bloqueo CORS o datos inválidos). Por favor intenta usar el Link de Pago directo si está configurado.");
-            } finally {
-                setIsGeneratingPayment(false);
-            }
-        };
-
-
-        const handleSimulatePayment = () => {
-            onConfirmPayment(newOrderId, { metodo: paymentMethod, montoPagado: lastOrderTotal });
-            setIsPaymentSimulated(true);
-        };
-
-        return (
-            <div className="flex flex-col items-center justify-center text-center h-full p-4">
-                 {paymentChoice === 'payLater' ? (
-                    <>
-                        <CheckCircleIcon className="h-20 w-20 text-success mb-4" />
-                        <h2 className="text-3xl font-heading font-bold text-text-primary dark:text-white">¡Pedido Recibido!</h2>
-                        <p className="text-lg text-text-secondary dark:text-light-silver mt-2">Tu pedido <span className="font-bold text-primary">{newOrderId}</span> ya está en preparación.</p>
-                    </>
-                ) : (
-                    <>
-                         {isPaymentSimulated || mpPaymentStatus === 'approved' ? (
-                             <div className="text-center py-8">
-                                <CheckCircleIcon className="h-16 w-16 text-success mx-auto mb-4" />
-                                <h3 className="font-bold text-lg text-success">¡Pago Confirmado!</h3>
-                                <p className="text-sm text-text-secondary dark:text-light-silver">Tu pedido <span className="font-bold text-primary">{newOrderId}</span> ha sido pagado y está en preparación.</p>
-                            </div>
-                        ) : mpPaymentStatus === 'rejected' ? (
-                            <div className="text-center py-8">
-                                <XMarkIcon className="h-16 w-16 text-danger mx-auto mb-4" />
-                                <h3 className="font-bold text-lg text-danger">Pago Rechazado</h3>
-                                <p className="text-sm text-text-secondary dark:text-light-silver mb-4">Tu banco o Mercado Pago rechazó la transacción.</p>
-                                <button onClick={() => { setMpPaymentStatus(null); setIsGeneratingPayment(false); }} className="bg-primary text-white px-4 py-2 rounded-lg">Intentar de nuevo</button>
-                            </div>
-                        ) : (
-                            <div className="mt-6 p-6 bg-surface dark:bg-[#34424D] rounded-2xl w-full max-w-sm border border-text-primary/5 dark:border-[#45535D]">
-                                <h2 className="text-xl font-heading font-bold text-text-primary dark:text-white">¡Pedido Recibido!</h2>
-                                <p className="text-base text-text-secondary dark:text-light-silver mt-1 mb-6">Pedido <span className="font-bold text-primary">{newOrderId}</span></p>
-                                
-                                {isOnlyMercadoPago ? (
-                                    // --- EXCLUSIVE MERCADO PAGO FLOW ---
-                                    <div className="animate-fade-in-up">
-                                        <p className="text-sm text-text-secondary dark:text-light-silver mb-2">Total a pagar:</p>
-                                        <p className="text-3xl font-mono font-extrabold text-[#009EE3] mb-6">S/.{lastOrderTotal.toFixed(2)}</p>
-
-                                        {/* Priority 1: Dynamic Checkout Button if keys exist */}
-                                        {mpAccessToken ? (
-                                            <button 
-                                                onClick={handleMercadoPagoCheckout}
-                                                disabled={isGeneratingPayment}
-                                                className="w-full bg-[#009EE3] hover:bg-[#007db3] text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg transition-all mb-3 disabled:opacity-70"
-                                            >
-                                                {isGeneratingPayment ? (
-                                                    <span className="animate-pulse">Generando pasarela...</span>
-                                                ) : (
-                                                    <>
-                                                        <MercadoPagoLogo className="h-5 w-auto"/> Pagar Ahora
-                                                    </>
-                                                )}
-                                            </button>
-                                        ) : null}
-
-                                        {/* Priority 2: Static Payment Link if keys fail or don't exist */}
-                                        {mpPaymentLink && mpPaymentLink.trim() !== '' && (
-                                            <a 
-                                                href={ensureAbsoluteUrl(mpPaymentLink)} 
-                                                target="_blank" 
-                                                rel="noopener noreferrer" 
-                                                className={`block w-full font-bold py-3 px-4 rounded-xl text-center mb-4 transition-transform hover:-translate-y-0.5 border-2 border-[#009EE3] text-[#009EE3] hover:bg-[#009EE3]/10`}
-                                            >
-                                                {mpAccessToken ? 'Link de Pago Alternativo' : 'Pagar con Link'}
-                                            </a>
-                                        )}
-
-                                        {/* Completion Action */}
-                                        <button
-                                            onClick={handleSimulatePayment}
-                                            className="mt-6 text-sm font-semibold text-text-secondary hover:text-primary dark:text-light-silver dark:hover:text-white underline decoration-dotted underline-offset-4"
-                                        >
-                                            Confirmar transacción completada
-                                        </button>
-                                    </div>
-                                ) : (
-                                    // --- STANDARD FLOW (YAPE/PLIN/MIXED) ---
-                                    <>
-                                        <h3 className="font-bold mb-2">Paga S/.{lastOrderTotal.toFixed(2)} con {methodLabel}</h3>
-                                        
-                                        {methodLabel !== 'Mercado Pago' && onlinePaymentConfig?.qrUrl ? (
-                                            <img src={onlinePaymentConfig?.qrUrl} alt="QR Code" className="w-40 h-40 mx-auto rounded-lg mb-2" />
-                                        ) : (
-                                            methodLabel !== 'Mercado Pago' && (
-                                                <div className="w-40 h-40 mx-auto rounded-lg bg-gray-200 flex items-center justify-center mb-2">
-                                                    <p className="text-xs text-text-secondary">Sin QR</p>
-                                                </div>
-                                            )
-                                        )}
-
-                                        {methodLabel !== 'Mercado Pago' && (
-                                            <p className="mt-2 text-sm">Titular: <span className="font-semibold">{onlinePaymentConfig?.holderName || ''}</span></p>
-                                        )}
-                                        
-                                        {(!mpPaymentLink && !mpAccessToken && methodLabel === 'Mercado Pago') || (methodLabel !== 'Mercado Pago') ? (
-                                            isMpLink ? (
-                                                 <a href={ensureAbsoluteUrl(onlinePaymentConfig?.phoneNumber)} target="_blank" rel="noreferrer" className="block mt-2 text-primary font-bold underline text-sm break-all">
-                                                    Ir al Link de Pago
-                                                 </a>
-                                            ) : (
-                                                 <p className="text-sm">Número: <span className="font-semibold">{onlinePaymentConfig?.phoneNumber || ''}</span></p>
-                                            )
-                                        ) : null}
-
-                                        <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="mt-4 w-full bg-green-500 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-green-600 transition-colors">
-                                           <WhatsAppIcon className="h-6 w-6"/> Enviar voucher por WhatsApp
-                                        </a>
-                                        
-                                        <button
-                                            onClick={handleSimulatePayment}
-                                            className="mt-2 w-full bg-transparent border-2 border-dashed border-text-secondary/50 text-text-secondary dark:text-light-silver font-bold py-2 px-4 rounded-xl flex items-center justify-center gap-2 hover:border-primary hover:text-primary transition-colors"
-                                        >
-                                            Ya realicé el pago
-                                        </button>
-                                    </>
-                                )}
-                            </div>
-                        )}
-                    </>
-                )}
-                
-                <button onClick={() => setStage('selection')} className="mt-8 font-semibold text-primary hover:underline">
-                    Hacer otro pedido
-                </button>
-            </div>
-        );
-    }
-    
-    const mainContent = () => {
-        switch (stage) {
-            case 'catalog':
-                return renderCatalogScreen();
-            case 'checkout':
-                return renderCheckoutScreen();
-            case 'confirmation':
-                return renderConfirmationScreen();
-            case 'selection':
-            default:
-                return renderSelectionScreen();
-        }
-    };
-
-    return (
-        <div className="min-h-screen bg-background dark:bg-gunmetal font-sans flex flex-col relative">
-            {showGoBackConfirm && (
-                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[101] p-4">
-                    <div className="bg-surface dark:bg-[#34424D] rounded-2xl shadow-xl p-6 max-w-sm w-full text-center">
-                        <h3 className="text-xl font-bold">¿Descartar Pedido?</h3>
-                        <p className="my-3">Si vuelves, se vaciará tu carrito. ¿Estás seguro?</p>
-                        <div className="grid grid-cols-2 gap-3 mt-6">
-                            <button onClick={() => setShowGoBackConfirm(false)} className="bg-text-primary/10 font-bold py-2 px-4 rounded-lg">Cancelar</button>
-                            <button onClick={confirmGoBack} className="bg-danger text-white font-bold py-2 px-4 rounded-lg">Sí, descartar</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-            {selectedProduct && <ProductDetailModal product={selectedProduct} onClose={() => setSelectedProduct(null)} onAddToCart={handleAddToCartWithAnimation} />}
-            {showInstallInstructions && renderInstallInstructions()}
-            {showPromosModal && renderPromosModal()}
-            {mainContent()}
-        </div>
-    );
-};
