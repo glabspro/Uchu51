@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import type { Pedido, Producto, ProductoPedido, Cliente, Salsa, TipoPedido, MetodoPago, Theme, ClienteLeal, LoyaltyProgram, Promocion } from '../types';
 import { useAppContext } from '../store';
@@ -20,7 +21,8 @@ type FormErrors = {
 };
 type PaymentChoice = 'payNow' | 'payLater';
 
-// Mercadopago Logo Component for this view
+// --- LOGOS ---
+
 const MercadoPagoLogo = ({ className }: { className?: string }) => (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
         <path d="M16.34 9.32C16.34 9.32 14.28 8.09 12 8.09C9.72 8.09 7.67 9.33 7.67 9.33C7.26 9.58 6.74 9.54 6.39 9.18L4.81 7.6C4.42 7.21 4.42 6.58 4.81 6.19C5.2 5.8 5.83 5.8 6.22 6.19L7.26 7.23C7.26 7.23 8.45 6.54 10.1 6.25V2H13.9V6.24C15.55 6.53 16.74 7.23 16.74 7.23L17.78 6.19C18.17 5.8 18.8 5.8 19.19 6.19C19.58 6.58 19.58 7.21 19.19 7.6L17.61 9.18C17.26 9.53 16.74 9.58 16.34 9.32ZM14.15 13.5C14.15 13.5 13.55 13.25 12 13.25C10.45 13.25 9.85 13.5 9.85 13.5C9.35 13.71 9 14.21 9 14.75V19H15V14.75C15 14.21 14.65 13.71 14.15 13.5ZM22 12C22 17.52 17.52 22 12 22C6.48 22 2 17.52 2 12C2 6.48 6.48 2 12 2C17.52 2 22 6.48 22 12Z" fillOpacity="0" />
@@ -28,7 +30,20 @@ const MercadoPagoLogo = ({ className }: { className?: string }) => (
     </svg>
 );
 
-// FIX: Change to named export to fix import issue
+const YapeLogo = ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 80 30" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <text x="50%" y="50%" dominantBaseline="central" textAnchor="middle" fontFamily="sans-serif" fontWeight="900" fontSize="24" fontStyle="italic" letterSpacing="-1">yape</text>
+    </svg>
+);
+
+const PlinLogo = ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 80 30" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <text x="50%" y="50%" dominantBaseline="central" textAnchor="middle" fontFamily="sans-serif" fontWeight="900" fontSize="24">plin</text>
+    </svg>
+);
+
+// --- MAIN COMPONENT ---
+
 export const CustomerView: React.FC<CustomerViewProps> = () => {
     const { state, dispatch } = useAppContext();
     const { products, customers, loyaltyPrograms, promotions, theme, installPrompt, restaurantSettings, isLoading } = state;
@@ -46,7 +61,6 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
     const [showPromosModal, setShowPromosModal] = useState(false);
     const [currentSlide, setCurrentSlide] = useState(0);
     const [isPaymentSimulated, setIsPaymentSimulated] = useState(false);
-    const [isGeneratingPayment, setIsGeneratingPayment] = useState(false);
     const [mpPaymentStatus, setMpPaymentStatus] = useState<'pending' | 'approved' | 'rejected' | null>(null);
     const hasProcessedReturn = useRef(false);
 
@@ -70,6 +84,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
 
     const [logoClickCount, setLogoClickCount] = useState(0);
     const [logoClickTimer, setLogoClickTimer] = useState<number | null>(null);
+    const [isGeneratingPayment, setIsGeneratingPayment] = useState(false);
 
     const onPlaceOrder = (order: Omit<Pedido, 'id' | 'fecha' | 'turno' | 'historial' | 'areaPreparacion' | 'estado' | 'gananciaEstimada'>) => dispatch({ type: 'SAVE_ORDER', payload: order });
     const onConfirmPayment = (orderId: string, details: { metodo: MetodoPago; montoPagado?: number }) => {
@@ -80,22 +95,18 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
 
     // Detect Payment Return from Mercado Pago
     useEffect(() => {
-        // Wait for initial data load to prevent race conditions where order doesn't exist yet in state
         if (isLoading) return;
-
         if (hasProcessedReturn.current) return;
 
         const searchParams = new URLSearchParams(window.location.search);
         const collectionStatus = searchParams.get('collection_status');
         const externalReference = searchParams.get('external_reference');
-        const status = searchParams.get('status'); // Alternative param
+        const status = searchParams.get('status');
 
-        // If returning from Mercado Pago
         if (externalReference && (collectionStatus || status)) {
             hasProcessedReturn.current = true;
             const finalStatus = collectionStatus || status;
             
-            // Restore basic state to show the confirmation screen
             setNewOrderId(externalReference);
             setStage('confirmation');
             setPaymentMethod('mercadopago');
@@ -103,16 +114,14 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
 
             if (finalStatus === 'approved') {
                 setMpPaymentStatus('approved');
-                // Automatically update system status
-                onConfirmPayment(externalReference, { metodo: 'mercadopago', montoPagado: 0 }); // Amount handled in context
-                setTimeout(() => setIsPaymentSimulated(true), 500); // Visual confirmation
+                onConfirmPayment(externalReference, { metodo: 'mercadopago', montoPagado: 0 });
+                setTimeout(() => setIsPaymentSimulated(true), 500);
             } else if (finalStatus === 'rejected' || finalStatus === 'failure') {
                 setMpPaymentStatus('rejected');
             } else {
                 setMpPaymentStatus('pending');
             }
             
-            // Try to recover total from local storage if available, or default (it's visual only at this point)
             const storedTotal = localStorage.getItem(`order_total_${externalReference}`);
             if (storedTotal) {
                 setLastOrderTotal(parseFloat(storedTotal));
@@ -133,7 +142,6 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
         }
     }, [restaurantSettings]);
 
-    // Detect if Mercado Pago is the ONLY enabled method
     const isOnlyMercadoPago = useMemo(() => {
         return paymentMethodsEnabled.mercadopago &&
                !paymentMethodsEnabled.efectivo &&
@@ -194,12 +202,11 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
         }
     }, [customerInfo.telefono, customers]);
 
-    // Control Promotion Modal Appearance using sessionStorage
+    // Control Promotion Modal Appearance
     useEffect(() => {
         const sessionKey = 'uchu_promos_shown';
         const hasShown = sessionStorage.getItem(sessionKey);
         
-        // Check if returning from payment to prevent modal overlap
         const searchParams = new URLSearchParams(window.location.search);
         const isPaymentReturn = searchParams.has('external_reference') || searchParams.has('collection_status') || searchParams.has('status');
 
@@ -268,18 +275,15 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
             return acc;
         }, {} as Record<string, Producto[]>);
 
-        // Inject Promotions as a pseudo-category
         if (activePromotions.length > 0) {
             const promoProducts = activePromotions.map(promo => {
                 let displayPrice = 0;
-                // Calculate display price for the card
                 if (promo.tipo === 'combo_fijo') {
                     displayPrice = promo.condiciones.precioFijo || 0;
                 } else if (promo.tipo === 'dos_por_uno' && promo.condiciones.productoId_2x1) {
                     const targetProduct = products.find(p => p.id === promo.condiciones.productoId_2x1);
                     displayPrice = targetProduct ? targetProduct.precio : 0;
                 } else if (promo.tipo === 'descuento_porcentaje') {
-                    // For general discount, show 0 or handle differently
                     displayPrice = 0; 
                 }
 
@@ -289,11 +293,11 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                     categoria: 'Promociones',
                     precio: displayPrice,
                     costo: 0,
-                    stock: 999, // Always available
+                    stock: 999, 
                     descripcion: promo.descripcion,
                     imagenUrl: getPromoImageUrl(promo, products) || '',
                     restaurant_id: promo.restaurant_id,
-                    isPromo: true, // Special flag to handle click
+                    isPromo: true, 
                     originalPromo: promo
                 } as unknown as Producto;
             });
@@ -307,14 +311,12 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
         if (!searchTerm) {
             return groupedProducts[activeCategory] || [];
         }
-        
-        // Search across all categories including promotions
         const allItems = Object.values(groupedProducts).flat() as Producto[];
         return allItems.filter(p => p.nombre.toLowerCase().includes(searchTerm.toLowerCase()));
     }, [products, searchTerm, activeCategory, groupedProducts]);
 
     const categories = useMemo(() => {
-        const productCategories = Object.keys(groupedProducts).filter(c => c !== 'Promociones'); // Filter out to re-order
+        const productCategories = Object.keys(groupedProducts).filter(c => c !== 'Promociones'); 
         return activePromotions.length > 0 ? ['Promociones', ...productCategories] : productCategories;
     }, [groupedProducts, activePromotions]);
     
@@ -461,7 +463,6 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
         
         if (itemsToAdd.length > 0) {
             setCart(currentCart => [...currentCart, ...itemsToAdd]);
-            // Optional: Show animation or feedback
             setIsCartAnimating(true);
             setTimeout(() => setIsCartAnimating(false), 500);
         }
@@ -497,22 +498,20 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
         
         const finalCart: ProductoPedido[] = cart.map(({ cartItemId, ...rest }) => rest);
         
-        // Determine the actual online payment method if 'payNow' is selected
         let effectivePaymentMethod: MetodoPago = paymentMethod;
 
         if (paymentChoice === 'payNow') {
             if (isOnlyMercadoPago) {
                 effectivePaymentMethod = 'mercadopago';
             } else {
-                if (paymentMethodsEnabled.yape) effectivePaymentMethod = 'yape';
-                else if (paymentMethodsEnabled.plin) effectivePaymentMethod = 'plin';
-                else if (paymentMethodsEnabled.mercadopago) effectivePaymentMethod = 'mercadopago';
+                if (paymentMethodsEnabled.yape && paymentMethod !== 'yape') effectivePaymentMethod = 'yape';
+                if (paymentMethodsEnabled.plin && paymentMethod !== 'plin') effectivePaymentMethod = 'plin';
+                if (paymentMethodsEnabled.mercadopago && paymentMethod !== 'mercadopago') effectivePaymentMethod = 'mercadopago';
+                
+                if (['yape', 'plin', 'mercadopago'].includes(paymentMethod)) {
+                     effectivePaymentMethod = paymentMethod;
+                }
             }
-        }
-
-        // Override if specific selection made
-        if (paymentChoice === 'payNow' && ['yape', 'plin', 'mercadopago'].includes(paymentMethod)) {
-             effectivePaymentMethod = paymentMethod;
         }
 
         const newOrder: Omit<Pedido, 'id' | 'fecha' | 'turno' | 'historial' | 'areaPreparacion' | 'estado' | 'gananciaEstimada'> = {
@@ -532,9 +531,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
         
         const generatedId = `PED-${String(Date.now()).slice(-4)}`;
         setNewOrderId(generatedId);
-        setLastOrderTotal(total); // Store the total before clearing cart
-        
-        // Persist total for recovery after MP redirect
+        setLastOrderTotal(total); 
         localStorage.setItem(`order_total_${generatedId}`, total.toString());
 
         setStage('confirmation');
@@ -607,7 +604,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
     const modules = restaurantSettings?.modules;
     const isOnlyDelivery = modules?.delivery !== false && modules?.retiro === false;
 
-    // ... (Install Instructions and Promo Modal Renderers omitted for brevity, same as before) ...
+    // ... (Install Instructions and Promo Modal Renderers kept same) ...
      const renderInstallInstructions = () => (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[101] p-4 animate-fade-in-scale">
              <div className="bg-surface dark:bg-[#34424D] rounded-2xl shadow-xl p-6 max-w-sm w-full text-center relative">
@@ -706,7 +703,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                 <div onClick={handleLogoClick} className="cursor-pointer" title="Acceso de administrador">
                     <Logo className="h-9 w-auto" variant={theme === 'dark' ? 'light' : 'default'} />
                 </div>
-                <button onClick={onToggleTheme} className="flex items-center justify-center h-10 w-10 rounded-full text-text-secondary dark:text-light-silver hover:bg-surface dark:hover:bg-[#34424D] hover:text-primary dark:hover:text-amber-400 transition-colors">
+                <button onClick={onToggleTheme} className="flex items-center justify-center h-10 w-10 rounded-full text-text-secondary dark:text-light-silver hover:bg-surface dark:hover:bg-[#34424D] hover:text-primary dark:hover:text-orange-400 transition-colors">
                     {theme === 'light' ? <MoonIcon className="h-6 w-6" /> : <SunIcon className="h-6 w-6" />}
                 </button>
             </div>
@@ -762,7 +759,6 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                         <ChevronLeftIcon className="h-6 w-6" />
                         Volver
                     </button>
-                    {/* Improved Title with Gradient and Font Size */}
                     <h2 className="font-heading font-black text-3xl capitalize text-transparent bg-clip-text bg-gradient-to-r from-primary to-warning drop-shadow-sm">
                         {orderType}
                     </h2>
@@ -776,7 +772,6 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
 
             {!searchTerm && (
                 <nav className="flex-shrink-0 border-b border-text-primary/10 dark:border-[#45535D] p-3 sticky top-32 z-40 bg-surface/90 dark:bg-[#45535D]/90 backdrop-blur-sm">
-                    {/* Hide Scrollbar with [&::-webkit-scrollbar]:hidden */}
                     <div className="flex space-x-3 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden">
                         {categories.map(cat => (
                             <button
@@ -790,7 +785,6 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                                     }
                                 `}
                             >
-                                {/* Add Sparkle Icon for Promotions Tab */}
                                 {cat === 'Promociones' && <SparklesIcon className="inline-block w-4 h-4 mr-1 -mt-0.5" />}
                                 {cat}
                             </button>
@@ -805,7 +799,6 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                         <button 
                             key={product.id} 
                             onClick={() => {
-                                // If it is a promo disguised as a product
                                 if ((product as any).isPromo) {
                                     handleAddPromotionToCart((product as any).originalPromo);
                                 } else {
@@ -823,13 +816,11 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                                         <span className="bg-danger text-white font-bold text-xs px-3 py-1.5 rounded-full uppercase tracking-wider shadow-lg transform -rotate-6">Agotado</span>
                                     </div>
                                 )}
-                                {/* Add Button Overlay - Visible on Hover/Active */}
                                 {product.stock > 0 && (
                                     <div className="absolute bottom-2 right-2 bg-white dark:bg-gunmetal text-primary rounded-full p-2 shadow-lg opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
                                         <PlusIcon className="h-5 w-5" />
                                     </div>
                                 )}
-                                {/* Promo Tag */}
                                 {(product as any).isPromo && (
                                     <div className="absolute top-2 left-2 bg-teal-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md animate-pulse">
                                         PROMO
@@ -910,7 +901,6 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                         <input type="tel" placeholder="N° de Celular (9 dígitos)" value={customerInfo.telefono} onChange={e => setCustomerInfo(p => ({...p, telefono: e.target.value.replace(/\D/g, '').slice(0, 9)}))} className={`w-full p-3 rounded-lg bg-background dark:bg-[#45535D] border ${formErrors.telefono ? 'border-danger' : 'border-text-primary/10 dark:border-[#56656E]'}`} />
                         {formErrors.telefono && <p className="text-danger text-xs mt-1">{formErrors.telefono}</p>}
                     </div>
-                    {/* ADDED EMAIL FIELD */}
                     <div>
                         <input type="email" placeholder="Email (Opcional - Para pagos online)" value={customerInfo.email || ''} onChange={e => setCustomerInfo(p => ({...p, email: e.target.value}))} className={`w-full p-3 rounded-lg bg-background dark:bg-[#45535D] border ${formErrors.email ? 'border-danger' : 'border-text-primary/10 dark:border-[#56656E]'}`} />
                         {formErrors.email && <p className="text-danger text-xs mt-1">{formErrors.email}</p>}
@@ -933,7 +923,6 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                         {isOnlyMercadoPago ? 'Pago Seguro' : '¿Cómo quieres pagar?'}
                     </h3>
                     
-                    {/* SIMPLIFIED FLOW FOR MERCADO PAGO ONLY */}
                     {isOnlyMercadoPago ? (
                         <div className="animate-fade-in-up">
                              <div className="flex flex-col items-center p-6 bg-blue-500/5 border-2 border-blue-500/20 rounded-xl text-center">
@@ -949,7 +938,6 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                             </div>
                         </div>
                     ) : (
-                        /* STANDARD FLOW WITH MULTIPLE OPTIONS */
                         <>
                             <div className={`grid ${showPayNow && showPayLater ? 'grid-cols-2' : 'grid-cols-1'} gap-3`}>
                                 {showPayNow && (
@@ -988,11 +976,14 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                                         {paymentMethodsEnabled.yape && (
                                             <button 
                                                 onClick={() => setPaymentMethod('yape')} 
-                                                className={`relative overflow-hidden group p-4 rounded-xl border-2 transition-all duration-300 hover:shadow-lg ${paymentMethod === 'yape' ? 'border-[#742284] bg-[#742284] text-white shadow-md' : 'border-[#742284]/30 bg-[#742284]/5 text-[#742284] hover:bg-[#742284]/10'}`}
+                                                className={`relative overflow-hidden group p-4 rounded-xl border-2 transition-all duration-300 hover:shadow-lg ${
+                                                    paymentMethod === 'yape' 
+                                                        ? 'border-[#742284] bg-[#742284] text-white shadow-md ring-2 ring-offset-2 ring-[#742284]' 
+                                                        : 'border-[#742284] bg-white dark:bg-[#742284]/10 text-[#742284] hover:bg-[#742284]/20'
+                                                }`}
                                             >
                                                 <div className="flex flex-col items-center justify-center gap-2 relative z-10">
-                                                    <DevicePhoneMobileIcon className="h-8 w-8" />
-                                                    <span className="font-bold text-lg">Yape</span>
+                                                    <YapeLogo className={`h-8 w-auto ${paymentMethod === 'yape' ? 'text-white' : 'text-[#742284]'}`} />
                                                 </div>
                                                 {paymentMethod === 'yape' && (
                                                     <div className="absolute top-2 right-2">
@@ -1005,11 +996,14 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                                         {paymentMethodsEnabled.plin && (
                                             <button 
                                                 onClick={() => setPaymentMethod('plin')} 
-                                                className={`relative overflow-hidden group p-4 rounded-xl border-2 transition-all duration-300 hover:shadow-lg ${paymentMethod === 'plin' ? 'border-[#00A1E0] bg-[#00A1E0] text-white shadow-md' : 'border-[#00A1E0]/30 bg-[#00A1E0]/5 text-[#00A1E0] hover:bg-[#00A1E0]/10'}`}
+                                                className={`relative overflow-hidden group p-4 rounded-xl border-2 transition-all duration-300 hover:shadow-lg ${
+                                                    paymentMethod === 'plin' 
+                                                        ? 'border-[#00A1E0] bg-[#00A1E0] text-white shadow-md ring-2 ring-offset-2 ring-[#00A1E0]' 
+                                                        : 'border-[#00A1E0] bg-white dark:bg-[#00A1E0]/10 text-[#00A1E0] hover:bg-[#00A1E0]/20'
+                                                }`}
                                             >
                                                 <div className="flex flex-col items-center justify-center gap-2 relative z-10">
-                                                    <DevicePhoneMobileIcon className="h-8 w-8" />
-                                                    <span className="font-bold text-lg">Plin</span>
+                                                    <PlinLogo className={`h-8 w-auto ${paymentMethod === 'plin' ? 'text-white' : 'text-[#00A1E0]'}`} />
                                                 </div>
                                                 {paymentMethod === 'plin' && (
                                                     <div className="absolute top-2 right-2">
@@ -1022,10 +1016,14 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                                         {paymentMethodsEnabled.mercadopago && (
                                             <button 
                                                 onClick={() => setPaymentMethod('mercadopago')} 
-                                                className={`col-span-2 relative overflow-hidden group p-4 rounded-xl border-2 transition-all duration-300 hover:shadow-lg ${paymentMethod === 'mercadopago' ? 'border-[#009EE3] bg-[#009EE3] text-white shadow-md' : 'border-[#009EE3]/30 bg-[#009EE3]/5 text-[#009EE3] hover:bg-[#009EE3]/10'}`}
+                                                className={`col-span-2 relative overflow-hidden group p-4 rounded-xl border-2 transition-all duration-300 hover:shadow-lg ${
+                                                    paymentMethod === 'mercadopago' 
+                                                        ? 'border-[#009EE3] bg-[#009EE3] text-white shadow-md ring-2 ring-offset-2 ring-[#009EE3]' 
+                                                        : 'border-[#009EE3] bg-white dark:bg-[#009EE3]/10 text-[#009EE3] hover:bg-[#009EE3]/20'
+                                                }`}
                                             >
                                                 <div className="flex flex-row items-center justify-center gap-3 relative z-10">
-                                                    <MercadoPagoLogo className="h-8 w-auto" />
+                                                    <MercadoPagoLogo className={`h-8 w-auto ${paymentMethod === 'mercadopago' ? 'text-white' : 'text-[#009EE3]'}`} />
                                                     <span className="font-bold text-lg">Mercado Pago</span>
                                                 </div>
                                                 {paymentMethod === 'mercadopago' && (
@@ -1093,3 +1091,225 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
     );
 
     const renderConfirmationScreen = () => {
+        // ... (Confirmation screen logic same as provided in previous turns) ...
+        // Re-injecting confirmation logic briefly to ensure file completeness if it was truncated in thought process
+        const isMpPending = mpPaymentStatus === 'pending' || (paymentMethod === 'mercadopago' && !isPaymentSimulated);
+        const isMpApproved = mpPaymentStatus === 'approved' || (paymentMethod === 'mercadopago' && isPaymentSimulated);
+        
+        let statusMessage = "¡Pedido Recibido!";
+        let subMessage = "Tu pedido ha sido enviado a cocina.";
+        let icon = <CheckCircleIcon className="h-20 w-20 text-success mx-auto mb-4" />;
+
+        if (paymentMethod === 'mercadopago') {
+            if (isMpPending) {
+                statusMessage = "Completando Pago...";
+                subMessage = "Por favor, termina el pago en la ventana segura.";
+                icon = <GlobeAltIcon className="h-20 w-20 text-blue-500 mx-auto mb-4 animate-pulse" />;
+            } else if (isMpApproved) {
+                statusMessage = "¡Pago Exitoso!";
+                subMessage = "Hemos recibido tu pago correctamente.";
+            } else if (mpPaymentStatus === 'rejected') {
+                statusMessage = "Pago Rechazado";
+                subMessage = "Hubo un problema con tu pago. Inténtalo de nuevo.";
+                icon = <XMarkIcon className="h-20 w-20 text-danger mx-auto mb-4" />;
+            }
+        } else if (['yape', 'plin'].includes(paymentMethod)) {
+             statusMessage = "¡Casi listo!";
+             subMessage = `Realiza el ${paymentMethod} ahora para confirmar tu pedido.`;
+        }
+
+        const handleSimulateLocalPayment = () => {
+             setIsGeneratingPayment(true);
+             setTimeout(() => {
+                 onConfirmPayment(newOrderId, { metodo: paymentMethod, montoPagado: 0 }); 
+                 setIsPaymentSimulated(true);
+                 setIsGeneratingPayment(false);
+             }, 1500);
+        };
+
+        const handleMercadoPagoCheckout = async () => {
+            setIsGeneratingPayment(true);
+            try {
+                // Construct preference items
+                const items = cart.map(item => ({
+                    title: item.nombre,
+                    quantity: item.cantidad,
+                    unit_price: item.precio,
+                    currency_id: 'PEN'
+                }));
+
+                const payer = {
+                    name: customerInfo.nombre,
+                    email: customerInfo.email || 'test_user_123@testuser.com', // Fallback for Sandbox
+                    phone: {
+                        area_code: '',
+                        number: Number(customerInfo.telefono)
+                    }
+                };
+
+                // Create preference logic (mock or real fetch would go here)
+                // For this frontend-only demo with configured creds:
+                const mPConfig = restaurantSettings?.paymentMethods?.mercadopago;
+                
+                if (mPConfig?.paymentLink && !mPConfig?.accessToken) {
+                     // Fallback to static link
+                     const link = mPConfig.paymentLink.startsWith('http') ? mPConfig.paymentLink : `https://${mPConfig.paymentLink}`;
+                     window.location.href = link;
+                     return;
+                }
+
+                if (mPConfig?.accessToken) {
+                    const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${mPConfig.accessToken}`
+                        },
+                        body: JSON.stringify({
+                            items,
+                            payer,
+                            external_reference: newOrderId,
+                            back_urls: {
+                                success: window.location.href,
+                                failure: window.location.href,
+                                pending: window.location.href
+                            },
+                            auto_return: "approved",
+                            payment_methods: {
+                                installments: 12,
+                                default_installments: null
+                            },
+                            statement_descriptor: "UCHU51 RESTAURANT"
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    if (data.init_point) {
+                        window.location.href = data.init_point;
+                    } else {
+                        throw new Error('No init_point');
+                    }
+                } else {
+                    // Fallback simulation if no credentials
+                     setTimeout(() => {
+                        setIsPaymentSimulated(true);
+                        setIsGeneratingPayment(false);
+                        onConfirmPayment(newOrderId, { metodo: 'mercadopago', montoPagado: 0 });
+                    }, 2000);
+                }
+
+            } catch (error) {
+                console.error("MP Error", error);
+                // Fallback to static link on error
+                const mPConfig = restaurantSettings?.paymentMethods?.mercadopago;
+                if (mPConfig?.paymentLink) {
+                     const link = mPConfig.paymentLink.startsWith('http') ? mPConfig.paymentLink : `https://${mPConfig.paymentLink}`;
+                     window.location.href = link;
+                } else {
+                    alert("Error conectando con Mercado Pago. Intenta otro método.");
+                    setIsGeneratingPayment(false);
+                }
+            }
+        };
+
+        const ensureAbsoluteUrl = (url?: string) => {
+            if (!url) return '#';
+            return url.startsWith('http') ? url : `https://${url}`;
+        };
+
+        return (
+            <div className="flex flex-col h-full items-center justify-center p-8 text-center animate-fade-in-scale">
+                {icon}
+                <h2 className="text-3xl font-heading font-extrabold text-text-primary dark:text-white mb-2">{statusMessage}</h2>
+                <p className="text-text-secondary dark:text-light-silver mb-2">{subMessage}</p>
+                
+                <div className="bg-surface dark:bg-[#34424D] p-4 rounded-xl shadow-sm border border-text-primary/10 dark:border-[#45535D] w-full max-w-sm mb-6">
+                    <p className="text-sm font-semibold text-text-secondary dark:text-light-silver">Pedido <span className="text-primary dark:text-orange-400 font-bold">{newOrderId}</span></p>
+                    {isOnlyMercadoPago && !isMpApproved && (
+                         <div className="mt-4 animate-fade-in-up">
+                            <p className="font-bold text-lg mb-2">Paga S/.{lastOrderTotal.toFixed(2)} con Mercado Pago</p>
+                            <button 
+                                onClick={handleMercadoPagoCheckout}
+                                disabled={isGeneratingPayment}
+                                className="w-full bg-[#009EE3] hover:bg-[#007eb5] text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/30"
+                            >
+                                {isGeneratingPayment ? 'Procesando...' : (
+                                    <>
+                                        <GlobeAltIcon className="h-5 w-5" /> Pagar S/.{lastOrderTotal.toFixed(2)} con Mercado Pago
+                                    </>
+                                )}
+                            </button>
+                            {/* Fallback Link Button if configured */}
+                            {restaurantSettings?.paymentMethods?.mercadopago?.paymentLink && (
+                                <a 
+                                    href={ensureAbsoluteUrl(restaurantSettings.paymentMethods.mercadopago.paymentLink)}
+                                    className="block w-full mt-3 border-2 border-[#009EE3] text-[#009EE3] font-bold py-3 px-4 rounded-xl hover:bg-[#009EE3]/10 transition-colors"
+                                >
+                                    Pagar con Link (Respaldo)
+                                </a>
+                            )}
+                         </div>
+                    )}
+                </div>
+
+                {isOnlyMercadoPago ? (
+                     // Simplified footer for MP only
+                     <div className="space-y-4 w-full max-w-sm">
+                        <div className="flex items-center justify-center gap-2 text-xs text-text-secondary dark:text-light-silver/60">
+                            <LockClosedIcon className="h-3 w-3" /> Pagos procesados de forma 100% segura
+                        </div>
+                        {/* Confirmation button always visible to allow closing loop if user paid externally */}
+                        <button onClick={() => { setStage('selection'); setNewOrderId(''); setCart([]); }} className="text-primary dark:text-orange-400 font-semibold hover:underline text-sm">
+                            Confirmar transacción y volver al inicio
+                        </button>
+                         <button onClick={() => { setStage('selection'); setNewOrderId(''); setCart([]); }} className="text-text-secondary dark:text-light-silver font-bold mt-4 hover:text-primary transition-colors">
+                            Hacer otro pedido
+                        </button>
+                     </div>
+                ) : (
+                    // Standard footer
+                    <div className="space-y-3 w-full max-w-sm">
+                        {!isPaymentSimulated && ['yape', 'plin'].includes(paymentMethod) && (
+                             <button onClick={handleSimulateLocalPayment} disabled={isGeneratingPayment} className={`w-full bg-text-primary dark:bg-[#45535D] text-white font-bold py-3 rounded-xl shadow-lg border-2 border-dashed border-white/20 ${isGeneratingPayment ? 'opacity-70' : ''}`}>
+                                {isGeneratingPayment ? 'Verificando...' : 'Ya realicé el pago'}
+                                <p className="text-[10px] font-normal opacity-80">(Al hacer clic, notificas al restaurante que pagaste)</p>
+                            </button>
+                        )}
+                        
+                        <button className="w-full bg-success hover:bg-green-600 text-white font-bold py-3 rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all">
+                            <WhatsAppIcon className="h-5 w-5" /> Enviar voucher por WhatsApp
+                        </button>
+                        
+                        <button onClick={() => { setStage('selection'); setNewOrderId(''); setCart([]); }} className="text-primary dark:text-orange-400 font-bold mt-4 hover:underline">
+                            Hacer otro pedido
+                        </button>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    return (
+        <div className="h-full bg-background dark:bg-gunmetal flex flex-col font-sans">
+            {stage === 'selection' && renderSelectionScreen()}
+            {stage === 'catalog' && renderCatalogScreen()}
+            {stage === 'checkout' && renderCheckoutScreen()}
+            {stage === 'confirmation' && renderConfirmationScreen()}
+            {showInstallInstructions && renderInstallInstructions()}
+            {showPromosModal && renderPromosModal()}
+            
+            {showGoBackConfirm && (
+                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[101] p-4 animate-fade-in-scale">
+                    <div className="bg-surface dark:bg-[#34424D] rounded-2xl shadow-xl p-6 max-w-sm w-full text-center">
+                        <h3 className="text-xl font-heading font-bold text-text-primary dark:text-white">¿Salir sin pedir?</h3>
+                        <p className="text-text-secondary dark:text-light-silver my-3">Si vuelves al inicio, perderás los productos de tu carrito.</p>
+                        <div className="grid grid-cols-2 gap-3 mt-6">
+                            <button onClick={() => setShowGoBackConfirm(false)} className="bg-text-primary/10 dark:bg-[#45535D] hover:bg-text-primary/20 dark:hover:bg-[#56656E] text-text-primary dark:text-ivory-cream font-bold py-2 px-4 rounded-lg transition-colors">Seguir pidiendo</button>
+                            <button onClick={confirmGoBack} className="bg-danger hover:brightness-110 text-white font-bold py-2 px-4 rounded-lg transition-all">Salir</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
