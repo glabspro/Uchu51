@@ -87,6 +87,18 @@ const App: React.FC = () => {
         restaurantSettings,
     } = state;
 
+    // Check for URL parameters for quick access (e.g. ?mode=staff)
+    useEffect(() => {
+        const searchParams = new URLSearchParams(window.location.search);
+        const mode = searchParams.get('mode');
+        
+        if (mode === 'staff') {
+            dispatch({ type: 'LOCK_TERMINAL' });
+        } else if (mode === 'admin') {
+            dispatch({ type: 'GO_TO_LOGIN' });
+        }
+    }, [dispatch]);
+
     useEffect(() => {
         const root = window.document.documentElement;
         if (theme === 'dark') {

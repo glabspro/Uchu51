@@ -13,6 +13,7 @@ import { supabase } from './utils/supabase';
 
 // --- CONSTANTS ---
 const RESTAURANT_ID = 'd290f1ee-6c54-4b01-90e6-d701748f0851';
+const STORAGE_KEY = 'uchu51_session_v1';
 
 // --- DEFAULT FALLBACK SETTINGS ---
 const DEFAULT_SETTINGS: RestaurantSettings = {
@@ -44,21 +45,18 @@ const getCategoryDefaultImage = (category: string, name: string): string => {
     const lowerName = name.toLowerCase();
     const lowerCat = category.toLowerCase();
 
-    // Specific Name Matches
     if (lowerName.includes('lomo')) return 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80';
     if (lowerName.includes('tallarin') || lowerName.includes('tallarín')) return 'https://images.unsplash.com/photo-1552611052-33e04de081de?auto=format&fit=crop&w=800&q=80';
     if (lowerName.includes('royal')) return 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&w=800&q=80';
     if (lowerName.includes('alitas')) return 'https://images.unsplash.com/photo-1567620832903-9fc6debc209f?auto=format&fit=crop&w=800&q=80';
     if (lowerName.includes('broaster')) return 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?auto=format&fit=crop&w=800&q=80';
 
-    // Category Matches
     if (lowerCat.includes('hamburguesa')) return 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=800&q=80';
     if (lowerCat.includes('saltado')) return 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=800&q=80';
     if (lowerCat.includes('bebida')) return 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=800&q=80';
     if (lowerCat.includes('postre')) return 'https://images.unsplash.com/photo-1563729768474-d77dbb933a9e?auto=format&fit=crop&w=800&q=80';
     if (lowerCat.includes('picar')) return 'https://images.unsplash.com/photo-1605851868187-2c930263f336?auto=format&fit=crop&w=800&q=80';
 
-    // Generic Fallback
     return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80';
 };
 
@@ -95,6 +93,28 @@ interface AppState {
     criticalError: string | null;
 }
 
+// Load initial state from local storage if available
+const loadPersistedState = (): Partial<AppState> => {
+    try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            return {
+                activeEmployee: parsed.activeEmployee,
+                appView: parsed.appView,
+                currentUserRole: parsed.currentUserRole,
+                view: parsed.view,
+                restaurantId: RESTAURANT_ID // Ensure ID is set
+            };
+        }
+    } catch (e) {
+        console.error("Failed to load session", e);
+    }
+    return {};
+};
+
+const persisted = loadPersistedState();
+
 const initialState: AppState = {
     orders: [],
     products: [],
@@ -126,6 +146,7 @@ const initialState: AppState = {
     restaurantSettings: null,
     isLoading: true,
     criticalError: null,
+    ...persisted // Merge persisted state
 };
 
 type AppAction = Action | 
@@ -141,17 +162,31 @@ const AppContext = createContext<{ state: AppState; dispatch: (action: AppAction
 });
 
 function appReducer(state: AppState, action: AppAction): AppState {
+    // Helper to persist state updates
+    const persistSession = (newState: Partial<AppState>) => {
+        const sessionData = {
+            activeEmployee: newState.activeEmployee !== undefined ? newState.activeEmployee : state.activeEmployee,
+            appView: newState.appView !== undefined ? newState.appView : state.appView,
+            currentUserRole: newState.currentUserRole !== undefined ? newState.currentUserRole : state.currentUserRole,
+            view: newState.view !== undefined ? newState.view : state.view,
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(sessionData));
+    };
+
     switch (action.type) {
         case 'SET_CRITICAL_ERROR': return { ...state, criticalError: action.payload, isLoading: false };
         case 'SET_LOADING': return { ...state, isLoading: action.payload };
-        case 'LOGIN_INTERNAL_SUCCESS':
-            return {
+        case 'LOGIN_INTERNAL_SUCCESS': {
+            const newState = {
                 ...state,
-                appView: 'super_admin',
-                currentUserRole: 'admin',
+                appView: 'super_admin' as AppView,
+                currentUserRole: 'admin' as UserRole,
                 restaurantId: RESTAURANT_ID,
                 loginError: null,
             };
+            // Do not persist super admin session for security, or persist with caution
+            return newState;
+        }
         case 'EMPLOYEE_LOGIN_SUCCESS': {
             const employee = action.payload;
             let initialView: View = 'dashboard';
@@ -162,35 +197,45 @@ function appReducer(state: AppState, action: AppAction): AppState {
             else if (employee.role === 'waiter') initialView = 'local';
             else if (employee.role === 'cashier') initialView = 'caja';
             
-            return {
+            const newState = {
                 ...state,
-                appView: 'admin',
+                appView: 'admin' as AppView,
                 activeEmployee: employee,
                 view: initialView,
                 loginError: null,
                 toasts: [...state.toasts, {
                     id: Date.now(),
                     message: `¡Bienvenido, ${employee.name}! Éxito en tu turno 🚀`,
-                    type: 'success'
+                    type: 'success' as const
                 }]
             };
+            persistSession(newState);
+            return newState;
         }
-        case 'LOCK_TERMINAL':
-            return {
+        case 'LOCK_TERMINAL': {
+            const newState = {
                 ...state,
-                appView: 'staff_login',
+                appView: 'staff_login' as AppView,
                 activeEmployee: null
             };
+            persistSession(newState);
+            return newState;
+        }
         case 'LOGOUT': {
+            localStorage.removeItem(STORAGE_KEY);
             return {
                 ...state,
                 appView: 'customer',
-                activeEmployee: null
-                // Keep data loaded
+                activeEmployee: null,
+                currentUserRole: 'cliente'
             };
         }
         case 'SET_STATE': return { ...state, ...action.payload };
-        case 'SET_VIEW': return { ...state, view: action.payload };
+        case 'SET_VIEW': {
+            const newState = { ...state, view: action.payload };
+            persistSession(newState);
+            return newState;
+        }
         case 'SET_TURNO': return { ...state, turno: action.payload };
         case 'TOGGLE_THEME': {
             const newTheme = state.theme === 'light' ? 'dark' : 'light';
@@ -356,12 +401,14 @@ function appReducer(state: AppState, action: AppAction): AppState {
              const { orderId, details } = action.payload;
              
              let total = 0;
-             const localOrder = state.orders.find(o => o.id === orderId);
+             let localOrder = state.orders.find(o => o.id === orderId);
              
-             if (localOrder) {
-                 total = localOrder.total;
+             if (!localOrder) {
+                 // In a real app we might fetch here, but synchronous reducer can't await. 
+                 // The side effect dispatch handles the DB fetch. 
+                 // Here we just update if we have it locally.
              } else {
-                 // In case of reload, the order might not be in the reduced local list immediately, so we trust DB (or fetch it)
+                 total = localOrder.total;
              }
              
              let newStatus: EstadoPedido = 'pagado';
@@ -374,7 +421,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
                      newStatus = 'en preparación'; 
                  }
              }
-             
+
              const pagoRegistrado = {
                 metodo: details.metodo,
                 montoTotal: total,
@@ -382,15 +429,14 @@ function appReducer(state: AppState, action: AppAction): AppState {
                 vuelto: (details.montoPagado && total) ? details.montoPagado - total : 0,
                 fecha: new Date().toISOString()
              };
-             
-             if (!localOrder) return state;
 
+             // Note: Deep logic for caja session updates handled in side-effect dispatch
              return {
                 ...state,
                 orders: state.orders.map(o => o.id === orderId ? { ...o, estado: newStatus, pagoRegistrado } : o),
                 orderToPay: null,
                 orderForDeliveryPayment: null,
-                orderForReceipt: { ...localOrder, estado: newStatus, pagoRegistrado }
+                orderForReceipt: { ...localOrder!, estado: newStatus, pagoRegistrado }
              };
         }
         default:
@@ -448,8 +494,13 @@ const mapOrderToDb = (order: Pedido): any => ({
 });
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const dispatchRef = useRef<(action: AppAction) => void>(() => {});
     const [state, baseDispatch] = useReducer(appReducer, initialState);
+    
+    // Use a ref to keep track of the latest state without causing re-renders of the dispatch function
+    const stateRef = useRef(state);
+    useEffect(() => {
+        stateRef.current = state;
+    }, [state]);
 
     // --- DATA FETCHING ---
     useEffect(() => {
@@ -681,6 +732,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     const dispatch = useCallback(async (action: AppAction) => {
         baseDispatch(action);
+        
+        // IMPORTANT: Use the Ref to access state inside async operations
+        // This prevents the dispatch function from being recreated on every state change
+        // which was causing the infinite loop/white screen.
+        const currentState = stateRef.current; 
 
         try {
             switch (action.type) {
@@ -761,14 +817,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                         id: generatedId,
                         fecha: new Date().toISOString(), 
                         estado: initialState, 
-                        turno: state.turno, 
-                        historial: [{ estado: initialState, fecha: new Date().toISOString(), usuario: state.activeEmployee ? state.activeEmployee.name : 'cliente' }], 
+                        turno: currentState.turno, 
+                        historial: [{ estado: initialState, fecha: new Date().toISOString(), usuario: currentState.activeEmployee ? currentState.activeEmployee.name : 'cliente' }], 
                         areaPreparacion: getAreaPreparacion(orderData.tipo),
                         restaurant_id: RESTAURANT_ID,
                     };
                     
                     if (newOrder.cliente.telefono) {
-                        const existingCustomer = state.customers.find(c => c.telefono === newOrder.cliente.telefono);
+                        const existingCustomer = currentState.customers.find(c => c.telefono === newOrder.cliente.telefono);
                         if (existingCustomer) {
                             newOrder.cliente_id = existingCustomer.id;
                         }
@@ -819,7 +875,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 }
                 case 'CLOSE_CAJA': {
                     const efectivoContado = action.payload;
-                    const session = state.cajaSession;
+                    const session = currentState.cajaSession;
                     if (!session.id) return;
 
                     const diff = efectivoContado - session.totalEfectivoEsperado;
@@ -836,7 +892,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 }
                 case 'ADD_MOVIMIENTO_CAJA': {
                     const { monto, descripcion, tipo } = action.payload;
-                    const session = state.cajaSession;
+                    const session = currentState.cajaSession;
                     if (!session.id) return;
 
                     const newMovimiento: MovimientoCaja = { monto, descripcion, tipo, fecha: new Date().toISOString() };
@@ -857,7 +913,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                     const { orderId, details } = action.payload;
                     
                     let total = 0;
-                    let localOrder = state.orders.find(o => o.id === orderId);
+                    let localOrder = currentState.orders.find(o => o.id === orderId);
                     
                     if (!localOrder) {
                         const { data: dbOrder } = await supabase
@@ -899,10 +955,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
                     if (error) console.error("Failed to confirm payment in DB:", error);
 
-                    let sessionId = state.cajaSession.id;
-                    let currentSessionState = state.cajaSession;
+                    let sessionId = currentState.cajaSession.id;
+                    let currentSessionState = currentState.cajaSession;
 
-                    if (!sessionId || state.cajaSession.estado !== 'abierta') {
+                    if (!sessionId || currentState.cajaSession.estado !== 'abierta') {
                         const { data: activeSession } = await supabase
                             .from('caja_sessions')
                             .select('*')
@@ -950,9 +1006,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             console.error("Error syncing action to Supabase:", action, err);
             baseDispatch({ type: 'ADD_TOAST', payload: { message: 'Error de sincronización', type: 'danger' } });
         }
-    }, [state.restaurantSettings, state.turno, state.orders, state.cajaSession, state.customers, state.activeEmployee, state.employees]);
-
-    dispatchRef.current = dispatch;
+    }, []); // Empty dependency array because we use stateRef
 
     return (
         <AppContext.Provider value={{ state, dispatch }}>

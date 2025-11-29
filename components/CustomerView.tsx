@@ -1,18 +1,18 @@
 
-import React, { useState, useMemo, useEffect, useRef } from 'react';
-import type { Pedido, Producto, ProductoPedido, Cliente, Salsa, TipoPedido, MetodoPago, Theme, ClienteLeal, LoyaltyProgram, Promocion } from '../types';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useAppContext } from '../store';
 import { ShoppingBagIcon, TrashIcon, CheckCircleIcon, TruckIcon, UserIcon, CashIcon, CreditCardIcon, DevicePhoneMobileIcon, MapPinIcon, SearchIcon, AdjustmentsHorizontalIcon, MinusIcon, PlusIcon, StarIcon, SunIcon, MoonIcon, ChevronLeftIcon, ChevronRightIcon, WhatsAppIcon, ArrowDownOnSquareIcon, ArrowUpOnSquareIcon, EllipsisVerticalIcon, XMarkIcon, SparklesIcon, HomeIcon, GlobeAltIcon, LockClosedIcon } from './icons';
 import SauceModal from './SauceModal';
 import ProductDetailModal from './ProductDetailModal';
 import PromoCustomizationModal from './PromoCustomizationModal';
 import { Logo } from './Logo';
-
+import type { Pedido, Producto, ProductoPedido, Cliente, TipoPedido, MetodoPago, ClienteLeal, Promocion, Salsa } from '../types';
 
 interface CustomerViewProps { }
 
-type CartItem = ProductoPedido & { cartItemId: number };
+type CartItem = ProductoPedido & { cartItemId: number; category?: string };
 type Stage = 'selection' | 'catalog' | 'checkout' | 'confirmation';
+type PaymentChoice = 'payNow' | 'payLater';
 type FormErrors = {
     nombre?: string;
     telefono?: string;
@@ -20,26 +20,28 @@ type FormErrors = {
     direccion?: string;
     pagoConEfectivo?: string;
 };
-type PaymentChoice = 'payNow' | 'payLater';
 
 // --- LOGOS ---
-
 const MercadoPagoLogo = ({ className }: { className?: string }) => (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-        <path d="M16.34 9.32C16.34 9.32 14.28 8.09 12 8.09C9.72 8.09 7.67 9.33 7.67 9.33C7.26 9.58 6.74 9.54 6.39 9.18L4.81 7.6C4.42 7.21 4.42 6.58 4.81 6.19C5.2 5.8 5.83 5.8 6.22 6.19L7.26 7.23C7.26 7.23 8.45 6.54 10.1 6.25V2H13.9V6.24C15.55 6.53 16.74 7.23 16.74 7.23L17.78 6.19C18.17 5.8 18.8 5.8 19.19 6.19C19.58 6.58 19.58 7.21 19.19 7.6L17.61 9.18C17.26 9.53 16.74 9.58 16.34 9.32ZM14.15 13.5C14.15 13.5 13.55 13.25 12 13.25C10.45 13.25 9.85 13.5 9.85 13.5C9.35 13.71 9 14.21 9 14.75V19H15V14.75C15 14.21 14.65 13.71 14.15 13.5ZM22 12C22 17.52 17.52 22 12 22C6.48 22 2 17.52 2 12C2 6.48 6.48 2 12 2C17.52 2 22 6.48 22 12Z" fillOpacity="0" />
-        <path d="M12 10.5C14.66 10.5 16.93 11.63 16.93 11.63C17.33 11.89 17.85 11.84 18.2 11.49L19.78 9.91C20.17 9.52 20.17 8.89 19.78 8.5C19.39 8.11 18.76 8.11 18.37 8.5L17.33 9.54C17.33 9.54 16.14 8.84 14.49 8.55V4.31H9.51V8.54C7.86 8.84 6.67 9.53 6.67 9.53L5.63 8.49C5.24 8.1 4.61 8.1 4.22 8.49C3.83 8.88 3.83 9.51 4.22 9.9L5.8 11.48C6.15 11.83 6.67 11.88 7.07 11.62C7.07 11.62 9.34 10.5 12 10.5ZM15 14.75C15 14.21 14.65 13.71 14.15 13.5C14.15 13.5 13.55 13.25 12 13.25C10.45 13.25 9.85 13.5 9.85 13.5C9.35 13.71 9 14.21 9 14.75V19H15V14.75Z" />
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} xmlns="http://www.w3.org/2000/svg">
+       <path d="M14.07 19.33c.7.21 1.45.33 2.21.33 2.38 0 4.52-1.04 5.99-2.71l-1.57-1.57c-1.09 1.24-2.67 2.03-4.42 2.03-2.76 0-5.09-1.92-5.77-4.52h-2.28v1.78c1.37 2.73 4.19 4.66 7.46 4.66zM7.22 10.96c-.18.6-.28 1.23-.28 1.88s.1 1.28.28 1.88v-1.78h2.28c.17-2.6-1.92-4.82-4.52-5.5V5.15c-3.27 1.43-5.2 4.25-5.2 7.49s1.93 6.06 5.2 7.49v-2.29c-1.39-1.32-2.28-3.17-2.28-5.2s.89-3.88 2.28-5.2v-2.29zM16.28 4.34c1.19 0 2.28.42 3.14 1.12l2.36-2.36C20.15 1.76 18.3 1.13 16.28 1.13c-3.27 0-6.09 1.93-7.46 4.66l2.28 1.78c.68-2.6 3.01-4.52 5.77-4.52z" fill="#009EE3"/>
+       <path d="M12.5 12.5h-1v-1h1v1z" fill="transparent"/>
     </svg>
 );
 
 const YapeLogo = ({ className }: { className?: string }) => (
-    <svg className={className} viewBox="0 0 80 30" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-        <text x="50%" y="50%" dominantBaseline="central" textAnchor="middle" fontFamily="sans-serif" fontWeight="900" fontSize="24" fontStyle="italic" letterSpacing="-1">yape</text>
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="10" fill="currentColor" fillOpacity="0.2"/>
+        <path d="M8 10l3 5 5-8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        <text x="12" y="20" fontSize="6" textAnchor="middle" fill="currentColor" fontWeight="bold">YAPE</text>
     </svg>
 );
 
 const PlinLogo = ({ className }: { className?: string }) => (
-    <svg className={className} viewBox="0 0 80 30" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-        <text x="50%" y="50%" dominantBaseline="central" textAnchor="middle" fontFamily="sans-serif" fontWeight="900" fontSize="24">plin</text>
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="4" width="20" height="16" rx="4" fill="currentColor" fillOpacity="0.2"/>
+        <path d="M7 12h10M12 7v10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+        <text x="12" y="19" fontSize="6" textAnchor="middle" fill="currentColor" fontWeight="bold">PLIN</text>
     </svg>
 );
 
@@ -94,8 +96,8 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
     };
     const onToggleTheme = () => dispatch({ type: 'TOGGLE_THEME' });
     const onInstallClick = () => { if (installPrompt) { installPrompt.prompt(); }};
+    const onGoToStaffLogin = () => dispatch({ type: 'LOCK_TERMINAL' });
 
-    // Detect Payment Return from Mercado Pago
     useEffect(() => {
         if (isLoading) return;
         if (hasProcessedReturn.current) return;
@@ -131,7 +133,6 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
             }
         }
     }, [isLoading]);
-
 
     const paymentMethodsEnabled = useMemo(() => {
         const pm = restaurantSettings?.paymentMethods;
@@ -204,7 +205,6 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
         }
     }, [customerInfo.telefono, customers]);
 
-    // Control Promotion Modal Appearance
     useEffect(() => {
         const sessionKey = 'uchu_promos_shown';
         const hasShown = sessionStorage.getItem(sessionKey);
@@ -248,7 +248,6 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
         }
     }, [paymentChoice, paymentMethodsEnabled, isOnlyMercadoPago]);
 
-
     const getPromoImageUrl = (promo: Promocion, allProducts: Producto[]): string | undefined => {
         if (promo.imagenUrl && promo.imagenUrl.trim() !== '') {
             return promo.imagenUrl;
@@ -265,7 +264,6 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
         }
         return undefined;
     };
-
 
     const groupedProducts = useMemo(() => {
         const grouped = products.reduce((acc, product) => {
@@ -325,7 +323,6 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
     useEffect(() => {
         setActiveCategory(activePromotions.length > 0 ? 'Promociones' : 'Hamburguesas');
     }, [activePromotions]);
-
 
     const total = useMemo(() =>
         cart.reduce((sum, item) => {
@@ -431,7 +428,7 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                             imagenUrl: productInfo.imagenUrl,
                             salsas: [],
                             promocionId: promoId,
-                            category: productInfo.categoria // Pass category to check if sauce allowed
+                            category: productInfo.categoria
                         });
                     }
                 }
@@ -467,16 +464,14 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
         }
         
         if (itemsToAdd.length > 0) {
-            // Open modal instead of adding directly
             setPromoCustomization({ items: itemsToAdd, name: promo.nombre });
         }
     };
 
     const handleConfirmPromoCart = (finalItems: ProductoPedido[]) => {
-        // Map back to CartItem and add to cart
         const cartItems: CartItem[] = finalItems.map(item => ({
             ...item,
-            cartItemId: Date.now() + Math.random() // Ensure unique IDs
+            cartItemId: Date.now() + Math.random()
         }));
         
         setCart(currentCart => [...currentCart, ...cartItems]);
@@ -622,8 +617,9 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
     const modules = restaurantSettings?.modules;
     const isOnlyDelivery = modules?.delivery !== false && modules?.retiro === false;
 
-    // ... (Install Instructions and Promo Modal Renderers kept same) ...
-     const renderInstallInstructions = () => (
+    // --- Renderers ---
+
+    const renderInstallInstructions = () => (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[101] p-4 animate-fade-in-scale">
              <div className="bg-surface dark:bg-[#34424D] rounded-2xl shadow-xl p-6 max-w-sm w-full text-center relative">
                  <button onClick={() => setShowInstallInstructions(false)} className="absolute top-2 right-2 p-2 rounded-full hover:bg-text-primary/10 dark:hover:bg-[#45535D]">
@@ -758,13 +754,16 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                 </div>
             </div>
 
-            <div className="pb-4">
+            <div className="pb-4 space-y-3">
                 {showInstallButton && (
                     <button onClick={handleSmartInstallClick} className="text-sm font-semibold text-text-secondary dark:text-light-silver hover:text-primary dark:hover:text-orange-400 transition-colors flex items-center justify-center gap-2 mx-auto">
                         <ArrowDownOnSquareIcon className="h-5 w-5" />
                         Instalar app para mejor experiencia
                     </button>
                 )}
+                <button onClick={onGoToStaffLogin} className="text-xs text-text-secondary/50 dark:text-light-silver/50 hover:text-text-primary dark:hover:text-white transition-colors block mx-auto underline">
+                    Soy Personal del Restaurante
+                </button>
             </div>
         </div>
     );
@@ -1137,8 +1136,6 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
     );
 
     const renderConfirmationScreen = () => {
-        // ... (Confirmation screen logic same as provided in previous turns) ...
-        // Re-injecting confirmation logic briefly to ensure file completeness if it was truncated in thought process
         const isMpPending = mpPaymentStatus === 'pending' || (paymentMethod === 'mercadopago' && !isPaymentSimulated);
         const isMpApproved = mpPaymentStatus === 'approved' || (paymentMethod === 'mercadopago' && isPaymentSimulated);
         
@@ -1186,19 +1183,16 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
 
                 const payer = {
                     name: customerInfo.nombre,
-                    email: customerInfo.email || 'test_user_123@testuser.com', // Fallback for Sandbox
+                    email: customerInfo.email || 'test_user_123@testuser.com', 
                     phone: {
                         area_code: '',
                         number: Number(customerInfo.telefono)
                     }
                 };
 
-                // Create preference logic (mock or real fetch would go here)
-                // For this frontend-only demo with configured creds:
                 const mPConfig = restaurantSettings?.paymentMethods?.mercadopago;
                 
                 if (mPConfig?.paymentLink && !mPConfig?.accessToken) {
-                     // Fallback to static link
                      const link = mPConfig.paymentLink.startsWith('http') ? mPConfig.paymentLink : `https://${mPConfig.paymentLink}`;
                      window.location.href = link;
                      return;
@@ -1236,7 +1230,6 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                         throw new Error('No init_point');
                     }
                 } else {
-                    // Fallback simulation if no credentials
                      setTimeout(() => {
                         setIsPaymentSimulated(true);
                         setIsGeneratingPayment(false);
@@ -1246,7 +1239,6 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
 
             } catch (error) {
                 console.error("MP Error", error);
-                // Fallback to static link on error
                 const mPConfig = restaurantSettings?.paymentMethods?.mercadopago;
                 if (mPConfig?.paymentLink) {
                      const link = mPConfig.paymentLink.startsWith('http') ? mPConfig.paymentLink : `https://${mPConfig.paymentLink}`;
@@ -1285,7 +1277,6 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                                     </>
                                 )}
                             </button>
-                            {/* Fallback Link Button if configured */}
                             {restaurantSettings?.paymentMethods?.mercadopago?.paymentLink && (
                                 <a 
                                     href={ensureAbsoluteUrl(restaurantSettings.paymentMethods.mercadopago.paymentLink)}
@@ -1299,12 +1290,10 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                 </div>
 
                 {isOnlyMercadoPago ? (
-                     // Simplified footer for MP only
                      <div className="space-y-4 w-full max-w-sm">
                         <div className="flex items-center justify-center gap-2 text-xs text-text-secondary dark:text-light-silver/60">
                             <LockClosedIcon className="h-3 w-3" /> Pagos procesados de forma 100% segura
                         </div>
-                        {/* Confirmation button always visible to allow closing loop if user paid externally */}
                         <button onClick={() => { setStage('selection'); setNewOrderId(''); setCart([]); }} className="text-primary dark:text-orange-400 font-semibold hover:underline text-sm">
                             Confirmar transacción y volver al inicio
                         </button>
@@ -1313,7 +1302,6 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                         </button>
                      </div>
                 ) : (
-                    // Standard footer
                     <div className="space-y-3 w-full max-w-sm">
                         {!isPaymentSimulated && ['yape', 'plin'].includes(paymentMethod) && paymentChoice === 'payNow' && (
                              <button onClick={handleSimulateLocalPayment} disabled={isGeneratingPayment} className={`w-full bg-text-primary dark:bg-[#45535D] text-white font-bold py-3 rounded-xl shadow-lg border-2 border-dashed border-white/20 ${isGeneratingPayment ? 'opacity-70' : ''}`}>
