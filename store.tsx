@@ -1,12 +1,13 @@
 
-import React, { createContext, useContext, useReducer, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, ReactNode, useCallback, useRef } from 'react';
 import type {
     Pedido, Producto, Promocion, Salsa, ClienteLeal, LoyaltyProgram, Recompensa, Mesa,
     CajaSession, MovimientoCaja, EstadoPedido, UserRole, View, Turno, Toast, MetodoPago, Action,
     AreaPreparacion,
     HistorialEstado,
     RestaurantSettings,
-    AppView
+    AppView,
+    Employee
 } from './types';
 import { supabase } from './utils/supabase';
 
@@ -68,6 +69,8 @@ interface AppState {
     salsas: Salsa[];
     customers: ClienteLeal[];
     loyaltyPrograms: LoyaltyProgram[];
+    employees: Employee[];
+    activeEmployee: Employee | null;
     cajaSession: CajaSession;
     cajaHistory: CajaSession[];
     view: View;
@@ -99,9 +102,10 @@ const initialState: AppState = {
     salsas: [],
     customers: [],
     loyaltyPrograms: [],
+    employees: [],
+    activeEmployee: null,
     cajaSession: { estado: 'cerrada', saldoInicial: 0, ventasPorMetodo: {}, totalVentas: 0, totalEfectivoEsperado: 0, fechaApertura: '', gananciaTotal: 0, movimientos: [], restaurant_id: '' },
     cajaHistory: [],
-    // CHANGED: Default view is now 'caja' for better workflow
     view: 'caja',
     turno: 'tarde',
     theme: 'light',
@@ -143,15 +147,40 @@ function appReducer(state: AppState, action: AppAction): AppState {
         case 'LOGIN_INTERNAL_SUCCESS':
             return {
                 ...state,
-                appView: 'admin',
+                appView: 'super_admin', // Changed: Redirect to Super Admin configuration view
                 currentUserRole: 'admin',
                 restaurantId: RESTAURANT_ID,
                 loginError: null,
+            };
+        case 'EMPLOYEE_LOGIN_SUCCESS': {
+            const employee = action.payload;
+            let initialView: View = 'dashboard';
+            
+            // Route based on role
+            if (employee.role === 'kitchen') initialView = 'cocina';
+            else if (employee.role === 'delivery') initialView = 'delivery';
+            else if (employee.role === 'waiter') initialView = 'local';
+            else if (employee.role === 'cashier') initialView = 'caja';
+            
+            return {
+                ...state,
+                appView: 'admin',
+                activeEmployee: employee,
+                view: initialView,
+                loginError: null
+            };
+        }
+        case 'LOCK_TERMINAL':
+            return {
+                ...state,
+                appView: 'staff_login',
+                activeEmployee: null
             };
         case 'LOGOUT': {
             return {
                 ...state,
                 appView: 'customer',
+                activeEmployee: null
                 // Keep data loaded
             };
         }
@@ -228,15 +257,26 @@ function appReducer(state: AppState, action: AppAction): AppState {
             };
         }
         case 'ADD_NEW_CUSTOMER': {
-            const { telefono, nombre } = action.payload;
-            const newCustomer: ClienteLeal = {
-                telefono, nombre, puntos: 0, historialPedidos: [],
-                restaurant_id: state.restaurantId!
-            };
             return {
                 ...state,
-                customers: [...state.customers, newCustomer]
+                customers: [...state.customers, action.payload]
             };
+        }
+        case 'UPDATE_CUSTOMER': {
+            const updatedCustomer = action.payload;
+            return {
+                ...state,
+                customers: state.customers.map(c => c.id === updatedCustomer.id || c.telefono === updatedCustomer.telefono ? updatedCustomer : c)
+            };
+        }
+        case 'ADD_EMPLOYEE': {
+            return { ...state, employees: [...state.employees, action.payload] };
+        }
+        case 'UPDATE_EMPLOYEE': {
+            return { ...state, employees: state.employees.map(e => e.id === action.payload.id ? action.payload : e) };
+        }
+        case 'DELETE_EMPLOYEE': {
+            return { ...state, employees: state.employees.filter(e => e.id !== action.payload) };
         }
         case 'CONFIRM_CUSTOMER_PAYMENT': {
             const orderId = action.payload;
@@ -260,7 +300,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
              };
         }
         case 'OPEN_CAJA': {
-            // This is optimistic UI update, DB update happens in async dispatch
             const newSession: CajaSession = {
                 estado: 'abierta',
                 fechaApertura: new Date().toISOString(),
@@ -275,7 +314,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
             return { ...state, cajaSession: newSession };
         }
         case 'CLOSE_CAJA': {
-             // Optimistic UI update
              const effectiveCount = action.payload;
              const diff = effectiveCount - state.cajaSession.totalEfectivoEsperado;
              
@@ -295,7 +333,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
             const newMovimiento: MovimientoCaja = { monto, descripcion, tipo, fecha: new Date().toISOString() };
             const currentMovimientos = state.cajaSession.movimientos || [];
             
-            // Calculate new totals locally
             let newEfectivoEsperado = state.cajaSession.totalEfectivoEsperado;
             if (tipo === 'ingreso') newEfectivoEsperado += monto;
             else newEfectivoEsperado -= monto;
@@ -312,43 +349,44 @@ function appReducer(state: AppState, action: AppAction): AppState {
         case 'CONFIRM_PAYMENT':
         case 'CONFIRM_DELIVERY_PAYMENT': {
              const { orderId, details } = action.payload;
-             const order = state.orders.find(o => o.id === orderId);
              
-             // Logic to determine next status based on payment method and delivery type
+             let total = 0;
+             const localOrder = state.orders.find(o => o.id === orderId);
+             
+             if (localOrder) {
+                 total = localOrder.total;
+             } else {
+                 // In case of reload, the order might not be in the reduced local list immediately, so we trust DB (or fetch it)
+                 // For now, assume consistent if UI calls this.
+             }
+             
              let newStatus: EstadoPedido = 'pagado';
              if (action.type === 'CONFIRM_DELIVERY_PAYMENT') {
                  newStatus = 'entregado';
              } else {
-                 // For online payments (MP, Yape, etc), skip 'confirmado' and go straight to kitchen
                  if (['mercadopago', 'yape', 'plin'].includes(details.metodo)) {
                     newStatus = 'en preparación';
                  } else {
-                     // Default for cash/card in local might be 'en preparación' as well if paid upfront
-                     newStatus = 'en preparación';
+                     newStatus = 'en preparación'; 
                  }
              }
              
-             // We rely on the realtime subscription to update the caja session totals
-             // to ensure single source of truth from DB, but we can optimistically update order status here
-             // The critical logic for Caja update is in the async dispatch
-
              const pagoRegistrado = {
                 metodo: details.metodo,
-                montoTotal: order ? order.total : 0,
-                montoPagado: details.montoPagado || (order ? order.total : 0),
-                vuelto: (order && details.montoPagado && order.total) ? details.montoPagado - order.total : 0,
+                montoTotal: total,
+                montoPagado: details.montoPagado || total,
+                vuelto: (details.montoPagado && total) ? details.montoPagado - total : 0,
                 fecha: new Date().toISOString()
              };
              
-             // If order is missing locally, we can't update it here, but dispatch will handle DB update
-             if (!order) return state;
+             if (!localOrder) return state; // Safety check
 
              return {
                 ...state,
                 orders: state.orders.map(o => o.id === orderId ? { ...o, estado: newStatus, pagoRegistrado } : o),
                 orderToPay: null,
                 orderForDeliveryPayment: null,
-                orderForReceipt: { ...order, estado: newStatus, pagoRegistrado }
+                orderForReceipt: { ...localOrder, estado: newStatus, pagoRegistrado }
              };
         }
         default:
@@ -364,6 +402,7 @@ const mapOrderFromDb = (dbOrder: any): Pedido => ({
     estado: dbOrder.estado,
     turno: dbOrder.turno,
     cliente: dbOrder.cliente,
+    cliente_id: dbOrder.cliente_id,
     productos: dbOrder.productos,
     total: dbOrder.total,
     metodoPago: dbOrder.metodo_pago,
@@ -377,7 +416,6 @@ const mapOrderFromDb = (dbOrder: any): Pedido => ({
     historial: dbOrder.historial,
     pagoRegistrado: dbOrder.pago_registrado,
     restaurant_id: dbOrder.restaurant_id,
-    // Derive areaPreparacion if not present, default to reasonable value based on type
     areaPreparacion: dbOrder.tipo === 'local' ? 'salon' : dbOrder.tipo,
     estacion: dbOrder.estacion 
 });
@@ -390,6 +428,7 @@ const mapOrderToDb = (order: Pedido): any => ({
     estado: order.estado,
     turno: order.turno,
     cliente: order.cliente,
+    cliente_id: order.cliente_id,
     productos: order.productos,
     total: order.total,
     metodo_pago: order.metodoPago,
@@ -405,6 +444,9 @@ const mapOrderToDb = (order: Pedido): any => ({
 });
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+    // Use a ref to store the stable dispatch function to prevent infinite re-renders in consumers
+    const dispatchRef = useRef<(action: AppAction) => void>(() => {});
+    
     const [state, baseDispatch] = useReducer(appReducer, initialState);
 
     // --- DATA FETCHING ---
@@ -437,7 +479,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 if (productsData) {
                     const mappedProducts = productsData.map((p: any) => ({
                         ...p,
-                        // AUTOMATIC FALLBACK: Use provided URL or generate a default one based on category
                         imagenUrl: p.imagen_url || getCategoryDefaultImage(p.categoria, p.nombre)
                     }));
                     baseDispatch({ type: 'SET_PRODUCTS', payload: mappedProducts });
@@ -503,6 +544,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                         gananciaTotal: sessionData.gananciaTotal || 0
                     };
                     baseDispatch({ type: 'SET_STATE', payload: { cajaSession: mappedSession } });
+                }
+
+                // 8. Employees
+                const { data: employeesData } = await supabase.from('employees').select('*').eq('restaurant_id', RESTAURANT_ID);
+                if (employeesData) {
+                    baseDispatch({ type: 'SET_STATE', payload: { employees: employeesData } });
                 }
 
                 baseDispatch({ type: 'SET_STATE', payload: { restaurantId: RESTAURANT_ID } });
@@ -578,15 +625,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             )
             .subscribe();
 
-        // Realtime Sync for Caja Sessions
         const cajaChannel = supabase.channel('public:caja_sessions')
             .on(
                 'postgres_changes',
                 { event: 'UPDATE', schema: 'public', table: 'caja_sessions', filter: `restaurant_id=eq.${RESTAURANT_ID}` },
                 (payload) => {
                      const newData = payload.new;
-                     // Map snake_case to camelCase for CajaSession
-                     // This ensures that when one device updates the total, all others receive it immediately.
                      const mappedSession: Partial<CajaSession> = {
                         id: newData.id,
                         estado: newData.estado,
@@ -606,12 +650,29 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 }
             )
             .subscribe();
+            
+        const customersChannel = supabase.channel('public:customers')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'customers', filter: `restaurant_id=eq.${RESTAURANT_ID}` },
+                async (payload) => {
+                    if (payload.eventType === 'INSERT') {
+                        const newCustomer = payload.new as ClienteLeal;
+                        baseDispatch({ type: 'ADD_NEW_CUSTOMER', payload: newCustomer });
+                    } else if (payload.eventType === 'UPDATE') {
+                        const updatedCustomer = payload.new as ClienteLeal;
+                        baseDispatch({ type: 'UPDATE_CUSTOMER', payload: updatedCustomer });
+                    }
+                }
+            )
+            .subscribe();
 
         return () => {
             supabase.removeChannel(settingsChannel);
             supabase.removeChannel(ordersChannel);
             supabase.removeChannel(salsasChannel);
             supabase.removeChannel(cajaChannel);
+            supabase.removeChannel(customersChannel);
         };
     }, []);
 
@@ -634,12 +695,67 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                     }
                     break;
                 }
+                case 'ADD_NEW_CUSTOMER': {
+                    const customerData = action.payload;
+                    // Optimistic update already handled by baseDispatch, this is persistence
+                    // However, we rely on Supabase returning the real ID to properly link orders later if needed.
+                    // The baseDispatch for ADD_NEW_CUSTOMER just adds it to local state.
+                    // Realtime subscription will handle the final sync back from DB.
+                    const { error } = await supabase.from('customers').insert({
+                        restaurant_id: RESTAURANT_ID,
+                        telefono: customerData.telefono,
+                        nombre: customerData.nombre,
+                        email: customerData.email || null,
+                        direccion: customerData.direccion || null,
+                        notas: customerData.notas || null,
+                        fecha_nacimiento: customerData.fecha_nacimiento || null,
+                        puntos: 0,
+                        nivel: 'bronce'
+                    });
+                    
+                    if (error) {
+                        console.error("Error adding customer:", error);
+                        baseDispatch({ type: 'ADD_TOAST', payload: { message: 'Error al registrar cliente: ' + error.message, type: 'danger' } });
+                    }
+                    break;
+                }
+                case 'ADD_EMPLOYEE': {
+                    const { name, role, pin_code } = action.payload;
+                    const { data, error } = await supabase.from('employees').insert({
+                        restaurant_id: RESTAURANT_ID,
+                        name,
+                        role,
+                        pin_code,
+                        is_active: true
+                    }).select().single();
+                    if (error) {
+                        baseDispatch({ type: 'ADD_TOAST', payload: { message: 'Error adding employee: ' + error.message, type: 'danger' } });
+                    } else if (data) {
+                        baseDispatch({ type: 'ADD_EMPLOYEE', payload: data });
+                    }
+                    break;
+                }
+                case 'UPDATE_EMPLOYEE': {
+                    const { id, name, role, pin_code, is_active } = action.payload;
+                    const { error } = await supabase.from('employees').update({
+                        name, role, pin_code, is_active
+                    }).eq('id', id);
+                    if (error) {
+                        baseDispatch({ type: 'ADD_TOAST', payload: { message: 'Error updating employee', type: 'danger' } });
+                    }
+                    break;
+                }
+                case 'DELETE_EMPLOYEE': {
+                    const id = action.payload;
+                    const { error } = await supabase.from('employees').delete().eq('id', id);
+                    if (error) {
+                        baseDispatch({ type: 'ADD_TOAST', payload: { message: 'Error deleting employee', type: 'danger' } });
+                    }
+                    break;
+                }
                 case 'SAVE_ORDER': {
                     const orderData = action.payload;
-                    // CHANGED LOGIC: All orders now go straight to kitchen ('en preparación')
-                    // Skipping 'pendiente confirmar pago' and 'pendiente de confirmación' (Recepción)
                     const initialState: EstadoPedido = 'en preparación';
-                    
                     const getAreaPreparacion = (tipo: Pedido['tipo']): AreaPreparacion => tipo === 'local' ? 'salon' : tipo;
                     
                     const generatedId = `PED-${String(Date.now()).slice(-4)}`;
@@ -649,12 +765,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                         fecha: new Date().toISOString(), 
                         estado: initialState, 
                         turno: state.turno, 
-                        historial: [{ estado: initialState, fecha: new Date().toISOString(), usuario: 'cliente' }], 
+                        historial: [{ estado: initialState, fecha: new Date().toISOString(), usuario: state.activeEmployee ? state.activeEmployee.name : 'cliente' }], 
                         areaPreparacion: getAreaPreparacion(orderData.tipo),
                         restaurant_id: RESTAURANT_ID,
                     };
                     
+                    if (newOrder.cliente.telefono) {
+                        const existingCustomer = state.customers.find(c => c.telefono === newOrder.cliente.telefono);
+                        if (existingCustomer) {
+                            newOrder.cliente_id = existingCustomer.id;
+                        }
+                    }
+                    
                     baseDispatch({ type: 'SAVE_POS_ORDER', payload: { orderData: newOrder, mesaNumero: 0 } });
+                    
+                    // Fetch order total from DB if checking for existing order to ensure sync,
+                    // but here we are creating a new one.
+                    
                     const dbPayload = mapOrderToDb(newOrder);
                     await supabase.from('orders').insert(dbPayload);
                     break;
@@ -668,8 +795,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 }
                 case 'UPDATE_ORDER_STATUS': {
                     const { orderId, newStatus, user } = action.payload;
+                    
+                    // Fetch current history to append properly if local state is stale (though reducer updates local state first)
                     const { data: currentOrder } = await supabase.from('orders').select('historial').eq('id', orderId).single();
                     const currentHist = currentOrder?.historial || [];
+                    
                     const newHistoryEntry: HistorialEstado = { estado: newStatus, fecha: new Date().toISOString(), usuario: user };
                     
                     await supabase.from('orders').update({
@@ -686,11 +816,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                         fecha_apertura: new Date().toISOString(),
                         saldo_inicial: saldoInicial,
                         total_efectivo_esperado: saldoInicial,
-                        detalles_cierre: {} // Will store ventasPorMetodo
+                        detalles_cierre: {}
                     }).select().single();
 
                     if (data) {
-                         // Update local state with real DB ID
                          baseDispatch({ type: 'UPDATE_CAJA_SESSION_DATA', payload: { id: data.id } });
                     }
                     break;
@@ -706,7 +835,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                         estado: 'cerrada',
                         fecha_cierre: new Date().toISOString(),
                         diferencia: diff,
-                        // Ensure final totals are synced
                         total_ventas: session.totalVentas,
                         total_efectivo_esperado: session.totalEfectivoEsperado,
                         detalles_cierre: session.ventasPorMetodo
@@ -721,7 +849,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                     const newMovimiento: MovimientoCaja = { monto, descripcion, tipo, fecha: new Date().toISOString() };
                     const updatedMovimientos = [...(session.movimientos || []), newMovimiento];
                     
-                    // Calculate new totals
                     let newEfectivoEsperado = session.totalEfectivoEsperado;
                     if (tipo === 'ingreso') newEfectivoEsperado += monto;
                     else newEfectivoEsperado -= monto;
@@ -736,35 +863,33 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 case 'CONFIRM_DELIVERY_PAYMENT': {
                     const { orderId, details } = action.payload;
                     
+                    // Robustness check: Ensure we have the latest order total
                     let total = 0;
-                    // Try to find order in local state first
-                    const localOrder = state.orders.find(o => o.id === orderId);
+                    let localOrder = state.orders.find(o => o.id === orderId);
                     
-                    if (localOrder) {
-                        total = localOrder.total;
-                    } else {
-                        // If not found (e.g. reload), fetch from DB to ensure we have the total for Caja
+                    if (!localOrder) {
+                        // Order might not be in local state if page reloaded
                         const { data: dbOrder } = await supabase
                             .from('orders')
-                            .select('total')
+                            .select('*')
                             .eq('id', orderId)
                             .single();
-                        if (dbOrder) total = dbOrder.total;
+                        if (dbOrder) {
+                            localOrder = mapOrderFromDb(dbOrder);
+                            total = localOrder.total;
+                        }
+                    } else {
+                        total = localOrder.total;
                     }
                     
                     let newStatus: EstadoPedido = 'pagado';
                     if (action.type === 'CONFIRM_DELIVERY_PAYMENT') {
                         newStatus = 'entregado';
                     } else {
-                        // With Direct Kitchen flow, payments usually happen AFTER prep or at the same time
-                        // We keep 'en preparación' if it's an online payment that happened early
-                        // Or shift to 'pagado' if it's a counter payment
-                        // User requested simplicity, so if they pay, we can just ensure it doesn't get stuck.
-                        // Force 'en preparación' to be safe so it stays on kitchen board if not delivered yet.
                         if (['mercadopago', 'yape', 'plin'].includes(details.metodo)) {
                             newStatus = 'en preparación';
                         } else {
-                            newStatus = 'en preparación'; 
+                            newStatus = 'en preparación'; // Payment confirmed at POS, sends to kitchen
                         }
                     }
 
@@ -776,7 +901,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                         fecha: new Date().toISOString()
                     };
                     
-                    // Update DB Status
                     const { error } = await supabase.from('orders').update({
                         estado: newStatus,
                         pago_registrado: pagoRegistrado
@@ -784,8 +908,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
                     if (error) console.error("Failed to confirm payment in DB:", error);
 
-                    // --- CAJA SESSION UPDATE ---
-                    // Fetch the latest open session from DB to ensure we have the correct ID even after reload
+                    // Update Cash Session if active
                     let sessionId = state.cajaSession.id;
                     let currentSessionState = state.cajaSession;
 
@@ -799,7 +922,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                         
                         if (activeSession) {
                             sessionId = activeSession.id;
-                            // Map basic needed fields to update logic
                             currentSessionState = {
                                 ...currentSessionState,
                                 id: activeSession.id,
@@ -814,13 +936,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                         const currentVentasMethod = currentSessionState.ventasPorMetodo[details.metodo] || 0;
                         const newVentasMethod = currentVentasMethod + total;
                         
-                        // Important: Ensure we use a new object for the update
                         const newVentasPorMetodo = {
                             ...currentSessionState.ventasPorMetodo,
                             [details.metodo]: newVentasMethod
                         };
                         
                         const newTotalVentas = currentSessionState.totalVentas + total;
+                        // Only add to expected cash if method is cash
                         const newTotalEfectivo = details.metodo === 'efectivo' 
                             ? currentSessionState.totalEfectivoEsperado + total 
                             : currentSessionState.totalEfectivoEsperado;
@@ -828,7 +950,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                         await supabase.from('caja_sessions').update({
                             total_ventas: newTotalVentas,
                             total_efectivo_esperado: newTotalEfectivo,
-                            detalles_cierre: newVentasPorMetodo // Using this column to store the breakdown
+                            detalles_cierre: newVentasPorMetodo 
                         }).eq('id', sessionId);
                     }
 
@@ -839,7 +961,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             console.error("Error syncing action to Supabase:", action, err);
             baseDispatch({ type: 'ADD_TOAST', payload: { message: 'Error de sincronización', type: 'danger' } });
         }
-    }, [state.restaurantSettings, state.turno, state.orders, state.cajaSession]);
+    }, [state.restaurantSettings, state.turno, state.orders, state.cajaSession, state.customers, state.activeEmployee, state.employees]);
+
+    dispatchRef.current = dispatch;
 
     return (
         <AppContext.Provider value={{ state, dispatch }}>

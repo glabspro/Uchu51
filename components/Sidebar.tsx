@@ -1,7 +1,7 @@
 
 import React from 'react';
 import type { View, Theme } from '../types';
-import { ChartBarIcon, FireIcon, HomeIcon, TruckIcon, LogoutIcon, ShoppingBagIcon, CreditCardIcon, ChevronDoubleLeftIcon, ChevronDoubleRightIcon, AdjustmentsHorizontalIcon, DocumentTextIcon } from './icons';
+import { ChartBarIcon, FireIcon, HomeIcon, TruckIcon, LogoutIcon, ShoppingBagIcon, CreditCardIcon, ChevronDoubleLeftIcon, ChevronDoubleRightIcon, AdjustmentsHorizontalIcon, DocumentTextIcon, LockClosedIcon, UserIcon } from './icons';
 import { Logo } from './Logo';
 import { LogoIcon } from './LogoIcon';
 import { useAppContext } from '../store';
@@ -30,10 +30,11 @@ const NavButton: React.FC<{
 
 const Sidebar: React.FC<SidebarProps> = () => {
     const { state, dispatch } = useAppContext();
-    const { view, theme, isSidebarCollapsed, restaurantSettings } = state;
+    const { view, theme, isSidebarCollapsed, restaurantSettings, activeEmployee } = state;
 
     const onNavigate = (view: View) => dispatch({ type: 'SET_VIEW', payload: view });
     const onLogout = () => dispatch({ type: 'LOGOUT' });
+    const onLock = () => dispatch({ type: 'LOCK_TERMINAL' });
     const onToggle = () => dispatch({ type: 'TOGGLE_SIDEBAR' });
     
     // Updated Navigation Order: Caja -> Dashboard -> Salón -> Delivery -> Retiro -> Cocina -> Gestión
@@ -66,7 +67,23 @@ const Sidebar: React.FC<SidebarProps> = () => {
                     ? <LogoIcon className="h-9 w-auto"/> 
                     : <Logo logoUrl={restaurantSettings?.branding?.logoUrl} className="h-9 w-auto" variant={theme === 'dark' ? 'light' : 'default'} />}
             </div>
-            <nav className="flex-grow p-4 space-y-2">
+            
+            {/* Active User Info */}
+            {!isSidebarCollapsed && activeEmployee && (
+                <div className="px-4 pt-4 pb-2">
+                    <div className="bg-primary/10 dark:bg-[#2C3B45] rounded-lg p-3 flex items-center gap-3">
+                        <div className="bg-primary text-white p-2 rounded-full">
+                            <UserIcon className="h-4 w-4" />
+                        </div>
+                        <div className="overflow-hidden">
+                            <p className="text-sm font-bold text-text-primary dark:text-white truncate">{activeEmployee.name}</p>
+                            <p className="text-xs text-text-secondary dark:text-zinc-400 capitalize">{activeEmployee.role}</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <nav className="flex-grow p-4 space-y-2 overflow-y-auto">
                 {visibleNavItems.map(item => (
                     <NavButton 
                         key={item.id}
@@ -87,6 +104,19 @@ const Sidebar: React.FC<SidebarProps> = () => {
                     <span className="sr-only">{isSidebarCollapsed ? 'Expandir menú' : 'Contraer menú'}</span>
                     {isSidebarCollapsed ? <ChevronDoubleRightIcon className="h-6 w-6" /> : <ChevronDoubleLeftIcon className="h-6 w-6" />}
                 </button>
+                
+                {/* Lock Terminal Button */}
+                <button
+                    onClick={onLock}
+                    title={isSidebarCollapsed ? 'Bloquear' : undefined}
+                    className={`flex items-center w-full px-4 py-3 rounded-lg text-base font-semibold transition-all duration-200 text-text-secondary hover:bg-surface hover:text-primary dark:text-light-silver dark:hover:bg-[#45535D] dark:hover:text-primary mb-2
+                        ${isSidebarCollapsed ? 'justify-center' : 'space-x-3'}
+                    `}
+                >
+                    <LockClosedIcon className="h-6 w-6" />
+                    {!isSidebarCollapsed && <span>Bloquear</span>}
+                </button>
+
                 <button
                     onClick={onLogout}
                     title={isSidebarCollapsed ? 'Salir' : undefined}
@@ -95,7 +125,7 @@ const Sidebar: React.FC<SidebarProps> = () => {
                     `}
                 >
                     <LogoutIcon className="h-6 w-6" />
-                    {!isSidebarCollapsed && <span>Salir</span>}
+                    {!isSidebarCollapsed && <span>Cerrar Sistema</span>}
                 </button>
             </div>
         </aside>

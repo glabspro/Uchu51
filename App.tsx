@@ -1,3 +1,4 @@
+
 import React, { useEffect, useMemo, useCallback } from 'react';
 import type { Pedido, Mesa, EstadoPedido, Recompensa, ClienteLeal } from './types';
 import { useAppContext } from './store';
@@ -11,7 +12,8 @@ import Dashboard from './components/Dashboard';
 import WaitingBoard from './components/WaitingBoard';
 import POSView from './components/POSView';
 import { CustomerView } from './components/CustomerView';
-import Login from './Login';
+import Login from './components/Login';
+import StaffLogin from './components/StaffLogin';
 import SuperAdminView from './components/SuperAdminView';
 import Toast from './components/Toast';
 import CajaView from './components/CajaView';
@@ -70,6 +72,7 @@ const App: React.FC = () => {
         turno, 
         theme, 
         appView, 
+        activeEmployee, // Check if an employee is active
         loginError, 
         toasts, 
         posMesaActiva,
@@ -158,8 +161,9 @@ const App: React.FC = () => {
     }, [dispatch]);
 
     const updateOrderStatus = useCallback((orderId: string, newStatus: EstadoPedido) => {
-        dispatch({ type: 'UPDATE_ORDER_STATUS', payload: { orderId, newStatus, user: state.currentUserRole } });
-    }, [dispatch, state.currentUserRole]);
+        // Pass current user (or active employee name) to action
+        dispatch({ type: 'UPDATE_ORDER_STATUS', payload: { orderId, newStatus, user: activeEmployee ? activeEmployee.name : state.currentUserRole } });
+    }, [dispatch, state.currentUserRole, activeEmployee]);
 
     const redeemReward = useCallback((customerId: string, reward: Recompensa) => {
         dispatch({ type: 'REDEEM_REWARD', payload: { customerId, reward } });
@@ -208,6 +212,9 @@ const App: React.FC = () => {
     if (appView === 'super_admin') return <SuperAdminView />;
     if (appView === 'customer') return <CustomerView />;
     if (appView === 'login') return <Login error={loginError} />;
+    
+    // Check for staff PIN login before showing admin panel
+    if (appView === 'staff_login') return <StaffLogin />;
     
     if (appView === 'admin') {
         if (posMesaActiva !== null) {

@@ -3,10 +3,19 @@ export type EstadoPedido = 'pendiente confirmar pago' | 'pendiente de confirmaci
 export type TipoPedido = 'delivery' | 'local' | 'retiro';
 export type Turno = 'mañana' | 'tarde' | 'noche';
 export type View = 'dashboard' | 'local' | 'cocina' | 'retiro' | 'delivery' | 'gestion' | 'caja' | 'recepcion';
-export type UserRole = 'owner' | 'admin' | 'cocinero' | 'repartidor' | 'recepcionista' | 'cliente';
+export type UserRole = 'owner' | 'admin' | 'cocinero' | 'repartidor' | 'mesero' | 'cajero' | 'cliente';
 export type MetodoPago = 'efectivo' | 'tarjeta' | 'yape' | 'plin' | 'mercadopago' | 'online';
 export type Theme = 'light' | 'dark';
-export type AppView = 'customer' | 'login' | 'admin' | 'super_admin';
+export type AppView = 'customer' | 'login' | 'admin' | 'super_admin' | 'staff_login';
+
+export interface Employee {
+    id: string;
+    name: string;
+    role: 'admin' | 'waiter' | 'kitchen' | 'delivery' | 'cashier';
+    pin_code: string;
+    is_active: boolean;
+    restaurant_id: string;
+}
 
 export interface PaymentMethodDetail {
     enabled: boolean;
@@ -89,7 +98,7 @@ export interface Producto {
 export interface HistorialEstado {
     estado: EstadoPedido;
     fecha: string;
-    usuario: UserRole;
+    usuario: string; // Changed from UserRole to string to support employee names
 }
 
 export type AreaPreparacion = 'delivery' | 'retiro' | 'salon';
@@ -101,6 +110,7 @@ export interface Pedido {
     estado: EstadoPedido;
     turno: Turno;
     cliente: Cliente;
+    cliente_id?: string; // Link to CRM Customer
     productos: ProductoPedido[];
     total: number;
     metodoPago: MetodoPago;
@@ -164,11 +174,20 @@ export interface CajaSession {
 }
 
 export interface ClienteLeal {
+    id?: string; // UUID from DB
     telefono: string;
     nombre: string;
+    email?: string;
+    fecha_nacimiento?: string;
+    direccion?: string;
+    notas?: string;
     puntos: number;
-    historialPedidos: any[];
+    nivel?: 'bronce' | 'plata' | 'oro' | 'platino' | 'diamante';
+    total_gastado?: number;
+    total_pedidos?: number;
+    ultimo_pedido?: string;
     restaurant_id: string;
+    historialPedidos?: any[]; // Keep for legacy/UI compatibility if needed
 }
 
 export interface Recompensa {
@@ -229,12 +248,14 @@ export type Action =
   | { type: 'TOGGLE_THEME' }
   | { type: 'TOGGLE_SIDEBAR' }
   | { type: 'LOGIN_INTERNAL_SUCCESS' }
+  | { type: 'EMPLOYEE_LOGIN_SUCCESS'; payload: Employee }
+  | { type: 'LOCK_TERMINAL' }
   | { type: 'LOGIN_FAILED'; payload: string }
   | { type: 'LOGOUT' }
   | { type: 'GO_TO_LOGIN' }
   | { type: 'ADD_TOAST'; payload: Omit<Toast, 'id'> }
   | { type: 'REMOVE_TOAST'; payload: number }
-  | { type: 'UPDATE_ORDER_STATUS'; payload: { orderId: string; newStatus: EstadoPedido; user: UserRole } }
+  | { type: 'UPDATE_ORDER_STATUS'; payload: { orderId: string; newStatus: EstadoPedido; user: string } }
   | { type: 'ASSIGN_DRIVER'; payload: { orderId: string; driverName: string } }
   | { type: 'SAVE_ORDER'; payload: Omit<Pedido, 'id' | 'fecha' | 'turno' | 'historial' | 'areaPreparacion' | 'estado' | 'gananciaEstimada' | 'restaurant_id'> }
   | { type: 'SAVE_POS_ORDER'; payload: { orderData: Pedido; mesaNumero: number } }
@@ -255,7 +276,11 @@ export type Action =
   | { type: 'SET_SAUCES'; payload: Salsa[] }
   | { type: 'SET_PROMOTIONS'; payload: Promocion[] }
   | { type: 'SET_LOYALTY_PROGRAMS'; payload: LoyaltyProgram[] }
-  | { type: 'ADD_NEW_CUSTOMER'; payload: { telefono: string; nombre: string } }
+  | { type: 'ADD_NEW_CUSTOMER'; payload: ClienteLeal }
+  | { type: 'UPDATE_CUSTOMER'; payload: ClienteLeal }
   | { type: 'REDEEM_REWARD'; payload: { customerId: string; reward: Recompensa } }
   | { type: 'SET_INSTALL_PROMPT'; payload: any }
-  | { type: 'UPDATE_RESTAURANT_SETTINGS'; payload: Partial<RestaurantSettings> };
+  | { type: 'UPDATE_RESTAURANT_SETTINGS'; payload: Partial<RestaurantSettings> }
+  | { type: 'ADD_EMPLOYEE'; payload: Employee }
+  | { type: 'UPDATE_EMPLOYEE'; payload: Employee }
+  | { type: 'DELETE_EMPLOYEE'; payload: string };

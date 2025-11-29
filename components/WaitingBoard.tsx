@@ -1,3 +1,4 @@
+
 import React from 'react';
 import type { Pedido, EstadoPedido, UserRole } from '../types';
 import { useAppContext } from '../store';
@@ -22,7 +23,7 @@ const WaitingBoard: React.FC<WaitingBoardProps> = () => {
     const { state, dispatch } = useAppContext();
     const { orders, turno } = state;
 
-    const updateOrderStatus = (orderId: string, newStatus: EstadoPedido, user: UserRole) => {
+    const updateOrderStatus = (orderId: string, newStatus: EstadoPedido, user: string) => {
         dispatch({ type: 'UPDATE_ORDER_STATUS', payload: { orderId, newStatus, user } });
     };
     
