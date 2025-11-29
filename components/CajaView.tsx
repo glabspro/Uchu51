@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import type { Pedido, CajaSession, MovimientoCaja } from '../types';
 import { useAppContext } from '../store';
-import { CheckCircleIcon, CashIcon, CalculatorIcon, PlusCircleIcon, MinusCircleIcon, DocumentMagnifyingGlassIcon, UserIcon, ClockIcon, CalendarIcon } from './icons';
+import { CheckCircleIcon, CashIcon, CalculatorIcon, PlusCircleIcon, MinusCircleIcon, DocumentMagnifyingGlassIcon, UserIcon, ClockIcon, CalendarIcon, InformationCircleIcon } from './icons';
 import CloseCajaModal from './CloseCajaModal';
 import SalesHistoryModal from './SalesHistoryModal';
 import CashDenominationCounter, { DenominationCounts } from './CashDenominationCounter';
@@ -39,13 +39,10 @@ const AdvancedOpenCajaModal: React.FC<{ onClose: () => void; onOpen: (saldo: num
 
     const handleSubmit = () => {
         if (isNaN(totalToOpen) || totalToOpen < 0) {
-            setError('Por favor, ingrese un monto válido.');
+            setError('Por favor, ingrese un monto válido (puede ser 0).');
             return;
         }
-        if (totalToOpen === 0) {
-             setError('El monto inicial no puede ser 0.');
-             return;
-        }
+        // Removed the check that blocked 0 amount
         onOpen(totalToOpen);
     };
 
@@ -54,83 +51,77 @@ const AdvancedOpenCajaModal: React.FC<{ onClose: () => void; onOpen: (saldo: num
     const formattedTime = today.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
 
     return (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[101] p-4">
-            <div className="bg-surface dark:bg-zinc-800 rounded-2xl shadow-xl p-0 max-w-lg w-full flex flex-col animate-fade-in-scale overflow-hidden max-h-[90vh]">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[101] p-4 backdrop-blur-sm">
+            <div className="bg-surface dark:bg-zinc-900 rounded-3xl shadow-2xl w-full max-w-md flex flex-col animate-fade-in-scale overflow-hidden border border-white/10">
                 
                 {/* Header */}
-                <div className="bg-primary/10 p-6 pb-4 border-b border-primary/20">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-primary rounded-lg text-white">
-                            <CashIcon className="h-6 w-6" />
-                        </div>
-                        <h3 className="text-2xl font-heading font-bold text-text-primary dark:text-zinc-100">Apertura de Caja</h3>
+                <div className="bg-gradient-to-r from-primary to-primary/80 p-6 text-white text-center relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 transform translate-x-4 -translate-y-4">
+                        <CashIcon className="h-24 w-24" />
                     </div>
-                    <p className="text-text-secondary dark:text-zinc-400 text-sm">Inicia el turno registrando el fondo de caja.</p>
+                    <h3 className="text-2xl font-heading font-bold relative z-10">Apertura de Caja</h3>
+                    <p className="text-white/80 text-sm mt-1 relative z-10 font-medium">Inicia el turno operativo</p>
                 </div>
 
                 <div className="flex-grow overflow-y-auto p-6 space-y-6">
-                    {/* Turn Info */}
-                    <div className="bg-background dark:bg-zinc-900/50 p-4 rounded-xl border border-text-primary/5 dark:border-zinc-700 grid grid-cols-2 gap-4">
-                        <div className="flex items-center gap-3">
-                            <UserIcon className="h-5 w-5 text-text-secondary dark:text-zinc-500" />
-                            <div>
-                                <p className="text-xs text-text-secondary dark:text-zinc-500 font-bold uppercase">Usuario</p>
-                                <p className="text-sm font-semibold text-text-primary dark:text-zinc-200 capitalize">{currentUserRole}</p>
+                    {/* Turn Info Card */}
+                    <div className="bg-background dark:bg-zinc-800/50 p-4 rounded-2xl border border-text-primary/5 dark:border-zinc-700/50 flex flex-col gap-3">
+                        <div className="flex justify-between items-center border-b border-dashed border-text-primary/10 dark:border-zinc-700 pb-3">
+                            <div className="flex items-center gap-2">
+                                <UserIcon className="h-4 w-4 text-text-secondary dark:text-zinc-500" />
+                                <span className="text-sm font-semibold text-text-primary dark:text-zinc-300 capitalize">{currentUserRole}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <ClockIcon className="h-4 w-4 text-text-secondary dark:text-zinc-500" />
+                                <span className="text-sm font-semibold text-text-primary dark:text-zinc-300 capitalize">{turno}</span>
                             </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                            <ClockIcon className="h-5 w-5 text-text-secondary dark:text-zinc-500" />
-                            <div>
-                                <p className="text-xs text-text-secondary dark:text-zinc-500 font-bold uppercase">Turno</p>
-                                <p className="text-sm font-semibold text-text-primary dark:text-zinc-200 capitalize">{turno}</p>
-                            </div>
-                        </div>
-                        <div className="col-span-2 flex items-center gap-3 pt-2 border-t border-text-primary/5 dark:border-zinc-700">
-                            <CalendarIcon className="h-5 w-5 text-text-secondary dark:text-zinc-500" />
-                            <div>
-                                <p className="text-xs text-text-secondary dark:text-zinc-500 font-bold uppercase">Fecha y Hora</p>
-                                <p className="text-sm font-semibold text-text-primary dark:text-zinc-200 capitalize">{formattedDate} - {formattedTime}</p>
-                            </div>
+                        <div className="flex items-center gap-2 justify-center text-xs text-text-secondary dark:text-zinc-500">
+                            <CalendarIcon className="h-4 w-4" />
+                            <span className="capitalize">{formattedDate}</span>
                         </div>
                     </div>
 
                     {/* Amount Input Section */}
-                    <div>
-                        <div className="flex justify-between items-center mb-2">
-                            <label className="text-sm font-bold text-text-secondary dark:text-zinc-400 uppercase">Monto Inicial</label>
-                            <div className="flex bg-background dark:bg-zinc-900 rounded-lg p-1 border border-text-primary/10 dark:border-zinc-700">
+                    <div className="space-y-4">
+                        <div className="flex justify-center">
+                            <div className="inline-flex bg-background dark:bg-zinc-800 rounded-full p-1 border border-text-primary/10 dark:border-zinc-700 shadow-inner">
                                 <button 
                                     onClick={() => setMode('manual')}
-                                    className={`px-3 py-1 text-xs font-bold rounded-md transition-colors ${mode === 'manual' ? 'bg-primary text-white shadow-sm' : 'text-text-secondary dark:text-zinc-400 hover:text-primary'}`}
+                                    className={`px-6 py-2 text-sm font-bold rounded-full transition-all duration-300 ${mode === 'manual' ? 'bg-white dark:bg-zinc-700 text-primary shadow-sm' : 'text-text-secondary dark:text-zinc-500 hover:text-text-primary dark:hover:text-zinc-300'}`}
                                 >
                                     Manual
                                 </button>
                                 <button 
                                     onClick={() => setMode('calculator')}
-                                    className={`px-3 py-1 text-xs font-bold rounded-md transition-colors flex items-center gap-1 ${mode === 'calculator' ? 'bg-primary text-white shadow-sm' : 'text-text-secondary dark:text-zinc-400 hover:text-primary'}`}
+                                    className={`px-6 py-2 text-sm font-bold rounded-full transition-all duration-300 flex items-center gap-2 ${mode === 'calculator' ? 'bg-white dark:bg-zinc-700 text-primary shadow-sm' : 'text-text-secondary dark:text-zinc-500 hover:text-text-primary dark:hover:text-zinc-300'}`}
                                 >
-                                    <CalculatorIcon className="h-3 w-3" /> Asistente
+                                    <CalculatorIcon className="h-4 w-4" /> Asistente
                                 </button>
                             </div>
                         </div>
 
                         {mode === 'manual' ? (
-                            <div className="relative">
-                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary dark:text-zinc-500 font-bold text-xl">S/.</span>
-                                <input
-                                    type="number"
-                                    value={montoManual}
-                                    onChange={handleManualChange}
-                                    placeholder="0.00"
-                                    className="w-full bg-background dark:bg-zinc-900 border border-text-primary/10 dark:border-zinc-700 rounded-xl p-4 pl-12 text-3xl font-mono font-bold text-text-primary dark:text-zinc-100 focus:ring-2 focus:ring-primary focus:border-primary transition"
-                                    autoFocus
-                                />
+                            <div className="relative text-center py-4">
+                                <label className="block text-xs font-bold text-text-secondary dark:text-zinc-500 uppercase tracking-widest mb-2">Monto Inicial</label>
+                                <div className="flex items-baseline justify-center gap-1">
+                                    <span className="text-3xl text-text-secondary dark:text-zinc-500 font-bold">S/.</span>
+                                    <input
+                                        type="number"
+                                        value={montoManual}
+                                        onChange={handleManualChange}
+                                        placeholder="0.00"
+                                        className="w-48 bg-transparent text-6xl font-heading font-black text-text-primary dark:text-white text-center focus:outline-none placeholder-text-primary/10 dark:placeholder-zinc-700"
+                                        autoFocus
+                                    />
+                                </div>
+                                <div className="h-1 w-32 bg-primary/20 mx-auto rounded-full mt-2"></div>
                             </div>
                         ) : (
-                            <div className="bg-background dark:bg-zinc-900 rounded-xl border border-text-primary/10 dark:border-zinc-700 overflow-hidden">
+                            <div className="bg-background dark:bg-zinc-800 rounded-xl border border-text-primary/10 dark:border-zinc-700 overflow-hidden">
                                 <div className="p-3 bg-primary/5 border-b border-primary/10 flex justify-between items-center">
-                                    <span className="text-xs font-bold text-primary">Calculadora de Efectivo</span>
-                                    <span className="font-mono font-bold text-primary">S/.{calculatedTotal.toFixed(2)}</span>
+                                    <span className="text-xs font-bold text-primary">Calculadora</span>
+                                    <span className="font-mono font-bold text-primary text-xl">S/.{calculatedTotal.toFixed(2)}</span>
                                 </div>
                                 <div className="p-2 max-h-48 overflow-y-auto">
                                     <CashDenominationCounter onTotalChange={handleCountChange} initialCounts={counts} />
@@ -138,38 +129,44 @@ const AdvancedOpenCajaModal: React.FC<{ onClose: () => void; onOpen: (saldo: num
                             </div>
                         )}
 
-                        {error && <p className="text-danger text-sm font-semibold mt-2 animate-fade-in-up">{error}</p>}
+                        {error && <p className="text-danger text-sm font-semibold mt-2 text-center animate-fade-in-up bg-danger/10 p-2 rounded-lg">{error}</p>}
                         
+                        {!error && totalToOpen === 0 && (
+                             <div className="mt-2 flex items-center justify-center gap-2 text-blue-500 text-sm bg-blue-500/10 p-3 rounded-xl border border-blue-500/20">
+                                <InformationCircleIcon className="h-5 w-5" />
+                                <p className="font-medium">Abriendo caja sin saldo inicial.</p>
+                            </div>
+                        )}
+
                         {!error && totalToOpen > 0 && totalToOpen < MIN_OPENING_AMOUNT && (
-                            <div className="mt-2 flex items-start gap-2 text-warning text-sm bg-warning/10 p-2 rounded-lg">
+                            <div className="mt-2 flex items-start gap-2 text-amber-600 dark:text-amber-400 text-sm bg-amber-500/10 p-3 rounded-xl border border-amber-500/20">
                                 <span className="text-lg">⚠️</span>
-                                <p>El monto es menor al mínimo recomendado de S/. {MIN_OPENING_AMOUNT.toFixed(2)}. Asegúrate de tener suficiente sencillo.</p>
+                                <p>Monto bajo sugerido. Se recomienda iniciar con S/. {MIN_OPENING_AMOUNT.toFixed(2)} en sencillo.</p>
                             </div>
                         )}
                     </div>
 
                     {/* Notes */}
                     <div>
-                        <label className="block text-sm font-medium text-text-secondary dark:text-zinc-400 mb-1">Notas / Observaciones (Opcional)</label>
                         <textarea 
                             value={notes} 
                             onChange={(e) => setNotes(e.target.value)} 
-                            placeholder="Ej: Se incluye sencillo del día anterior..."
+                            placeholder="Notas opcionales (ej. se dejó sencillo ayer...)"
                             rows={2}
-                            className="w-full bg-background dark:bg-zinc-900 border border-text-primary/10 dark:border-zinc-700 rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary focus:border-primary transition"
+                            className="w-full bg-background dark:bg-zinc-800 border border-text-primary/10 dark:border-zinc-700 rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary focus:border-primary transition resize-none"
                         />
                     </div>
                 </div>
 
                 {/* Footer */}
-                <div className="p-6 pt-2 border-t border-text-primary/5 dark:border-zinc-700 bg-background dark:bg-zinc-900/30">
+                <div className="p-6 pt-4 border-t border-text-primary/5 dark:border-zinc-700/50 bg-background dark:bg-zinc-800/80 backdrop-blur-md">
                     <div className="grid grid-cols-2 gap-4">
-                        <button onClick={onClose} className="w-full bg-text-primary/10 dark:bg-zinc-700 hover:bg-text-primary/20 dark:hover:bg-zinc-600 text-text-primary dark:text-zinc-200 font-bold py-3.5 px-4 rounded-xl transition-colors active:scale-95">
+                        <button onClick={onClose} className="w-full bg-text-primary/5 dark:bg-zinc-700 hover:bg-text-primary/10 dark:hover:bg-zinc-600 text-text-primary dark:text-zinc-300 font-bold py-4 px-4 rounded-2xl transition-colors active:scale-95">
                             Cancelar
                         </button>
-                        <button onClick={handleSubmit} className="w-full bg-success hover:brightness-110 text-white font-bold py-3.5 px-4 rounded-xl transition-all active:scale-95 shadow-lg shadow-success/20 flex items-center justify-center gap-2">
+                        <button onClick={handleSubmit} className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-4 px-4 rounded-2xl transition-all active:scale-95 shadow-lg shadow-primary/20 flex items-center justify-center gap-2">
                             <CheckCircleIcon className="h-5 w-5" />
-                            Abrir Caja
+                            ABRIR CAJA
                         </button>
                     </div>
                 </div>
