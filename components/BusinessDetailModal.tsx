@@ -60,13 +60,20 @@ const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({ restaurant, o
 
     // Prepare safe settings object by merging specific settings with global defaults/current state
     // This ensures LocalSettings never receives an empty object that causes crashes
+    const defaultSettings: RestaurantSettings = {
+        cooks: [], drivers: [], tables: [],
+        branding: {}, modules: {}, paymentMethods: {}
+    };
+
+    const baseSettings = globalSettings || defaultSettings;
+
     const mergedSettings: RestaurantSettings = {
-        ...globalSettings!, // Start with global defaults (assumes loaded in store)
-        ...restaurant.settings, // Override with specific restaurant settings if they exist
-        // Ensure critical arrays are present if both above fail
-        tables: restaurant.settings?.tables || globalSettings?.tables || [],
-        modules: restaurant.settings?.modules || globalSettings?.modules || {},
-        paymentMethods: restaurant.settings?.paymentMethods || globalSettings?.paymentMethods || {}
+        ...baseSettings,
+        ...restaurant.settings,
+        tables: restaurant.settings?.tables || baseSettings.tables || [],
+        modules: restaurant.settings?.modules || baseSettings.modules || {},
+        paymentMethods: restaurant.settings?.paymentMethods || baseSettings.paymentMethods || {},
+        branding: restaurant.settings?.branding || baseSettings.branding || {}
     };
 
     return (

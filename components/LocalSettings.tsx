@@ -279,7 +279,7 @@ interface LocalSettingsProps {
 
 const LocalSettings: React.FC<LocalSettingsProps> = ({ customSettings, onSave }) => {
     const { state, dispatch } = useAppContext();
-    const activeSettings = customSettings || state.restaurantSettings!;
+    const activeSettings = customSettings || state.restaurantSettings || {} as RestaurantSettings;
     
     // Ensure default empty objects if activeSettings properties are missing (e.g. fresh DB record)
     const [settings, setSettings] = useState<RestaurantSettings>({
