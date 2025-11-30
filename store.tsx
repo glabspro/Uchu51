@@ -185,7 +185,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
                 restaurantId: RESTAURANT_ID,
                 loginError: null,
             };
-            // Do not persist super admin session for security, or persist with caution
             return newState;
         }
         case 'EMPLOYEE_LOGIN_SUCCESS': {
@@ -375,10 +374,13 @@ function appReducer(state: AppState, action: AppAction): AppState {
         }
         case 'ADD_MOVIMIENTO_CAJA': {
             const { monto, descripcion, tipo } = action.payload;
+            const session = state.cajaSession;
+            if (!session.id) return state;
+
             const newMovimiento: MovimientoCaja = { monto, descripcion, tipo, fecha: new Date().toISOString() };
-            const currentMovimientos = state.cajaSession.movimientos || [];
+            const updatedMovimientos = [...(session.movimientos || []), newMovimiento];
             
-            let newEfectivoEsperado = state.cajaSession.totalEfectivoEsperado;
+            let newEfectivoEsperado = session.totalEfectivoEsperado;
             if (tipo === 'ingreso') newEfectivoEsperado += monto;
             else newEfectivoEsperado -= monto;
 
@@ -386,7 +388,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
                 ...state,
                 cajaSession: {
                     ...state.cajaSession,
-                    movimientos: [...currentMovimientos, newMovimiento],
+                    movimientos: updatedMovimientos,
                     totalEfectivoEsperado: newEfectivoEsperado
                 }
             };
@@ -398,9 +400,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
              let total = 0;
              let localOrder = state.orders.find(o => o.id === orderId);
              
-             if (!localOrder) {
-                 // handled in side effect
-             } else {
+             if (localOrder) {
                  total = localOrder.total;
              }
              
@@ -422,13 +422,21 @@ function appReducer(state: AppState, action: AppAction): AppState {
                 vuelto: (details.montoPagado && total) ? details.montoPagado - total : 0,
                 fecha: new Date().toISOString()
              };
+             
+             // Update local order immediately for UI responsiveness
+             const updatedOrder = localOrder ? { 
+                 ...localOrder, 
+                 estado: newStatus, 
+                 pagoRegistrado,
+                 puntosGanados: Math.floor(total) // Optimistic update
+             } : null;
 
              return {
                 ...state,
-                orders: state.orders.map(o => o.id === orderId ? { ...o, estado: newStatus, pagoRegistrado } : o),
+                orders: state.orders.map(o => o.id === orderId ? (updatedOrder || o) : o),
                 orderToPay: null,
                 orderForDeliveryPayment: null,
-                orderForReceipt: { ...localOrder!, estado: newStatus, pagoRegistrado }
+                orderForReceipt: updatedOrder || null
              };
         }
         default:
@@ -919,6 +927,26 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                         total = localOrder.total;
                     }
                     
+                    // --- AUTOMATIC LOYALTY POINTS LOGIC ---
+                    const pointsEarned = Math.floor(total); // 1 point per 1 sol
+                    if (localOrder && localOrder.cliente.telefono) {
+                        const customer = currentState.customers.find(c => c.telefono === localOrder.cliente.telefono);
+                        if (customer && customer.id) {
+                            const newPoints = (customer.puntos || 0) + pointsEarned;
+                            const newTotalSpent = (customer.total_gastado || 0) + total;
+                            const newTotalOrders = (customer.total_pedidos || 0) + 1;
+                            
+                            // Update Customer Stats in DB
+                            await supabase.from('customers').update({
+                                puntos: newPoints,
+                                total_gastado: newTotalSpent,
+                                total_pedidos: newTotalOrders,
+                                ultimo_pedido: new Date().toISOString()
+                            }).eq('id', customer.id);
+                        }
+                    }
+                    // -------------------------------------
+
                     let newStatus: EstadoPedido = 'pagado';
                     if (action.type === 'CONFIRM_DELIVERY_PAYMENT') {
                         newStatus = 'entregado';
@@ -938,9 +966,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                         fecha: new Date().toISOString()
                     };
                     
+                    // Update order including points earned
                     const { error } = await supabase.from('orders').update({
                         estado: newStatus,
-                        pago_registrado: pagoRegistrado
+                        pago_registrado: pagoRegistrado,
+                        puntos_ganados: pointsEarned // Save points to order history
                     }).eq('id', orderId);
 
                     if (error) console.error("Failed to confirm payment in DB:", error);
