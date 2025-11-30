@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Pedido, Producto, ProductoPedido, Mesa, Salsa, EstadoPedido, ClienteLeal, Recompensa, LoyaltyProgram, Promocion } from '../types';
-import { ChevronLeftIcon, TrashIcon, MinusIcon, PlusIcon, CheckCircleIcon, UserIcon, StarIcon, SparklesIcon, DocumentTextIcon, FireIcon } from './icons';
+import { ChevronLeftIcon, TrashIcon, MinusIcon, PlusIcon, CheckCircleIcon, UserIcon, StarIcon, SparklesIcon, DocumentTextIcon } from './icons';
 import SauceModal from './SauceModal';
 import AssignCustomerModal from './AssignCustomerModal';
 import RedeemRewardModal from './RedeemRewardModal';
@@ -284,10 +284,15 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
 
         const productosEnviados = currentOrder.productos.map(p => ({...p, sentToKitchen: true}));
         
-        // Logic Update: If order was 'entregado' or 'listo' and we add items, send back to 'en preparación'
-        let newStatus: EstadoPedido = currentOrder.estado;
-        if (['nuevo', 'entregado', 'listo', 'cuenta solicitada'].includes(currentOrder.estado)) {
-            newStatus = 'en preparación';
+        // Update status logic:
+        // If order is new/confirmed -> 'en preparación'
+        // If order was delivered ('entregado') but we add items -> 'en preparación'
+        // If order was ready ('listo') but we add items -> 'en preparación'
+        let newStatus: EstadoPedido = 'en preparación';
+        
+        // If it was already in a cooking state, keep it unless specifically changing
+        if (currentOrder.estado === 'en armado' || currentOrder.estado === 'listo para armado') {
+            newStatus = currentOrder.estado;
         }
         
         const orderToSend: Pedido = { 
@@ -352,10 +357,8 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
     const handleRedeemReward = (reward: Recompensa) => {
         if (!assignedCustomer || !currentOrder) return;
         redeemReward(assignedCustomer.telefono, reward);
-    
         let redeemedProduct: ProductoPedido;
         const productFromCatalog = reward.productoId ? products.find(p => p.id === reward.productoId) : null;
-    
         if (productFromCatalog) {
             redeemedProduct = {
                 id: productFromCatalog.id,
@@ -377,7 +380,6 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                 sentToKitchen: false,
             };
         }
-    
         updateCurrentOrder([...currentOrder.productos, redeemedProduct]);
         setIsRedeemRewardModalOpen(false);
     };
@@ -402,7 +404,6 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
             case 'dos_por_uno': {
                 const productId = promotion.condiciones.productoId_2x1;
                 if (!productId) break;
-                
                 const originalProduct = products.find(p => p.id === productId);
                 if (originalProduct) {
                     const item1: ProductoPedido = {
@@ -437,9 +438,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                     const productInfo = products.find(p => p.id === comboProd.productoId);
                     return sum + (productInfo ? productInfo.precio * comboProd.cantidad : 0);
                 }, 0);
-                
                 const discountRatio = totalOriginalPrice > 0 ? precioFijo / totalOriginalPrice : 1;
-                
                 const newItems: ProductoPedido[] = [];
                 comboProducts.forEach(comboProd => {
                     const productInfo = products.find(p => p.id === comboProd.productoId);
@@ -457,12 +456,10 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                         });
                     }
                 });
-                
                 updateCurrentOrder([...currentProds, ...newItems]);
                 break;
             }
         }
-        
         setIsApplyPromotionModalOpen(false);
     };
     
@@ -624,22 +621,48 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                             <span className="text-text-primary dark:text-zinc-100 font-mono">S/.{currentOrder?.total.toFixed(2) || '0.00'}</span>
                         </div>
                         
-                        {/* MARK AS SERVED / DELIVERED */}
-                         {currentOrder?.estado === 'listo' && (
-                            <button
-                                onClick={() => updateOrderStatus(currentOrder!.id, 'entregado')}
-                                className="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl text-base mb-3 transition-all duration-300 shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/40 hover:-translate-y-0.5 active:scale-95"
-                                aria-label="Marcar el pedido como servido en la mesa"
-                            >
-                                <CheckCircleIcon className="inline-block h-5 w-5 mr-2" />
-                                Entregar a Mesa (Comenzar a comer)
-                            </button>
-                        )}
-
+                        {/* Action Buttons Logic */}
                         <div className="space-y-3">
                              {currentOrder?.id ? (
                                 <>
-                                    {hasUnsentItems ? (
+                                    {currentOrder.estado === 'listo' && (
+                                        <button
+                                            onClick={() => updateOrderStatus(currentOrder!.id, 'entregado')}
+                                            className="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl text-base mb-3 transition-all duration-300 shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/40 hover:-translate-y-0.5 active:scale-95"
+                                            aria-label="Marcar el pedido como servido en la mesa"
+                                        >
+                                            <CheckCircleIcon className="inline-block h-5 w-5 mr-2" />
+                                            Marcar como Servido en Mesa
+                                        </button>
+                                    )}
+
+                                    {/* Logic for 'Entregado' state: Add Items OR Request Bill */}
+                                    {currentOrder.estado === 'entregado' && (
+                                        <>
+                                            {hasUnsentItems ? (
+                                                <button
+                                                    onClick={handleSendToKitchen}
+                                                    className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl text-base transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:scale-95 disabled:bg-gray-400 dark:disabled:bg-zinc-700 disabled:shadow-none disabled:translate-y-0 disabled:cursor-not-allowed"
+                                                    disabled={isSubmitting}
+                                                >
+                                                    {isSubmitting ? 'Enviando...' : 'Adicionar y Enviar a Cocina'}
+                                                </button>
+                                            ) : (
+                                                isWaiter && (
+                                                    <button
+                                                        onClick={handleRequestBill}
+                                                        className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 rounded-xl text-lg transition-all duration-300 shadow-lg active:scale-95 flex items-center justify-center gap-2"
+                                                    >
+                                                        <DocumentTextIcon className="h-6 w-6" />
+                                                        Solicitar Cuenta
+                                                    </button>
+                                                )
+                                            )}
+                                        </>
+                                    )}
+
+                                    {/* Default or Kitchen Logic */}
+                                    {!['listo', 'entregado', 'cuenta solicitada'].includes(currentOrder.estado) && hasUnsentItems && (
                                         <button
                                             onClick={handleSendToKitchen}
                                             className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl text-base transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:scale-95 disabled:bg-gray-400 dark:disabled:bg-zinc-700 disabled:shadow-none disabled:translate-y-0 disabled:cursor-not-allowed"
@@ -647,16 +670,6 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                                         >
                                             {isSubmitting ? 'Enviando...' : 'Adicionar y Enviar a Cocina'}
                                         </button>
-                                    ) : (
-                                        isWaiter && currentOrder.estado === 'entregado' && (
-                                            <button
-                                                onClick={handleRequestBill}
-                                                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 rounded-xl text-lg transition-all duration-300 shadow-lg active:scale-95 flex items-center justify-center gap-2"
-                                            >
-                                                <DocumentTextIcon className="h-6 w-6" />
-                                                Solicitar Cuenta
-                                            </button>
-                                        )
                                     )}
 
                                     {!hasUnsentItems && !isWaiter && (

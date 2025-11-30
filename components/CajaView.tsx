@@ -14,6 +14,7 @@ interface CajaViewProps {
 }
 
 const AdvancedOpenCajaModal: React.FC<{ onClose: () => void; onOpen: (saldo: number) => void; }> = ({ onClose, onOpen }) => {
+    // ... (Keep existing implementation of AdvancedOpenCajaModal)
     const { state } = useAppContext();
     const { turno, currentUserRole } = state;
     const [mode, setMode] = useState<'manual' | 'calculator'>('manual');
@@ -175,6 +176,7 @@ const AdvancedOpenCajaModal: React.FC<{ onClose: () => void; onOpen: (saldo: num
     );
 };
 
+// ... (Keep MovimientoCajaModal implementation)
 const MovimientoCajaModal: React.FC<{
     tipo: 'ingreso' | 'egreso';
     onClose: () => void;
@@ -302,13 +304,13 @@ const CajaView: React.FC<CajaViewProps> = ({ orders, retiroOrdersToPay, paidOrde
                             {cuentasPorCobrarSalon.length > 0 ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {cuentasPorCobrarSalon.map(order => (
-                                        <div key={order.id} className={`bg-background dark:bg-gunmetal/50 p-4 rounded-xl border flex flex-col transition-all ${order.estado === 'cuenta solicitada' ? 'border-blue-500 shadow-md shadow-blue-500/10 animate-pulse-glow' : 'border-text-primary/5 dark:border-[#45535D]'}`} style={order.estado === 'cuenta solicitada' ? {'--glow-color': '59, 130, 246'} as React.CSSProperties : {}}>
+                                        <div key={order.id} className={`bg-background dark:bg-gunmetal/50 p-4 rounded-xl border flex flex-col transition-all ${order.estado === 'cuenta solicitada' ? 'border-2 border-blue-500 shadow-lg shadow-blue-500/20 animate-pulse-glow bg-blue-500/5' : 'border-text-primary/5 dark:border-[#45535D]'}`} style={order.estado === 'cuenta solicitada' ? {'--glow-color': '59, 130, 246'} as React.CSSProperties : {}}>
                                             <div className="flex justify-between items-start mb-2">
                                                 <div>
                                                     <h3 className="font-bold text-lg text-text-primary dark:text-ivory-cream flex items-center gap-2">
                                                         Mesa {order.cliente.mesa}
                                                         {order.estado === 'cuenta solicitada' && (
-                                                            <span className="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider animate-pulse shadow-sm">Pide Cuenta</span>
+                                                            <span className="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider animate-pulse shadow-sm border border-white/20">Pide Cuenta</span>
                                                         )}
                                                     </h3>
                                                     <p className="text-xs font-mono text-text-secondary dark:text-light-silver/50">{order.id}</p>

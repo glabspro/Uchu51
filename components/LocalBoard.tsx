@@ -13,9 +13,9 @@ const statusConfig: { [key in EstadoPedido]?: { label: string; icon: React.React
     'confirmado': { label: 'Confirmado', icon: <CheckCircleIcon className="h-4 w-4" />, progress: 20, className: 'bg-primary' },
     'en preparación': { label: 'Cocinando', icon: <FireIcon className="h-4 w-4" />, progress: 40, className: 'bg-amber-500' },
     'en armado': { label: 'Sirviendo', icon: <AdjustmentsHorizontalIcon className="h-4 w-4" />, progress: 60, className: 'bg-yellow-400' },
-    'listo': { label: 'Listo p/ Llevar', icon: <BellIcon className="h-4 w-4" />, progress: 80, className: 'bg-green-500', pulse: true, pulseColor: '34, 197, 94' }, // green-500
+    'listo': { label: 'Listo p/ Llevar', icon: <BellIcon className="h-4 w-4" />, progress: 80, className: 'bg-green-500', pulse: true, pulseColor: '34, 197, 94' },
     'entregado': { label: 'Comiendo', icon: <UserIcon className="h-4 w-4" />, progress: 100, className: 'bg-emerald-700', pulse: false }, // Dark Green for eating
-    'cuenta solicitada': { label: 'Pide Cuenta', icon: <CreditCardIcon className="h-4 w-4" />, progress: 100, className: 'bg-blue-600', pulse: true, pulseColor: '37, 99, 235' }, // blue-600
+    'cuenta solicitada': { label: 'Pide Cuenta', icon: <CreditCardIcon className="h-4 w-4" />, progress: 100, className: 'bg-blue-600', pulse: true, pulseColor: '37, 99, 235' }, // Intense Blue Pulse
     'pagado': { label: 'Pagado', icon: <CheckCircleIcon className="h-4 w-4" />, progress: 100, className: 'bg-slate-500' },
 };
 
