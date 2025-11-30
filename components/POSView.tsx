@@ -290,7 +290,6 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
         setIsSubmitting(true);
 
         const productosEnviados = currentOrder.productos.map(p => ({...p, sentToKitchen: true}));
-        // FIX: Directly set status to 'en preparación' to skip reception and show on Kitchen Board immediately
         const newStatus: EstadoPedido = 'en preparación';
         
         const orderToSend: Pedido = { 

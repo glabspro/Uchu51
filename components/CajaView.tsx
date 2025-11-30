@@ -243,7 +243,15 @@ const CajaView: React.FC<CajaViewProps> = ({ orders, retiroOrdersToPay, paidOrde
     const onCloseCaja = (efectivo: number) => dispatch({ type: 'CLOSE_CAJA', payload: efectivo });
     const onAddMovimiento = (monto: number, descripcion: string, tipo: 'ingreso' | 'egreso') => dispatch({ type: 'ADD_MOVIMIENTO_CAJA', payload: { monto, descripcion, tipo } });
 
-    const cuentasPorCobrarSalon = useMemo(() => orders, [orders]);
+    // Filter pending salon orders, highlighting those requesting the bill
+    const cuentasPorCobrarSalon = useMemo(() => {
+        return orders.sort((a, b) => {
+            // Sort 'cuenta solicitada' to top
+            if (a.estado === 'cuenta solicitada' && b.estado !== 'cuenta solicitada') return -1;
+            if (a.estado !== 'cuenta solicitada' && b.estado === 'cuenta solicitada') return 1;
+            return 0;
+        });
+    }, [orders]);
     
     const { totalIngresos, totalEgresos } = useMemo(() => {
         const movimientos = cajaSession.movimientos || [];
@@ -286,10 +294,15 @@ const CajaView: React.FC<CajaViewProps> = ({ orders, retiroOrdersToPay, paidOrde
                             {cuentasPorCobrarSalon.length > 0 ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {cuentasPorCobrarSalon.map(order => (
-                                        <div key={order.id} className="bg-background dark:bg-gunmetal/50 p-4 rounded-xl border border-text-primary/5 dark:border-[#45535D] flex flex-col">
+                                        <div key={order.id} className={`bg-background dark:bg-gunmetal/50 p-4 rounded-xl border flex flex-col transition-all ${order.estado === 'cuenta solicitada' ? 'border-blue-500 shadow-md shadow-blue-500/10 animate-pulse-glow' : 'border-text-primary/5 dark:border-[#45535D]'}`} style={order.estado === 'cuenta solicitada' ? {'--glow-color': '59, 130, 246'} as React.CSSProperties : {}}>
                                             <div className="flex justify-between items-start mb-2">
                                                 <div>
-                                                    <h3 className="font-bold text-lg text-text-primary dark:text-ivory-cream">Mesa {order.cliente.mesa}</h3>
+                                                    <h3 className="font-bold text-lg text-text-primary dark:text-ivory-cream flex items-center gap-2">
+                                                        Mesa {order.cliente.mesa}
+                                                        {order.estado === 'cuenta solicitada' && (
+                                                            <span className="bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">Pide Cuenta</span>
+                                                        )}
+                                                    </h3>
                                                     <p className="text-xs font-mono text-text-secondary dark:text-light-silver/50">{order.id}</p>
                                                 </div>
                                                 <p className="font-mono text-xl font-semibold text-text-primary dark:text-ivory-cream">S/.{order.total.toFixed(2)}</p>
@@ -297,7 +310,7 @@ const CajaView: React.FC<CajaViewProps> = ({ orders, retiroOrdersToPay, paidOrde
                                             <ul className="text-sm space-y-1 my-2 flex-grow">
                                                 {order.productos.map(p => <li key={p.id + p.nombre} className="text-text-secondary dark:text-light-silver">{p.cantidad}x {p.nombre}</li>)}
                                             </ul>
-                                            <button onClick={() => onInitiatePayment(order)} className="w-full mt-3 bg-primary text-white font-bold py-2.5 rounded-lg shadow-md hover:bg-primary-dark transition-transform hover:-translate-y-0.5 active:scale-95">
+                                            <button onClick={() => onInitiatePayment(order)} className={`w-full mt-3 font-bold py-2.5 rounded-lg shadow-md transition-transform hover:-translate-y-0.5 active:scale-95 ${order.estado === 'cuenta solicitada' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-primary text-white hover:bg-primary-dark'}`}>
                                                 Registrar Pago
                                             </button>
                                         </div>
