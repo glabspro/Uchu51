@@ -278,14 +278,29 @@ interface LocalSettingsProps {
 const LocalSettings: React.FC<LocalSettingsProps> = ({ customSettings, onSave }) => {
     const { state, dispatch } = useAppContext();
     
-    // Ensure we always have an object, even if state is loading
+    // Ensure we always have an object, even if state is loading or customSettings is partial
     const activeSettings = useMemo(() => {
-        return customSettings || state.restaurantSettings || {
+        // Fallback defaults
+        const defaults: RestaurantSettings = {
             tables: [],
             branding: { primaryColor: '#F64D00', secondaryColor: '#FFB40B', backgroundColor: '#FFFFFF' },
             modules: { delivery: true, local: true, retiro: true },
-            paymentMethods: { efectivo: true, tarjeta: true }
-        } as RestaurantSettings;
+            paymentMethods: { efectivo: true, tarjeta: true },
+            cooks: [],
+            drivers: []
+        };
+
+        const source = customSettings || state.restaurantSettings || defaults;
+
+        // Merge to ensure no undefined properties
+        return {
+            ...defaults,
+            ...source,
+            tables: source.tables || defaults.tables,
+            branding: { ...defaults.branding, ...source.branding },
+            modules: { ...defaults.modules, ...source.modules },
+            paymentMethods: { ...defaults.paymentMethods, ...source.paymentMethods }
+        };
     }, [customSettings, state.restaurantSettings]);
     
     const [settings, setSettings] = useState<RestaurantSettings>(activeSettings);
@@ -295,13 +310,7 @@ const LocalSettings: React.FC<LocalSettingsProps> = ({ customSettings, onSave })
     
     // Sync state when props change
     useEffect(() => {
-        setSettings({
-            ...activeSettings,
-            tables: activeSettings.tables || [],
-            branding: activeSettings.branding || {},
-            modules: activeSettings.modules || {},
-            paymentMethods: activeSettings.paymentMethods || {}
-        });
+        setSettings(activeSettings);
         setTablesInput((activeSettings.tables || []).join(', '));
     }, [activeSettings]);
 

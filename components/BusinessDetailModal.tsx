@@ -62,18 +62,21 @@ const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({ restaurant, o
     // This ensures LocalSettings never receives an empty object that causes crashes
     const defaultSettings: RestaurantSettings = {
         cooks: [], drivers: [], tables: [],
-        branding: {}, modules: {}, paymentMethods: {}
+        branding: { primaryColor: '#F64D00', secondaryColor: '#FFB40B', backgroundColor: '#FFFFFF' },
+        modules: { delivery: true, local: true, retiro: true },
+        paymentMethods: { efectivo: true, tarjeta: true }
     };
 
     const baseSettings = globalSettings || defaultSettings;
 
+    // Deep merge to ensure partial settings don't overwrite defaults with undefined
     const mergedSettings: RestaurantSettings = {
         ...baseSettings,
         ...restaurant.settings,
         tables: restaurant.settings?.tables || baseSettings.tables || [],
-        modules: restaurant.settings?.modules || baseSettings.modules || {},
-        paymentMethods: restaurant.settings?.paymentMethods || baseSettings.paymentMethods || {},
-        branding: restaurant.settings?.branding || baseSettings.branding || {}
+        branding: { ...baseSettings.branding, ...restaurant.settings?.branding },
+        modules: { ...baseSettings.modules, ...restaurant.settings?.modules },
+        paymentMethods: { ...baseSettings.paymentMethods, ...restaurant.settings?.paymentMethods }
     };
 
     return (
