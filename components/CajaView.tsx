@@ -111,19 +111,19 @@ const AdvancedOpenCajaModal: React.FC<{ onClose: () => void; onOpen: (saldo: num
                                         value={montoManual}
                                         onChange={handleManualChange}
                                         placeholder="0.00"
-                                        className="w-48 bg-transparent text-6xl font-heading font-black text-text-primary dark:text-white text-center focus:outline-none placeholder-text-primary/10 dark:placeholder-zinc-700"
+                                        className="w-48 bg-transparent text-5xl md:text-6xl font-heading font-black text-text-primary dark:text-white text-center focus:outline-none placeholder-text-primary/10 dark:placeholder-zinc-700"
                                         autoFocus
                                     />
                                 </div>
                                 <div className="h-1 w-32 bg-primary/20 mx-auto rounded-full mt-2"></div>
                             </div>
                         ) : (
-                            <div className="bg-background dark:bg-zinc-800 rounded-xl border border-text-primary/10 dark:border-zinc-700 overflow-hidden">
+                            <div className="bg-background dark:bg-zinc-800 rounded-xl border border-text-primary/10 dark:border-zinc-700 overflow-hidden w-full max-w-lg">
                                 <div className="p-3 bg-primary/5 border-b border-primary/10 flex justify-between items-center">
                                     <span className="text-xs font-bold text-primary">Calculadora</span>
                                     <span className="font-mono font-bold text-primary text-xl">S/.{calculatedTotal.toFixed(2)}</span>
                                 </div>
-                                <div className="p-2 max-h-48 overflow-y-auto">
+                                <div className="p-2 overflow-y-auto">
                                     <CashDenominationCounter onTotalChange={handleCountChange} initialCounts={counts} />
                                 </div>
                             </div>
@@ -245,7 +245,8 @@ const CajaView: React.FC<CajaViewProps> = ({ orders, retiroOrdersToPay, paidOrde
 
     // Filter pending salon orders, highlighting those requesting the bill
     const cuentasPorCobrarSalon = useMemo(() => {
-        // Filter out orders that are already paid or cancelled, keep 'entregado' and 'cuenta solicitada'
+        // Include orders that are 'entregado' OR 'cuenta solicitada'
+        // Filter out already paid or cancelled
         const pendingOrders = orders.filter(o => 
             o.tipo === 'local' && 
             ['entregado', 'cuenta solicitada'].includes(o.estado) && 
@@ -253,7 +254,7 @@ const CajaView: React.FC<CajaViewProps> = ({ orders, retiroOrdersToPay, paidOrde
         );
 
         return pendingOrders.sort((a, b) => {
-            // Sort 'cuenta solicitada' to top
+            // Priority: 'cuenta solicitada' first
             if (a.estado === 'cuenta solicitada' && b.estado !== 'cuenta solicitada') return -1;
             if (a.estado !== 'cuenta solicitada' && b.estado === 'cuenta solicitada') return 1;
             return 0;
@@ -307,7 +308,7 @@ const CajaView: React.FC<CajaViewProps> = ({ orders, retiroOrdersToPay, paidOrde
                                                     <h3 className="font-bold text-lg text-text-primary dark:text-ivory-cream flex items-center gap-2">
                                                         Mesa {order.cliente.mesa}
                                                         {order.estado === 'cuenta solicitada' && (
-                                                            <span className="bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider animate-pulse">Pide Cuenta</span>
+                                                            <span className="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider animate-pulse shadow-sm">Pide Cuenta</span>
                                                         )}
                                                     </h3>
                                                     <p className="text-xs font-mono text-text-secondary dark:text-light-silver/50">{order.id}</p>
@@ -317,7 +318,7 @@ const CajaView: React.FC<CajaViewProps> = ({ orders, retiroOrdersToPay, paidOrde
                                             <ul className="text-sm space-y-1 my-2 flex-grow">
                                                 {order.productos.map(p => <li key={p.id + p.nombre} className="text-text-secondary dark:text-light-silver">{p.cantidad}x {p.nombre}</li>)}
                                             </ul>
-                                            <button onClick={() => onInitiatePayment(order)} className={`w-full mt-3 font-bold py-2.5 rounded-lg shadow-md transition-transform hover:-translate-y-0.5 active:scale-95 ${order.estado === 'cuenta solicitada' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-primary text-white hover:bg-primary-dark'}`}>
+                                            <button onClick={() => onInitiatePayment(order)} className={`w-full mt-3 font-bold py-2.5 rounded-lg shadow-md transition-transform hover:-translate-y-0.5 active:scale-95 ${order.estado === 'cuenta solicitada' ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/30' : 'bg-primary text-white hover:bg-primary-dark'}`}>
                                                 Registrar Pago
                                             </button>
                                         </div>

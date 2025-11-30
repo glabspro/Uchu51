@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Pedido, Producto, ProductoPedido, Mesa, Salsa, EstadoPedido, ClienteLeal, Recompensa, LoyaltyProgram, Promocion } from '../types';
-import { ChevronLeftIcon, TrashIcon, MinusIcon, PlusIcon, CheckCircleIcon, UserIcon, StarIcon, SparklesIcon, DocumentTextIcon } from './icons';
+import { ChevronLeftIcon, TrashIcon, MinusIcon, PlusIcon, CheckCircleIcon, UserIcon, StarIcon, SparklesIcon, DocumentTextIcon, FireIcon } from './icons';
 import SauceModal from './SauceModal';
 import AssignCustomerModal from './AssignCustomerModal';
 import RedeemRewardModal from './RedeemRewardModal';
@@ -30,8 +30,8 @@ const getStatusAppearance = (status: Pedido['estado']) => {
         case 'en preparación': return { color: 'bg-amber-500', label: 'En Preparación' };
         case 'en armado': return { color: 'bg-yellow-400', label: 'En Armado' };
         case 'listo': return { color: 'bg-green-500', label: 'Listo para Servir' };
-        case 'entregado': return { color: 'bg-emerald-600', label: 'Servido en Mesa' };
-        case 'cuenta solicitada': return { color: 'bg-blue-500', label: 'Cuenta Solicitada' };
+        case 'entregado': return { color: 'bg-emerald-600', label: 'Comiendo' };
+        case 'cuenta solicitada': return { color: 'bg-blue-600', label: 'Cuenta Solicitada' };
         default: return { color: 'bg-zinc-400', label: status };
     }
 };
@@ -52,11 +52,10 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
     const [isApplyPromotionModalOpen, setIsApplyPromotionModalOpen] = useState(false);
     const [assignedCustomer, setAssignedCustomer] = useState<ClienteLeal | null>(null);
     
-    // RBAC: Check if user is a waiter
-    const isWaiter = activeEmployee?.role === 'waiter';
+    // RBAC
+    const isWaiter = activeEmployee?.role === 'waiter' || activeEmployee?.role === 'admin' || activeEmployee?.role === 'owner';
 
     useEffect(() => {
-        // If it's an existing order, load it
         if (order) {
             setCurrentOrder(order);
             if (order.cliente.telefono) {
@@ -65,7 +64,6 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
             } else {
                 setAssignedCustomer(null);
             }
-        // If it's a new order AND a customer was pre-selected from the modal
         } else if (preselectedCustomerForPOS) {
             setAssignedCustomer(preselectedCustomerForPOS);
             const newOrderShell: Pedido = {
@@ -92,7 +90,6 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
         return currentOrder.productos.some(p => !p.sentToKitchen);
     }, [currentOrder]);
     
-    // Calculate grouped products and inject promotions
     const groupedProducts = useMemo(() => {
         const grouped = products.reduce((acc, product) => {
             const category = product.categoria;
@@ -101,7 +98,6 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
             return acc;
         }, {} as Record<string, Producto[]>);
 
-        // Inject Promotions
         const activePromotions = promotions.filter(p => p.isActive);
         if (activePromotions.length > 0) {
             const promoProducts = activePromotions.map(promo => {
@@ -113,7 +109,6 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                     displayPrice = targetProduct ? targetProduct.precio : 0;
                 }
 
-                // Create a pseudo-product object
                 return {
                     id: promo.id,
                     nombre: promo.nombre,
@@ -124,8 +119,8 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                     descripcion: promo.descripcion,
                     imagenUrl: promo.imagenUrl || '',
                     restaurant_id: promo.restaurant_id,
-                    isPromo: true, // Special flag
-                    originalPromo: promo // Reference to original promo object
+                    isPromo: true,
+                    originalPromo: promo
                 } as unknown as Producto;
             });
             grouped['Promociones'] = promoProducts;
@@ -222,7 +217,6 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
     const handleProductClick = (product: Producto) => {
         if (product.stock <= 0) return;
 
-        // Check if it is a promotion
         if ((product as any).isPromo) {
             handleApplyPromotion((product as any).originalPromo);
             return;
@@ -279,7 +273,6 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
     
     const handleSaveChanges = () => {
         if (!currentOrder) return;
-        // This save does not change the status or send to kitchen
         onSaveOrder(currentOrder, mesa.numero);
     };
 
@@ -290,7 +283,12 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
         setIsSubmitting(true);
 
         const productosEnviados = currentOrder.productos.map(p => ({...p, sentToKitchen: true}));
-        const newStatus: EstadoPedido = 'en preparación';
+        
+        // Logic Update: If order was 'entregado' or 'listo' and we add items, send back to 'en preparación'
+        let newStatus: EstadoPedido = currentOrder.estado;
+        if (['nuevo', 'entregado', 'listo', 'cuenta solicitada'].includes(currentOrder.estado)) {
+            newStatus = 'en preparación';
+        }
         
         const orderToSend: Pedido = { 
             ...currentOrder, 
@@ -353,7 +351,6 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
 
     const handleRedeemReward = (reward: Recompensa) => {
         if (!assignedCustomer || !currentOrder) return;
-    
         redeemReward(assignedCustomer.telefono, reward);
     
         let redeemedProduct: ProductoPedido;
@@ -386,7 +383,6 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
     };
 
     const handleApplyPromotion = (promotion: Promocion) => {
-        // Initialize order if null
         let currentProds = currentOrder ? [...currentOrder.productos] : [];
         if (!currentOrder) {
              const newOrderShell: Pedido = {
@@ -400,7 +396,6 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                 restaurant_id: state.restaurantId!,
              };
              setCurrentOrder(newOrderShell);
-             // Since we just created it, we can continue logic below but currentProds is empty
         }
 
         switch (promotion.tipo) {
@@ -410,7 +405,6 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                 
                 const originalProduct = products.find(p => p.id === productId);
                 if (originalProduct) {
-                    // Add two items: one full price (marked as promo), one free
                     const item1: ProductoPedido = {
                         id: originalProduct.id,
                         nombre: originalProduct.nombre,
@@ -482,9 +476,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
 
     const handleRequestBill = () => {
         if (!currentOrder || !currentOrder.id) return;
-        // 1. Generate Pre-Bill (Print)
         onGeneratePreBill(currentOrder.id);
-        // 2. Change Status to 'cuenta solicitada' so cashier sees it blue
         updateOrderStatus(currentOrder.id, 'cuenta solicitada');
     };
 
@@ -631,6 +623,8 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                             <span className="text-text-primary dark:text-zinc-100">Total</span>
                             <span className="text-text-primary dark:text-zinc-100 font-mono">S/.{currentOrder?.total.toFixed(2) || '0.00'}</span>
                         </div>
+                        
+                        {/* MARK AS SERVED / DELIVERED */}
                          {currentOrder?.estado === 'listo' && (
                             <button
                                 onClick={() => updateOrderStatus(currentOrder!.id, 'entregado')}
@@ -638,49 +632,51 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                                 aria-label="Marcar el pedido como servido en la mesa"
                             >
                                 <CheckCircleIcon className="inline-block h-5 w-5 mr-2" />
-                                Marcar como Servido en Mesa
+                                Entregar a Mesa (Comenzar a comer)
                             </button>
                         )}
+
                         <div className="space-y-3">
                              {currentOrder?.id ? (
                                 <>
-                                    <button
-                                        onClick={handleSendToKitchen}
-                                        className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl text-base transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:scale-95 disabled:bg-gray-400 dark:disabled:bg-zinc-700 disabled:shadow-none disabled:translate-y-0 disabled:cursor-not-allowed"
-                                        disabled={isSubmitting || !hasUnsentItems}
-                                    >
-                                        {isSubmitting ? 'Enviando...' : 'Adicionar y Enviar a Cocina'}
-                                    </button>
-                                    <div className="grid grid-cols-2 gap-3">
+                                    {hasUnsentItems ? (
                                         <button
-                                            onClick={handleSaveChanges}
-                                            disabled={!hasUnsentItems}
-                                            className="w-full bg-text-primary/10 dark:bg-zinc-700 hover:bg-text-primary/20 dark:hover:bg-zinc-600 text-text-primary dark:text-zinc-200 font-bold py-3 rounded-xl text-base transition-colors active:scale-95 disabled:bg-gray-400/20 dark:disabled:bg-zinc-800 disabled:text-text-secondary/50 disabled:cursor-not-allowed"
+                                            onClick={handleSendToKitchen}
+                                            className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl text-base transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:scale-95 disabled:bg-gray-400 dark:disabled:bg-zinc-700 disabled:shadow-none disabled:translate-y-0 disabled:cursor-not-allowed"
+                                            disabled={isSubmitting}
                                         >
-                                            Guardar Cambios
+                                            {isSubmitting ? 'Enviando...' : 'Adicionar y Enviar a Cocina'}
                                         </button>
-                                        
-                                        {/* Dynamic Button: Pay (Cashier/Admin) or Request Bill (Waiter) */}
-                                        {isWaiter ? (
+                                    ) : (
+                                        isWaiter && currentOrder.estado === 'entregado' && (
                                             <button
                                                 onClick={handleRequestBill}
-                                                disabled={hasUnsentItems}
-                                                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-xl text-base transition-all duration-300 shadow-lg active:scale-95 disabled:bg-gray-400/50 disabled:cursor-not-allowed"
+                                                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 rounded-xl text-lg transition-all duration-300 shadow-lg active:scale-95 flex items-center justify-center gap-2"
                                             >
-                                                <DocumentTextIcon className="inline-block h-5 w-5 mr-2" />
+                                                <DocumentTextIcon className="h-6 w-6" />
                                                 Solicitar Cuenta
                                             </button>
-                                        ) : (
-                                            <button
-                                                onClick={() => onGeneratePreBill(currentOrder!.id)}
-                                                disabled={hasUnsentItems}
-                                                className="w-full bg-text-primary/80 dark:bg-zinc-600 text-white font-bold py-3 rounded-xl text-base hover:bg-text-primary/90 dark:hover:bg-zinc-500 transition-all duration-300 shadow-lg hover:shadow-text-primary/20 hover:-translate-y-0.5 active:scale-95 disabled:bg-gray-400/50 dark:disabled:bg-zinc-700 disabled:text-text-secondary dark:disabled:text-zinc-400 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0"
-                                                aria-label="Ver o imprimir la pre-cuenta del pedido"
-                                            >
-                                                Ver Cuenta / Cobrar
-                                            </button>
-                                        )}
-                                    </div>
+                                        )
+                                    )}
+
+                                    {!hasUnsentItems && !isWaiter && (
+                                         <button
+                                            onClick={() => onGeneratePreBill(currentOrder!.id)}
+                                            className="w-full bg-text-primary/80 dark:bg-zinc-600 text-white font-bold py-3 rounded-xl text-base hover:bg-text-primary/90 dark:hover:bg-zinc-500 transition-all duration-300 shadow-lg hover:shadow-text-primary/20 hover:-translate-y-0.5 active:scale-95 disabled:bg-gray-400/50 dark:disabled:bg-zinc-700 disabled:text-text-secondary dark:disabled:text-zinc-400 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0"
+                                            aria-label="Ver o imprimir la pre-cuenta del pedido"
+                                        >
+                                            Ver Cuenta / Cobrar
+                                        </button>
+                                    )}
+                                    
+                                    {hasUnsentItems && (
+                                        <button
+                                            onClick={handleSaveChanges}
+                                            className="w-full bg-text-primary/10 dark:bg-zinc-700 hover:bg-text-primary/20 dark:hover:bg-zinc-600 text-text-primary dark:text-zinc-200 font-bold py-3 rounded-xl text-base transition-colors active:scale-95"
+                                        >
+                                            Guardar Cambios (Sin enviar)
+                                        </button>
+                                    )}
                                 </>
                              ) : (
                                 <button

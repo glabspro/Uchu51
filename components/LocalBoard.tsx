@@ -9,13 +9,14 @@ interface LocalBoardProps {
 }
 
 const statusConfig: { [key in EstadoPedido]?: { label: string; icon: React.ReactNode; progress: number; className: string; pulse?: boolean; pulseColor?: string; } } = {
-    'nuevo': { label: 'Nuevo', icon: <ClockIcon className="h-4 w-4" />, progress: 10, className: 'bg-gray-500' },
-    'confirmado': { label: 'Confirmado', icon: <CheckCircleIcon className="h-4 w-4" />, progress: 25, className: 'bg-primary' },
-    'en preparación': { label: 'En Cocina', icon: <FireIcon className="h-4 w-4" />, progress: 50, className: 'bg-amber-500' },
-    'en armado': { label: 'En Armado', icon: <AdjustmentsHorizontalIcon className="h-4 w-4" />, progress: 75, className: 'bg-yellow-400' },
-    'listo': { label: 'Listo p/ Servir', icon: <BellIcon className="h-4 w-4" />, progress: 100, className: 'bg-green-500', pulse: true, pulseColor: '52, 211, 153' }, // green
-    'entregado': { label: 'En Mesa', icon: <UserIcon className="h-4 w-4" />, progress: 100, className: 'bg-emerald-600' },
-    'cuenta solicitada': { label: 'Pide Cuenta', icon: <CreditCardIcon className="h-4 w-4" />, progress: 100, className: 'bg-blue-500', pulse: true, pulseColor: '59, 130, 246' }, // blue
+    'nuevo': { label: 'Tomando Orden', icon: <ClockIcon className="h-4 w-4" />, progress: 10, className: 'bg-gray-500' },
+    'confirmado': { label: 'Confirmado', icon: <CheckCircleIcon className="h-4 w-4" />, progress: 20, className: 'bg-primary' },
+    'en preparación': { label: 'Cocinando', icon: <FireIcon className="h-4 w-4" />, progress: 40, className: 'bg-amber-500' },
+    'en armado': { label: 'Sirviendo', icon: <AdjustmentsHorizontalIcon className="h-4 w-4" />, progress: 60, className: 'bg-yellow-400' },
+    'listo': { label: 'Listo p/ Llevar', icon: <BellIcon className="h-4 w-4" />, progress: 80, className: 'bg-green-500', pulse: true, pulseColor: '34, 197, 94' }, // green-500
+    'entregado': { label: 'Comiendo', icon: <UserIcon className="h-4 w-4" />, progress: 100, className: 'bg-emerald-700', pulse: false }, // Dark Green for eating
+    'cuenta solicitada': { label: 'Pide Cuenta', icon: <CreditCardIcon className="h-4 w-4" />, progress: 100, className: 'bg-blue-600', pulse: true, pulseColor: '37, 99, 235' }, // blue-600
+    'pagado': { label: 'Pagado', icon: <CheckCircleIcon className="h-4 w-4" />, progress: 100, className: 'bg-slate-500' },
 };
 
 const LocalBoard: React.FC<LocalBoardProps> = ({ mesas }) => {
@@ -49,7 +50,7 @@ const LocalBoard: React.FC<LocalBoardProps> = ({ mesas }) => {
                         'p-4 text-center transition-all duration-300',
                         'active:scale-95 border-2',
                         'relative overflow-hidden h-48',
-                        mesa.ocupada ? 'border-primary/50 dark:border-primary/70' : 'border-transparent dark:border-[#45535D]',
+                        mesa.ocupada ? (statusInfo?.className ? `border-[${statusInfo.className.replace('bg-', '')}]` : 'border-primary/50') : 'border-transparent dark:border-[#45535D]',
                         statusInfo?.pulse ? 'animate-pulse-glow' : '',
                     ].join(' ');
 
@@ -78,11 +79,13 @@ const LocalBoard: React.FC<LocalBoardProps> = ({ mesas }) => {
                                 {mesa.ocupada ? (
                                     statusInfo ? (
                                         <div>
-                                            <div className="flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider text-white">
-                                                {statusInfo.icon}
+                                            <div className="flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider text-text-primary dark:text-white">
+                                                <div className={`p-1 rounded-full text-white ${statusInfo.className}`}>
+                                                    {statusInfo.icon}
+                                                </div>
                                                 <span>{statusInfo.label}</span>
                                             </div>
-                                            <div className="w-full bg-black/20 dark:bg-white/10 rounded-full h-1.5 mt-2 overflow-hidden">
+                                            <div className="w-full bg-black/10 dark:bg-white/10 rounded-full h-1.5 mt-2 overflow-hidden">
                                                 <div className={`${statusInfo.className} h-1.5 rounded-full transition-all duration-500`} style={{width: `${statusInfo.progress}%`}}></div>
                                             </div>
                                         </div>
