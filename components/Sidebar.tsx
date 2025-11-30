@@ -48,16 +48,17 @@ const Sidebar: React.FC<SidebarProps> = () => {
         { id: 'gestion' as View, label: 'Gestión', icon: <AdjustmentsHorizontalIcon className="h-6 w-6" /> },
     ];
 
+    // Determine current role (default to admin if null for safety, though activeEmployee should be set)
     const currentRole = activeEmployee?.role || 'admin';
     const allowedViews = ROLE_PERMISSIONS[currentRole] || [];
 
     const enabledModules = restaurantSettings?.modules;
 
     const visibleNavItems = allNavItems.filter(item => {
-        // First check RBAC
+        // 1. RBAC Check: Is this view allowed for the current role?
         if (!allowedViews.includes(item.id)) return false;
 
-        // Then check Module Configuration
+        // 2. Module Check: Is this module enabled in restaurant settings?
         if (enabledModules) {
             if (item.id === 'local') return enabledModules.local !== false;
             if (item.id === 'delivery') return enabledModules.delivery !== false;
@@ -130,7 +131,7 @@ const Sidebar: React.FC<SidebarProps> = () => {
                 {/* Lock Terminal Button */}
                 <button
                     onClick={onLock}
-                    title={isSidebarCollapsed ? 'Bloquear' : undefined}
+                    title={isSidebarCollapsed ? 'Bloquear / Cambiar Usuario' : undefined}
                     className={`flex items-center w-full px-4 py-3 rounded-lg text-base font-semibold transition-all duration-200 text-text-secondary hover:bg-surface hover:text-primary dark:text-light-silver dark:hover:bg-[#45535D] dark:hover:text-primary mb-2
                         ${isSidebarCollapsed ? 'justify-center' : 'space-x-3'}
                     `}

@@ -27,6 +27,7 @@ const Header: React.FC = () => {
         dispatch({ type: 'TOGGLE_THEME' });
     };
     
+    // Quick Switch User Action (Lock Terminal)
     const onSwitchUser = () => {
         dispatch({ type: 'LOCK_TERMINAL' });
     };
@@ -42,11 +43,11 @@ const Header: React.FC = () => {
                     
                     {/* Controls */}
                     <div className="flex items-center space-x-4">
-                        {/* Switch User Button (Visible for employees) */}
+                        {/* Switch User Button (Visible only when an employee is logged in) */}
                         {activeEmployee && (
                             <button 
                                 onClick={onSwitchUser}
-                                className="flex items-center gap-2 bg-text-primary/5 hover:bg-text-primary/10 dark:bg-[#45535D] dark:hover:bg-[#56656E] px-3 py-1.5 rounded-full transition-colors text-sm font-semibold"
+                                className="flex items-center gap-2 bg-text-primary/5 hover:bg-text-primary/10 dark:bg-[#45535D] dark:hover:bg-[#56656E] px-3 py-1.5 rounded-full transition-colors text-sm font-semibold text-text-secondary dark:text-zinc-300"
                                 title="Cambiar Usuario / Bloquear"
                             >
                                 <ArrowPathIcon className="h-4 w-4" />

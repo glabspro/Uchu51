@@ -124,7 +124,6 @@ const OnlinePaymentConfigurator: React.FC<{
                         />
                     </div>
 
-                    {/* Generic Phone/Alias field - Optional for MP if using Link */}
                     <div>
                         <label className="text-xs font-semibold text-text-secondary dark:text-light-silver">{placeholderPhone}</label>
                         <input
@@ -136,7 +135,6 @@ const OnlinePaymentConfigurator: React.FC<{
                         />
                     </div>
 
-                    {/* Specific fields for Mercado Pago */}
                     {type === 'mercadopago' && (
                         <>
                              <div className="p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
@@ -372,6 +370,7 @@ const LocalSettings: React.FC<LocalSettingsProps> = ({ customSettings, onSave })
     };
 
     return (
+        // REMOVED 'max-h' restriction class from here. This allows the parent modal to control scroll.
         <div className="animate-fade-in-up space-y-8 pr-3">
             <div>
                 <h3 className="text-xl font-bold text-text-primary dark:text-ivory-cream mb-4">Apariencia y Marca</h3>

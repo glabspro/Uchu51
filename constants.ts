@@ -5,9 +5,9 @@ export const ROLE_PERMISSIONS: Record<string, View[]> = {
     owner: ['dashboard', 'local', 'cocina', 'retiro', 'delivery', 'gestion', 'caja'],
     admin: ['dashboard', 'local', 'cocina', 'retiro', 'delivery', 'gestion', 'caja'],
     cashier: ['caja', 'dashboard', 'local', 'retiro', 'delivery'],
-    waiter: ['local', 'retiro', 'dashboard'],
-    kitchen: ['cocina'],
-    delivery: ['delivery'],
+    waiter: ['local', 'retiro', 'dashboard'], // Waiters can only see Tables, Pickup, and basic Dashboard
+    kitchen: ['cocina'], // Kitchen staff only sees Kitchen Display
+    delivery: ['delivery'], // Drivers only see Delivery Board
     cliente: []
 };
 

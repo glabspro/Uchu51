@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import type { Employee, RestaurantSettings } from '../types';
-import { BuildingStorefrontIcon, UserGroupIcon, AdjustmentsHorizontalIcon, XMarkIcon, PlusIcon, TrashIcon, AdjustmentsHorizontalIcon as PencilIcon } from './icons';
+import { BuildingStorefrontIcon, UserGroupIcon, AdjustmentsHorizontalIcon, XMarkIcon, PlusIcon, TrashIcon, AdjustmentsHorizontalIcon as PencilIcon, InformationCircleIcon } from './icons';
 import LocalSettings from './LocalSettings';
 import EmployeeModal from './EmployeeModal';
 import { useAppContext } from '../store';
@@ -113,7 +113,7 @@ const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({ restaurant, o
                 {/* Content */}
                 <div className="flex-grow overflow-y-auto p-6 bg-background dark:bg-zinc-900">
                     {activeTab === 'info' && (
-                        <div className="max-w-2xl mx-auto space-y-6">
+                        <div className="max-w-3xl mx-auto space-y-6">
                             <div className="bg-surface dark:bg-zinc-800 p-6 rounded-xl border border-text-primary/5 dark:border-zinc-700">
                                 <h3 className="text-lg font-bold mb-4">Información General</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -124,12 +124,35 @@ const BusinessDetailModal: React.FC<BusinessDetailModalProps> = ({ restaurant, o
                                     <div>
                                         <label className="block text-sm font-medium text-text-secondary mb-1">Plan Actual</label>
                                         <select defaultValue={restaurant.plan_id} className="w-full bg-background dark:bg-zinc-700 border border-text-primary/10 rounded-lg p-2.5">
-                                            <option value="basic">Básico (Solo POS)</option>
-                                            <option value="pro">Profesional (Inventario + Roles)</option>
-                                            <option value="enterprise">Enterprise (Multi-local + API)</option>
+                                            <option value="basic">Básico</option>
+                                            <option value="pro">Profesional</option>
+                                            <option value="enterprise">Enterprise</option>
                                         </select>
                                     </div>
                                 </div>
+                                
+                                {/* Plans Explanation Box */}
+                                <div className="mt-4 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                                    <h4 className="text-sm font-bold text-primary flex items-center gap-2 mb-2">
+                                        <InformationCircleIcon className="h-4 w-4" />
+                                        Detalle de los Planes
+                                    </h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-text-secondary dark:text-zinc-400">
+                                        <div className="p-2 bg-white dark:bg-zinc-800 rounded border border-text-primary/5">
+                                            <span className="font-bold block mb-1">Básico (Startups)</span>
+                                            POS, Toma de pedidos y Ticket digital. Ideal para iniciar.
+                                        </div>
+                                        <div className="p-2 bg-white dark:bg-zinc-800 rounded border border-text-primary/5">
+                                            <span className="font-bold block mb-1">Profesional (Estándar)</span>
+                                            Incluye Inventario (Kardex), Roles de Empleados y Reportes avanzados.
+                                        </div>
+                                        <div className="p-2 bg-white dark:bg-zinc-800 rounded border border-text-primary/5">
+                                            <span className="font-bold block mb-1">Enterprise (Cadenas)</span>
+                                            API, Multi-local, Business Intelligence y Soporte prioritario.
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div className="mt-6 flex justify-end">
                                     <button className="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-6 rounded-lg shadow-md transition-transform active:scale-95">
                                         Guardar Cambios

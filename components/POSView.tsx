@@ -675,6 +675,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                                                 onClick={() => onGeneratePreBill(currentOrder!.id)}
                                                 disabled={hasUnsentItems}
                                                 className="w-full bg-text-primary/80 dark:bg-zinc-600 text-white font-bold py-3 rounded-xl text-base hover:bg-text-primary/90 dark:hover:bg-zinc-500 transition-all duration-300 shadow-lg hover:shadow-text-primary/20 hover:-translate-y-0.5 active:scale-95 disabled:bg-gray-400/50 dark:disabled:bg-zinc-700 disabled:text-text-secondary dark:disabled:text-zinc-400 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0"
+                                                aria-label="Ver o imprimir la pre-cuenta del pedido"
                                             >
                                                 Ver Cuenta / Cobrar
                                             </button>
