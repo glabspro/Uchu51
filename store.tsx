@@ -322,6 +322,15 @@ function appReducer(state: AppState, action: AppAction): AppState {
         case 'DELETE_EMPLOYEE': {
             return { ...state, employees: state.employees.filter(e => e.id !== action.payload) };
         }
+        case 'ADD_LOYALTY_PROGRAM': {
+            return { ...state, loyaltyPrograms: [...state.loyaltyPrograms, action.payload] };
+        }
+        case 'UPDATE_LOYALTY_PROGRAM': {
+            return { ...state, loyaltyPrograms: state.loyaltyPrograms.map(p => p.id === action.payload.id ? action.payload : p) };
+        }
+        case 'DELETE_LOYALTY_PROGRAM': {
+            return { ...state, loyaltyPrograms: state.loyaltyPrograms.filter(p => p.id !== action.payload) };
+        }
         case 'CONFIRM_CUSTOMER_PAYMENT': {
             const orderId = action.payload;
             return {
@@ -605,6 +614,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                     baseDispatch({ type: 'SET_STATE', payload: { employees: employeesData } });
                 }
 
+                // 9. Loyalty Programs
+                const { data: loyaltyData } = await supabase.from('loyalty_programs').select('*').eq('restaurant_id', RESTAURANT_ID);
+                if(loyaltyData) {
+                     const mappedLoyalty = loyaltyData.map((p: any) => ({
+                         id: p.id,
+                         name: p.name,
+                         description: p.description,
+                         isActive: p.is_active,
+                         config: p.config,
+                         rewards: p.rewards,
+                         restaurant_id: p.restaurant_id
+                     }));
+                     baseDispatch({ type: 'SET_LOYALTY_PROGRAMS', payload: mappedLoyalty });
+                }
+
                 baseDispatch({ type: 'SET_STATE', payload: { restaurantId: RESTAURANT_ID } });
 
             } catch (error: any) {
@@ -720,12 +744,39 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             )
             .subscribe();
 
+        const loyaltyChannel = supabase.channel('public:loyalty_programs')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'loyalty_programs', filter: `restaurant_id=eq.${RESTAURANT_ID}` },
+                (payload) => {
+                    const mappedProgram = (p: any) => ({
+                         id: p.id,
+                         name: p.name,
+                         description: p.description,
+                         isActive: p.is_active,
+                         config: p.config,
+                         rewards: p.rewards,
+                         restaurant_id: p.restaurant_id
+                    });
+
+                    if (payload.eventType === 'INSERT') {
+                        baseDispatch({ type: 'ADD_LOYALTY_PROGRAM', payload: mappedProgram(payload.new) });
+                    } else if (payload.eventType === 'UPDATE') {
+                        baseDispatch({ type: 'UPDATE_LOYALTY_PROGRAM', payload: mappedProgram(payload.new) });
+                    } else if (payload.eventType === 'DELETE') {
+                        baseDispatch({ type: 'DELETE_LOYALTY_PROGRAM', payload: payload.old.id });
+                    }
+                }
+            )
+            .subscribe();
+
         return () => {
             supabase.removeChannel(settingsChannel);
             supabase.removeChannel(ordersChannel);
             supabase.removeChannel(salsasChannel);
             supabase.removeChannel(cajaChannel);
             supabase.removeChannel(customersChannel);
+            supabase.removeChannel(loyaltyChannel);
         };
     }, []);
 
@@ -802,6 +853,36 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                     if (error) {
                         baseDispatch({ type: 'ADD_TOAST', payload: { message: 'Error deleting employee', type: 'danger' } });
                     }
+                    break;
+                }
+                case 'ADD_LOYALTY_PROGRAM': {
+                    const { id, ...rest } = action.payload;
+                    const { error } = await supabase.from('loyalty_programs').insert({
+                        restaurant_id: RESTAURANT_ID,
+                        name: rest.name,
+                        description: rest.description,
+                        is_active: rest.isActive,
+                        config: rest.config,
+                        rewards: rest.rewards
+                    });
+                    if (error) baseDispatch({ type: 'ADD_TOAST', payload: { message: 'Error adding program', type: 'danger' } });
+                    break;
+                }
+                case 'UPDATE_LOYALTY_PROGRAM': {
+                    const { id, isActive, ...rest } = action.payload;
+                    const { error } = await supabase.from('loyalty_programs').update({
+                        name: rest.name,
+                        description: rest.description,
+                        is_active: isActive,
+                        config: rest.config,
+                        rewards: rest.rewards
+                    }).eq('id', id);
+                    if (error) baseDispatch({ type: 'ADD_TOAST', payload: { message: 'Error updating program', type: 'danger' } });
+                    break;
+                }
+                case 'DELETE_LOYALTY_PROGRAM': {
+                    const { error } = await supabase.from('loyalty_programs').delete().eq('id', action.payload);
+                    if (error) baseDispatch({ type: 'ADD_TOAST', payload: { message: 'Error deleting program', type: 'danger' } });
                     break;
                 }
                 case 'SAVE_ORDER': {
@@ -891,7 +972,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 case 'ADD_MOVIMIENTO_CAJA': {
                     const { monto, descripcion, tipo } = action.payload;
                     const session = currentState.cajaSession;
-                    if (!session.id) return;
+                    if (!session.id) return state;
 
                     const newMovimiento: MovimientoCaja = { monto, descripcion, tipo, fecha: new Date().toISOString() };
                     const updatedMovimientos = [...(session.movimientos || []), newMovimiento];

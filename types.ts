@@ -276,6 +276,9 @@ export type Action =
   | { type: 'SET_SAUCES'; payload: Salsa[] }
   | { type: 'SET_PROMOTIONS'; payload: Promocion[] }
   | { type: 'SET_LOYALTY_PROGRAMS'; payload: LoyaltyProgram[] }
+  | { type: 'ADD_LOYALTY_PROGRAM'; payload: LoyaltyProgram }
+  | { type: 'UPDATE_LOYALTY_PROGRAM'; payload: LoyaltyProgram }
+  | { type: 'DELETE_LOYALTY_PROGRAM'; payload: string }
   | { type: 'ADD_NEW_CUSTOMER'; payload: ClienteLeal }
   | { type: 'UPDATE_CUSTOMER'; payload: ClienteLeal }
   | { type: 'REDEEM_REWARD'; payload: { customerId: string; reward: Recompensa } }

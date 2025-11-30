@@ -1,15 +1,18 @@
+
 import React, { useState } from 'react';
 import type { LoyaltyProgram, Producto } from '../types';
 import { PlusIcon, TrashIcon, AdjustmentsHorizontalIcon as PencilIcon, CheckCircleIcon } from './icons';
 import LoyaltyProgramModal from './LoyaltyProgramModal';
+import { useAppContext } from '../store';
 
 interface LoyaltyProgramManagerProps {
     programs: LoyaltyProgram[];
-    setPrograms: React.Dispatch<React.SetStateAction<LoyaltyProgram[]>>;
+    setPrograms: React.Dispatch<React.SetStateAction<LoyaltyProgram[]>>; // Kept for type compatibility but unused with dispatch
     products: Producto[];
 }
 
-const LoyaltyProgramManager: React.FC<LoyaltyProgramManagerProps> = ({ programs, setPrograms, products }) => {
+const LoyaltyProgramManager: React.FC<LoyaltyProgramManagerProps> = ({ programs, products }) => {
+    const { dispatch } = useAppContext();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProgram, setEditingProgram] = useState<LoyaltyProgram | null>(null);
 
@@ -23,22 +26,33 @@ const LoyaltyProgramManager: React.FC<LoyaltyProgramManagerProps> = ({ programs,
         setIsModalOpen(true);
     };
     
+    const handleDelete = (program: LoyaltyProgram) => {
+        if(window.confirm(`¿Estás seguro de eliminar el programa "${program.name}"?`)) {
+            dispatch({ type: 'DELETE_LOYALTY_PROGRAM', payload: program.id });
+        }
+    }
+    
     const handleSave = (programToSave: LoyaltyProgram) => {
         if (editingProgram) {
-            setPrograms(prev => prev.map(p => p.id === programToSave.id ? programToSave : p));
+            dispatch({ type: 'UPDATE_LOYALTY_PROGRAM', payload: programToSave });
         } else {
-            setPrograms(prev => [...prev, { ...programToSave, id: `prog-${Date.now()}` }]);
+            dispatch({ type: 'ADD_LOYALTY_PROGRAM', payload: programToSave });
         }
         setIsModalOpen(false);
     };
 
-    const handleToggleActive = (programId: string) => {
-        // Only one program can be active at a time.
-        setPrograms(prev => prev.map(p => 
-            p.id === programId 
-            ? { ...p, isActive: true } 
-            : { ...p, isActive: false }
-        ));
+    const handleToggleActive = (program: LoyaltyProgram) => {
+        // Deactivate all others first (optional, depends on if we enforce single active program in UI)
+        // For now, let's just toggle this one. Ideally, trigger a DB function or multiple updates.
+        // Assuming we want exclusive active program:
+        
+        // 1. Deactivate current active ones
+        programs.filter(p => p.isActive && p.id !== program.id).forEach(p => {
+             dispatch({ type: 'UPDATE_LOYALTY_PROGRAM', payload: { ...p, isActive: false } });
+        });
+
+        // 2. Activate target
+        dispatch({ type: 'UPDATE_LOYALTY_PROGRAM', payload: { ...program, isActive: true } });
     };
 
     const activeProgram = programs.find(p => p.isActive);
@@ -98,8 +112,9 @@ const LoyaltyProgramManager: React.FC<LoyaltyProgramManagerProps> = ({ programs,
                                      <p className="text-sm text-text-secondary dark:text-zinc-400">{program.rewards.length} recompensas</p>
                                  </div>
                                   <div className="flex items-center gap-2">
-                                     <button onClick={() => handleToggleActive(program.id)} className="text-sm font-semibold flex items-center gap-1 bg-success/10 text-success p-2 rounded-md hover:bg-success/20"><CheckCircleIcon className="h-4 w-4"/> Activar</button>
+                                     <button onClick={() => handleToggleActive(program)} className="text-sm font-semibold flex items-center gap-1 bg-success/10 text-success p-2 rounded-md hover:bg-success/20"><CheckCircleIcon className="h-4 w-4"/> Activar</button>
                                      <button onClick={() => handleEdit(program)} className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 rounded-md"><PencilIcon className="h-5 w-5"/></button>
+                                     <button onClick={() => handleDelete(program)} className="p-2 text-danger dark:text-red-500 hover:bg-danger/10 rounded-md"><TrashIcon className="h-5 w-5"/></button>
                                 </div>
                              </div>
                          ))}
