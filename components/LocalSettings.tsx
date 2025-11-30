@@ -277,35 +277,33 @@ interface LocalSettingsProps {
 
 const LocalSettings: React.FC<LocalSettingsProps> = ({ customSettings, onSave }) => {
     const { state, dispatch } = useAppContext();
-    const activeSettings = customSettings || state.restaurantSettings || {} as RestaurantSettings;
     
-    // Ensure default empty objects if activeSettings properties are missing (e.g. fresh DB record)
-    const [settings, setSettings] = useState<RestaurantSettings>({
-        ...activeSettings,
-        tables: activeSettings.tables || [],
-        branding: activeSettings.branding || {},
-        modules: activeSettings.modules || {},
-        paymentMethods: activeSettings.paymentMethods || {}
-    });
-
+    // Ensure we always have an object, even if state is loading
+    const activeSettings = useMemo(() => {
+        return customSettings || state.restaurantSettings || {
+            tables: [],
+            branding: { primaryColor: '#F64D00', secondaryColor: '#FFB40B', backgroundColor: '#FFFFFF' },
+            modules: { delivery: true, local: true, retiro: true },
+            paymentMethods: { efectivo: true, tarjeta: true }
+        } as RestaurantSettings;
+    }, [customSettings, state.restaurantSettings]);
+    
+    const [settings, setSettings] = useState<RestaurantSettings>(activeSettings);
     const [tablesInput, setTablesInput] = useState((activeSettings.tables || []).join(', '));
     const [isSaving, setIsSaving] = useState(false);
     const [activeTab, setActiveTab] = useState<'palettes' | 'custom'>('palettes');
     
+    // Sync state when props change
     useEffect(() => {
-        const sourceSettings = customSettings || state.restaurantSettings;
-        if (sourceSettings) {
-            setSettings({
-                ...sourceSettings,
-                tables: sourceSettings.tables || [],
-                branding: sourceSettings.branding || {},
-                modules: sourceSettings.modules || {},
-                paymentMethods: sourceSettings.paymentMethods || {}
-            });
-            // Safe access to tables with fallback
-            setTablesInput((sourceSettings.tables || []).join(', '));
-        }
-    }, [customSettings, state.restaurantSettings]);
+        setSettings({
+            ...activeSettings,
+            tables: activeSettings.tables || [],
+            branding: activeSettings.branding || {},
+            modules: activeSettings.modules || {},
+            paymentMethods: activeSettings.paymentMethods || {}
+        });
+        setTablesInput((activeSettings.tables || []).join(', '));
+    }, [activeSettings]);
 
     const handleModuleChange = (module: 'delivery' | 'local' | 'retiro', value: boolean) => {
         setSettings(prev => {
@@ -370,7 +368,6 @@ const LocalSettings: React.FC<LocalSettingsProps> = ({ customSettings, onSave })
     };
 
     return (
-        // REMOVED 'max-h' restriction class from here. This allows the parent modal to control scroll.
         <div className="animate-fade-in-up space-y-8 pr-3">
             <div>
                 <h3 className="text-xl font-bold text-text-primary dark:text-ivory-cream mb-4">Apariencia y Marca</h3>
