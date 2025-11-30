@@ -761,8 +761,15 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                         Instalar app para mejor experiencia
                     </button>
                 )}
-                <button onClick={onGoToStaffLogin} className="text-xs text-text-secondary/50 dark:text-light-silver/50 hover:text-text-primary dark:hover:text-white transition-colors block mx-auto underline">
-                    Soy Personal del Restaurante
+                
+                <button
+                    onClick={onGoToStaffLogin}
+                    className="flex items-center justify-center gap-2 mx-auto mt-4 px-4 py-2 rounded-full border border-text-primary/10 dark:border-white/10 text-text-secondary dark:text-zinc-400 hover:bg-text-primary/5 dark:hover:bg-white/5 hover:text-text-primary dark:hover:text-white transition-all duration-300 text-xs font-medium group"
+                >
+                    <div className="bg-text-primary/10 dark:bg-white/10 p-1 rounded-full group-hover:bg-primary group-hover:text-white transition-colors">
+                        <LockClosedIcon className="h-3 w-3" />
+                    </div>
+                    <span>Acceso Personal</span>
                 </button>
             </div>
         </div>
@@ -1001,12 +1008,8 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                                             >
                                                 <div className="flex flex-col items-center justify-center gap-2 relative z-10">
                                                     <YapeLogo className={`h-8 w-auto ${paymentMethod === 'yape' ? 'text-white' : 'text-[#742284]'}`} />
+                                                    <span className="font-bold">Yape</span>
                                                 </div>
-                                                {paymentMethod === 'yape' && (
-                                                    <div className="absolute top-2 right-2">
-                                                        <CheckCircleIcon className="h-5 w-5 text-white" />
-                                                    </div>
-                                                )}
                                             </button>
                                         )}
                                         {/* Plin Button */}
@@ -1021,100 +1024,124 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                                             >
                                                 <div className="flex flex-col items-center justify-center gap-2 relative z-10">
                                                     <PlinLogo className={`h-8 w-auto ${paymentMethod === 'plin' ? 'text-white' : 'text-[#00A1E0]'}`} />
+                                                    <span className="font-bold">Plin</span>
                                                 </div>
-                                                {paymentMethod === 'plin' && (
-                                                    <div className="absolute top-2 right-2">
-                                                        <CheckCircleIcon className="h-5 w-5 text-white" />
-                                                    </div>
-                                                )}
-                                            </button>
-                                        )}
-                                        {/* Mercado Pago Button */}
-                                        {paymentMethodsEnabled.mercadopago && (
-                                            <button 
-                                                onClick={() => setPaymentMethod('mercadopago')} 
-                                                className={`col-span-2 relative overflow-hidden group p-4 rounded-xl border-2 transition-all duration-300 hover:shadow-lg ${
-                                                    paymentMethod === 'mercadopago' 
-                                                        ? 'border-[#009EE3] bg-[#009EE3] text-white shadow-md ring-2 ring-offset-2 ring-[#009EE3]' 
-                                                        : 'border-[#009EE3] bg-white dark:bg-[#009EE3]/10 text-[#009EE3] hover:bg-[#009EE3]/20'
-                                                }`}
-                                            >
-                                                <div className="flex flex-row items-center justify-center gap-3 relative z-10">
-                                                    <MercadoPagoLogo className={`h-8 w-auto ${paymentMethod === 'mercadopago' ? 'text-white' : 'text-[#009EE3]'}`} />
-                                                    <span className="font-bold text-lg">Mercado Pago</span>
-                                                </div>
-                                                {paymentMethod === 'mercadopago' && (
-                                                    <div className="absolute top-3 right-3">
-                                                        <CheckCircleIcon className="h-5 w-5 text-white" />
-                                                    </div>
-                                                )}
                                             </button>
                                         )}
                                     </div>
+                                    
+                                    {/* Mercado Pago Button */}
+                                    {paymentMethodsEnabled.mercadopago && (
+                                        <button 
+                                            onClick={() => setPaymentMethod('mercadopago')} 
+                                            className={`w-full relative overflow-hidden group p-4 rounded-xl border-2 transition-all duration-300 hover:shadow-lg mt-3 ${
+                                                paymentMethod === 'mercadopago' 
+                                                    ? 'border-[#009EE3] bg-[#009EE3] text-white shadow-md ring-2 ring-offset-2 ring-[#009EE3]' 
+                                                    : 'border-[#009EE3] bg-white dark:bg-[#009EE3]/10 text-[#009EE3] hover:bg-[#009EE3]/20'
+                                            }`}
+                                        >
+                                            <div className="flex items-center justify-center gap-3 relative z-10">
+                                                <MercadoPagoLogo className={`h-6 w-auto ${paymentMethod === 'mercadopago' ? 'text-white' : 'text-[#009EE3]'}`} />
+                                                <span className="font-bold">Mercado Pago</span>
+                                            </div>
+                                        </button>
+                                    )}
                                 </div>
                             )}
-
+                            
+                            {/* Pay Later Options including Wallets */}
                             {paymentChoice === 'payLater' && (
                                 <div className="animate-fade-in-up pt-4 space-y-3 border-t border-text-primary/10 dark:border-[#45535D]">
+                                    <p className="text-sm text-text-secondary dark:text-light-silver mb-2">Selecciona método de pago contraentrega:</p>
                                     <div className="grid grid-cols-2 gap-3">
                                         {paymentMethodsEnabled.efectivo && (
                                             <button 
-                                                onClick={() => setPaymentMethod('efectivo')} 
-                                                className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'efectivo' ? 'bg-green-500/10 border-green-500 text-green-600 dark:text-green-400' : 'bg-background dark:bg-gunmetal/50 border-transparent text-text-primary dark:text-ivory-cream hover:border-green-500/30'}`}
+                                                onClick={() => setPaymentMethod('efectivo')}
+                                                className={`p-3 rounded-lg border-2 flex flex-col items-center justify-center gap-1 transition-all ${
+                                                    paymentMethod === 'efectivo' 
+                                                    ? 'border-green-600 bg-green-600 text-white shadow-md' 
+                                                    : 'border-green-600/50 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'
+                                                }`}
                                             >
-                                                <CashIcon className="h-5 w-5"/> <span>Efectivo</span>
+                                                <CashIcon className="h-6 w-6" />
+                                                <span className="font-bold text-sm">Efectivo</span>
                                             </button>
                                         )}
                                         {paymentMethodsEnabled.tarjeta && (
                                             <button 
-                                                onClick={() => setPaymentMethod('tarjeta')} 
-                                                className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'tarjeta' ? 'bg-slate-500/10 border-slate-500 text-slate-600 dark:text-slate-300' : 'bg-background dark:bg-gunmetal/50 border-transparent text-text-primary dark:text-ivory-cream hover:border-slate-500/30'}`}
+                                                onClick={() => setPaymentMethod('tarjeta')}
+                                                className={`p-3 rounded-lg border-2 flex flex-col items-center justify-center gap-1 transition-all ${
+                                                    paymentMethod === 'tarjeta' 
+                                                    ? 'border-slate-600 bg-slate-600 text-white shadow-md' 
+                                                    : 'border-slate-600/50 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                                                }`}
                                             >
-                                                <CreditCardIcon className="h-5 w-5"/> <span>Tarjeta</span>
+                                                <CreditCardIcon className="h-6 w-6" />
+                                                <span className="font-bold text-sm">Tarjeta</span>
                                             </button>
                                         )}
                                         {paymentMethodsEnabled.yape && (
                                             <button 
-                                                onClick={() => setPaymentMethod('yape')} 
-                                                className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'yape' ? 'bg-[#742284]/10 border-[#742284] text-[#742284]' : 'bg-background dark:bg-gunmetal/50 border-transparent text-text-primary dark:text-ivory-cream hover:border-[#742284]/30'}`}
+                                                onClick={() => setPaymentMethod('yape')}
+                                                className={`p-3 rounded-lg border-2 flex flex-col items-center justify-center gap-1 transition-all ${
+                                                    paymentMethod === 'yape' 
+                                                    ? 'border-[#742284] bg-[#742284] text-white shadow-md' 
+                                                    : 'border-[#742284]/50 text-[#742284] hover:bg-[#742284]/10'
+                                                }`}
                                             >
-                                                <YapeLogo className="h-6 w-auto"/>
+                                                <YapeLogo className="h-6 w-auto" />
+                                                <span className="font-bold text-sm">Yape</span>
                                             </button>
                                         )}
                                         {paymentMethodsEnabled.plin && (
                                             <button 
-                                                onClick={() => setPaymentMethod('plin')} 
-                                                className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 font-semibold transition-colors ${paymentMethod === 'plin' ? 'bg-[#00A1E0]/10 border-[#00A1E0] text-[#00A1E0]' : 'bg-background dark:bg-gunmetal/50 border-transparent text-text-primary dark:text-ivory-cream hover:border-[#00A1E0]/30'}`}
+                                                onClick={() => setPaymentMethod('plin')}
+                                                className={`p-3 rounded-lg border-2 flex flex-col items-center justify-center gap-1 transition-all ${
+                                                    paymentMethod === 'plin' 
+                                                    ? 'border-[#00A1E0] bg-[#00A1E0] text-white shadow-md' 
+                                                    : 'border-[#00A1E0]/50 text-[#00A1E0] hover:bg-[#00A1E0]/10'
+                                                }`}
                                             >
-                                                <PlinLogo className="h-6 w-auto"/>
+                                                <PlinLogo className="h-6 w-auto" />
+                                                <span className="font-bold text-sm">Plin</span>
                                             </button>
                                         )}
                                     </div>
 
                                     {paymentMethod === 'efectivo' && (
-                                        <div className="space-y-2 pt-2">
-                                            <label className="flex items-center gap-3 p-3 bg-background dark:bg-gunmetal/50 rounded-lg cursor-pointer">
-                                                <input type="checkbox" checked={isExactCash} onChange={e => setIsExactCash(e.target.checked)} className="h-5 w-5 rounded text-primary focus:ring-primary border-text-primary/20 dark:border-[#56656E] bg-surface dark:bg-gunmetal"/>
-                                                <span className="font-medium text-sm text-text-primary dark:text-ivory-cream">Pagaré con el monto exacto</span>
-                                            </label>
+                                        <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/10 rounded-lg border border-green-200 dark:border-green-900/30">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <span className="text-sm font-semibold text-green-800 dark:text-green-300">¿Con cuánto pagarás?</span>
+                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        checked={isExactCash} 
+                                                        onChange={(e) => setIsExactCash(e.target.checked)} 
+                                                        className="h-4 w-4 text-green-600 rounded focus:ring-green-500"
+                                                    />
+                                                    <span className="text-xs text-green-700 dark:text-green-400">Monto exacto</span>
+                                                </label>
+                                            </div>
                                             {!isExactCash && (
                                                 <div>
-                                                    <input
-                                                        type="number"
-                                                        placeholder="¿Con cuánto pagarás?"
-                                                        value={cashPaymentAmount}
-                                                        onChange={e => setCashPaymentAmount(e.target.value)}
-                                                        className={`w-full p-3 rounded-lg bg-background dark:bg-gunmetal/50 border ${formErrors.pagoConEfectivo ? 'border-danger' : 'border-text-primary/10 dark:border-[#56656E]'}`}
-                                                    />
-                                                    {formErrors.pagoConEfectivo && <p className="text-danger text-xs mt-1">{formErrors.pagoConEfectivo}</p>}
+                                                    <div className="relative">
+                                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 font-bold">S/.</span>
+                                                        <input 
+                                                            type="number" 
+                                                            value={cashPaymentAmount} 
+                                                            onChange={(e) => setCashPaymentAmount(e.target.value)} 
+                                                            placeholder="0.00" 
+                                                            className={`w-full p-2 pl-10 rounded border ${formErrors.pagoConEfectivo ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-zinc-800`} 
+                                                        />
+                                                    </div>
+                                                    {formErrors.pagoConEfectivo && <p className="text-xs text-red-500 mt-1">{formErrors.pagoConEfectivo}</p>}
+                                                    {cashPaymentAmount && parseFloat(cashPaymentAmount) >= total && (
+                                                        <p className="text-xs text-green-600 dark:text-green-400 mt-1 font-semibold">
+                                                            Vuelto: S/. {(parseFloat(cashPaymentAmount) - total).toFixed(2)}
+                                                        </p>
+                                                    )}
                                                 </div>
                                             )}
-                                        </div>
-                                    )}
-                                    
-                                    {(paymentMethod === 'yape' || paymentMethod === 'plin') && (
-                                        <div className="p-3 bg-background dark:bg-gunmetal/50 rounded-lg border border-dashed border-text-primary/20 text-center text-sm text-text-secondary dark:text-light-silver">
-                                            <p>Ten lista tu app de {paymentMethod === 'yape' ? 'Yape' : 'Plin'} para pagar al repartidor.</p>
                                         </div>
                                     )}
                                 </div>
@@ -1122,223 +1149,128 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
                         </>
                     )}
                 </div>
-            </main>
-             <footer className="flex-shrink-0 p-4 border-t border-text-primary/10 dark:border-[#45535D] bg-surface/90 dark:bg-[#34424D]/90 backdrop-blur-lg sticky bottom-0 z-50">
-                <div className="flex justify-between items-center mb-3">
-                    <span className="font-semibold">Total a Pagar</span>
-                    <span className="font-bold text-2xl font-mono">S/.{total.toFixed(2)}</span>
+
+                <div className="p-4 border-t border-text-primary/10 dark:border-[#45535D] sticky bottom-0 bg-surface/90 dark:bg-[#34424D]/90 backdrop-blur-lg z-50">
+                    <button 
+                        onClick={handlePlaceOrder}
+                        className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 shadow-lg shadow-primary/30 hover:shadow-primary/40 hover:-translate-y-1 active:scale-95 disabled:bg-gray-400 disabled:shadow-none disabled:translate-y-0"
+                    >
+                        {isGeneratingPayment ? 'Procesando...' : (
+                            paymentChoice === 'payNow' ? `Pagar S/.${total.toFixed(2)}` : 'Confirmar Pedido'
+                        )}
+                    </button>
                 </div>
-                <button onClick={handlePlaceOrder} className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3 px-4 rounded-xl transition-all shadow-lg">
-                    {paymentChoice === 'payNow' ? `Ir a Pagar S/.${total.toFixed(2)}` : 'Confirmar Pedido'}
-                </button>
-            </footer>
+            </main>
         </div>
     );
 
-    const renderConfirmationScreen = () => {
-        const isMpPending = mpPaymentStatus === 'pending' || (paymentMethod === 'mercadopago' && !isPaymentSimulated);
-        const isMpApproved = mpPaymentStatus === 'approved' || (paymentMethod === 'mercadopago' && isPaymentSimulated);
-        
-        let statusMessage = "¡Pedido Recibido!";
-        let subMessage = "Tu pedido ha sido enviado a cocina.";
-        let icon = <CheckCircleIcon className="h-20 w-20 text-success mx-auto mb-4" />;
-
-        if (paymentMethod === 'mercadopago') {
-            if (isMpPending) {
-                statusMessage = "Completando Pago...";
-                subMessage = "Por favor, termina el pago en la ventana segura.";
-                icon = <GlobeAltIcon className="h-20 w-20 text-blue-500 mx-auto mb-4 animate-pulse" />;
-            } else if (isMpApproved) {
-                statusMessage = "¡Pago Exitoso!";
-                subMessage = "Hemos recibido tu pago correctamente.";
-            } else if (mpPaymentStatus === 'rejected') {
-                statusMessage = "Pago Rechazado";
-                subMessage = "Hubo un problema con tu pago. Inténtalo de nuevo.";
-                icon = <XMarkIcon className="h-20 w-20 text-danger mx-auto mb-4" />;
-            }
-        } else if (['yape', 'plin'].includes(paymentMethod) && paymentChoice === 'payNow') {
-             statusMessage = "¡Casi listo!";
-             subMessage = `Realiza el ${paymentMethod} ahora para confirmar tu pedido.`;
-        }
-
-        const handleSimulateLocalPayment = () => {
-             setIsGeneratingPayment(true);
-             setTimeout(() => {
-                 onConfirmPayment(newOrderId, { metodo: paymentMethod, montoPagado: 0 }); 
-                 setIsPaymentSimulated(true);
-                 setIsGeneratingPayment(false);
-             }, 1500);
-        };
-
-        const handleMercadoPagoCheckout = async () => {
-            setIsGeneratingPayment(true);
-            try {
-                // Construct preference items
-                const items = cart.map(item => ({
-                    title: item.nombre,
-                    quantity: item.cantidad,
-                    unit_price: item.precio,
-                    currency_id: 'PEN'
-                }));
-
-                const payer = {
-                    name: customerInfo.nombre,
-                    email: customerInfo.email || 'test_user_123@testuser.com', 
-                    phone: {
-                        area_code: '',
-                        number: Number(customerInfo.telefono)
-                    }
-                };
-
-                const mPConfig = restaurantSettings?.paymentMethods?.mercadopago;
-                
-                if (mPConfig?.paymentLink && !mPConfig?.accessToken) {
-                     const link = mPConfig.paymentLink.startsWith('http') ? mPConfig.paymentLink : `https://${mPConfig.paymentLink}`;
-                     window.location.href = link;
-                     return;
-                }
-
-                if (mPConfig?.accessToken) {
-                    const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${mPConfig.accessToken}`
-                        },
-                        body: JSON.stringify({
-                            items,
-                            payer,
-                            external_reference: newOrderId,
-                            back_urls: {
-                                success: window.location.href,
-                                failure: window.location.href,
-                                pending: window.location.href
-                            },
-                            auto_return: "approved",
-                            payment_methods: {
-                                installments: 12,
-                                default_installments: null
-                            },
-                            statement_descriptor: "UCHU51 RESTAURANT"
-                        })
-                    });
+    const renderConfirmationScreen = () => (
+        <div className="flex flex-col h-full items-center justify-center p-6 text-center animate-fade-in-scale">
+            {isPaymentSimulated || (paymentChoice === 'payLater' && !isOnlyMercadoPago) ? (
+                <>
+                    <div className="w-24 h-24 bg-success/10 rounded-full flex items-center justify-center mb-6 animate-pulse-glow" style={{'--glow-color': '22, 163, 74'} as React.CSSProperties}>
+                        <CheckCircleIcon className="h-12 w-12 text-success" />
+                    </div>
+                    <h2 className="text-3xl font-heading font-extrabold text-text-primary dark:text-ivory-cream mb-2">¡Pedido Recibido!</h2>
+                    <p className="text-text-secondary dark:text-light-silver mb-8 text-lg">
+                        Tu pedido <span className="font-mono font-bold text-primary dark:text-orange-400">#{newOrderId}</span> ha sido confirmado.
+                    </p>
                     
-                    const data = await response.json();
-                    if (data.init_point) {
-                        window.location.href = data.init_point;
-                    } else {
-                        throw new Error('No init_point');
-                    }
-                } else {
-                     setTimeout(() => {
-                        setIsPaymentSimulated(true);
-                        setIsGeneratingPayment(false);
-                        onConfirmPayment(newOrderId, { metodo: 'mercadopago', montoPagado: 0 });
-                    }, 2000);
-                }
-
-            } catch (error) {
-                console.error("MP Error", error);
-                const mPConfig = restaurantSettings?.paymentMethods?.mercadopago;
-                if (mPConfig?.paymentLink) {
-                     const link = mPConfig.paymentLink.startsWith('http') ? mPConfig.paymentLink : `https://${mPConfig.paymentLink}`;
-                     window.location.href = link;
-                } else {
-                    alert("Error conectando con Mercado Pago. Intenta otro método.");
-                    setIsGeneratingPayment(false);
-                }
-            }
-        };
-
-        const ensureAbsoluteUrl = (url?: string) => {
-            if (!url) return '#';
-            return url.startsWith('http') ? url : `https://${url}`;
-        };
-
-        return (
-            <div className="flex flex-col h-full items-center justify-center p-8 text-center animate-fade-in-scale">
-                {icon}
-                <h2 className="text-3xl font-heading font-extrabold text-text-primary dark:text-white mb-2">{statusMessage}</h2>
-                <p className="text-text-secondary dark:text-light-silver mb-2">{subMessage}</p>
-                
-                <div className="bg-surface dark:bg-[#34424D] p-4 rounded-xl shadow-sm border border-text-primary/10 dark:border-[#45535D] w-full max-w-sm mb-6">
-                    <p className="text-sm font-semibold text-text-secondary dark:text-light-silver">Pedido <span className="text-primary dark:text-orange-400 font-bold">{newOrderId}</span></p>
-                    {isOnlyMercadoPago && !isMpApproved && (
-                         <div className="mt-4 animate-fade-in-up">
-                            <p className="font-bold text-lg mb-2">Paga S/.{lastOrderTotal.toFixed(2)} con Mercado Pago</p>
-                            <button 
-                                onClick={handleMercadoPagoCheckout}
-                                disabled={isGeneratingPayment}
-                                className="w-full bg-[#009EE3] hover:bg-[#007eb5] text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/30"
-                            >
-                                {isGeneratingPayment ? 'Procesando...' : (
-                                    <>
-                                        <GlobeAltIcon className="h-5 w-5" /> Pagar S/.{lastOrderTotal.toFixed(2)} con Mercado Pago
-                                    </>
-                                )}
-                            </button>
-                            {restaurantSettings?.paymentMethods?.mercadopago?.paymentLink && (
-                                <a 
-                                    href={ensureAbsoluteUrl(restaurantSettings.paymentMethods.mercadopago.paymentLink)}
-                                    className="block w-full mt-3 border-2 border-[#009EE3] text-[#009EE3] font-bold py-3 px-4 rounded-xl hover:bg-[#009EE3]/10 transition-colors"
-                                >
-                                    Pagar con Link (Respaldo)
-                                </a>
-                            )}
-                         </div>
-                    )}
-                </div>
-
-                {isOnlyMercadoPago ? (
-                     <div className="space-y-4 w-full max-w-sm">
-                        <div className="flex items-center justify-center gap-2 text-xs text-text-secondary dark:text-light-silver/60">
-                            <LockClosedIcon className="h-3 w-3" /> Pagos procesados de forma 100% segura
+                    <div className="bg-surface dark:bg-[#34424D] p-6 rounded-2xl shadow-lg border border-text-primary/5 dark:border-[#45535D] w-full max-w-sm mb-8">
+                        <p className="text-sm text-text-secondary dark:text-light-silver mb-2">Tiempo estimado</p>
+                        <p className="text-4xl font-heading font-black text-text-primary dark:text-white mb-1">
+                            {orderType === 'delivery' ? '30-45' : '15-20'} min
+                        </p>
+                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-4 overflow-hidden">
+                            <div className="bg-primary h-2 rounded-full w-1/3 animate-pulse"></div>
                         </div>
-                        <button onClick={() => { setStage('selection'); setNewOrderId(''); setCart([]); }} className="text-primary dark:text-orange-400 font-semibold hover:underline text-sm">
-                            Confirmar transacción y volver al inicio
-                        </button>
-                         <button onClick={() => { setStage('selection'); setNewOrderId(''); setCart([]); }} className="text-text-secondary dark:text-light-silver font-bold mt-4 hover:text-primary transition-colors">
-                            Hacer otro pedido
-                        </button>
-                     </div>
-                ) : (
-                    <div className="space-y-3 w-full max-w-sm">
-                        {!isPaymentSimulated && ['yape', 'plin'].includes(paymentMethod) && paymentChoice === 'payNow' && (
-                             <button onClick={handleSimulateLocalPayment} disabled={isGeneratingPayment} className={`w-full bg-text-primary dark:bg-[#45535D] text-white font-bold py-3 rounded-xl shadow-lg border-2 border-dashed border-white/20 ${isGeneratingPayment ? 'opacity-70' : ''}`}>
-                                {isGeneratingPayment ? 'Verificando...' : 'Ya realicé el pago'}
-                                <p className="text-[10px] font-normal opacity-80">(Al hacer clic, notificas al restaurante que pagaste)</p>
-                            </button>
-                        )}
+                        <p className="text-xs text-text-secondary dark:text-light-silver mt-4">
+                            {orderType === 'delivery' ? 'El repartidor va en camino.' : 'Estamos preparando tu orden.'}
+                        </p>
+                    </div>
+
+                    <button onClick={() => { setStage('selection'); setOrderType(null); }} className="bg-text-primary dark:bg-[#45535D] hover:bg-text-primary/90 dark:hover:bg-[#56656E] text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg hover:-translate-y-1 active:scale-95">
+                        Hacer otro pedido
+                    </button>
+                </>
+            ) : (
+                <div className="w-full max-w-md bg-surface dark:bg-[#34424D] p-6 rounded-2xl shadow-xl border border-text-primary/5 dark:border-[#45535D]">
+                    <h3 className="text-xl font-bold mb-4 text-text-primary dark:text-ivory-cream">Pago con Mercado Pago</h3>
+                    <p className="text-text-secondary dark:text-light-silver mb-6">
+                        Completa el pago para confirmar tu pedido.
+                    </p>
+                    
+                    {mpPaymentStatus === 'rejected' && (
+                        <div className="bg-danger/10 text-danger p-3 rounded-lg mb-4 text-sm font-semibold">
+                            El pago fue rechazado. Intenta nuevamente.
+                        </div>
+                    )}
+
+                    <div className="space-y-3">
+                        <a 
+                            href={restaurantSettings?.paymentMethods?.mercadopago?.paymentLink || '#'}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block w-full bg-[#009EE3] hover:bg-[#009EE3]/90 text-white font-bold py-3 px-4 rounded-xl text-center transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-2"
+                        >
+                            <GlobeAltIcon className="h-5 w-5" />
+                            Pagar S/.{lastOrderTotal.toFixed(2)} con Mercado Pago
+                        </a>
                         
-                        <button className="w-full bg-success hover:bg-green-600 text-white font-bold py-3 rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all">
-                            <WhatsAppIcon className="h-5 w-5" /> Enviar voucher por WhatsApp
-                        </button>
-                        
-                        <button onClick={() => { setStage('selection'); setNewOrderId(''); setCart([]); }} className="text-primary dark:text-orange-400 font-bold mt-4 hover:underline">
-                            Hacer otro pedido
+                        <div className="relative my-4">
+                            <div className="absolute inset-0 flex items-center">
+                                <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+                            </div>
+                            <div className="relative flex justify-center text-sm">
+                                <span className="px-2 bg-surface dark:bg-[#34424D] text-text-secondary dark:text-gray-400">
+                                    O si ya pagaste
+                                </span>
+                            </div>
+                        </div>
+
+                        <button 
+                            onClick={() => setIsPaymentSimulated(true)}
+                            className="w-full text-primary dark:text-orange-400 font-semibold text-sm hover:underline"
+                        >
+                            Confirmar transacción manualmente
                         </button>
                     </div>
-                )}
-            </div>
-        );
-    };
+                </div>
+            )}
+        </div>
+    );
 
     return (
-        <div className="h-full bg-background dark:bg-gunmetal flex flex-col font-sans">
-            {selectedProduct && (
-                <ProductDetailModal
-                    product={selectedProduct}
-                    onClose={() => setSelectedProduct(null)}
-                    onAddToCart={handleAddToCartWithAnimation}
+        <div className="min-h-screen bg-background dark:bg-gunmetal flex flex-col font-sans transition-colors duration-300">
+            {showInstallInstructions && renderInstallInstructions()}
+            {showPromosModal && renderPromosModal()}
+            {promoCustomization && (
+                <PromoCustomizationModal 
+                    promoName={promoCustomization.name} 
+                    initialItems={promoCustomization.items} 
+                    onConfirm={handleConfirmPromoCart} 
+                    onClose={() => setPromoCustomization(null)} 
                 />
             )}
             
-            {promoCustomization && (
-                <PromoCustomizationModal
-                    promoName={promoCustomization.name}
-                    initialItems={promoCustomization.items}
-                    onClose={() => setPromoCustomization(null)}
-                    onConfirm={handleConfirmPromoCart}
+            {showGoBackConfirm && (
+                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[101] p-4">
+                    <div className="bg-surface dark:bg-[#34424D] rounded-2xl shadow-xl p-6 max-w-sm w-full text-center animate-fade-in-scale">
+                        <h3 className="text-xl font-heading font-bold text-text-primary dark:text-white">¿Cancelar pedido?</h3>
+                        <p className="text-text-secondary dark:text-light-silver my-3">Si vuelves al inicio, perderás los productos seleccionados.</p>
+                        <div className="grid grid-cols-2 gap-3 mt-6">
+                            <button onClick={() => setShowGoBackConfirm(false)} className="bg-text-primary/10 dark:bg-[#45535D] hover:bg-text-primary/20 dark:hover:bg-[#56656E] text-text-primary dark:text-ivory-cream font-bold py-2 px-4 rounded-lg transition-colors active:scale-95">Seguir</button>
+                            <button onClick={confirmGoBack} className="bg-danger hover:brightness-110 text-white font-bold py-2 px-4 rounded-lg transition-all active:scale-95">Salir</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {selectedProduct && (
+                <ProductDetailModal 
+                    product={selectedProduct} 
+                    onClose={() => setSelectedProduct(null)} 
+                    onAddToCart={handleAddToCartWithAnimation} 
                 />
             )}
 
@@ -1346,21 +1278,6 @@ export const CustomerView: React.FC<CustomerViewProps> = () => {
             {stage === 'catalog' && renderCatalogScreen()}
             {stage === 'checkout' && renderCheckoutScreen()}
             {stage === 'confirmation' && renderConfirmationScreen()}
-            {showInstallInstructions && renderInstallInstructions()}
-            {showPromosModal && renderPromosModal()}
-            
-            {showGoBackConfirm && (
-                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[101] p-4 animate-fade-in-scale">
-                    <div className="bg-surface dark:bg-[#34424D] rounded-2xl shadow-xl p-6 max-w-sm w-full text-center">
-                        <h3 className="text-xl font-heading font-bold text-text-primary dark:text-white">¿Salir sin pedir?</h3>
-                        <p className="text-text-secondary dark:text-light-silver my-3">Si vuelves al inicio, perderás los productos de tu carrito.</p>
-                        <div className="grid grid-cols-2 gap-3 mt-6">
-                            <button onClick={() => setShowGoBackConfirm(false)} className="bg-text-primary/10 dark:bg-[#45535D] hover:bg-text-primary/20 dark:hover:bg-[#56656E] text-text-primary dark:text-ivory-cream font-bold py-2 px-4 rounded-lg transition-colors">Seguir pidiendo</button>
-                            <button onClick={confirmGoBack} className="bg-danger hover:brightness-110 text-white font-bold py-2 px-4 rounded-lg transition-all">Salir</button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };
