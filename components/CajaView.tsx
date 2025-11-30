@@ -245,7 +245,14 @@ const CajaView: React.FC<CajaViewProps> = ({ orders, retiroOrdersToPay, paidOrde
 
     // Filter pending salon orders, highlighting those requesting the bill
     const cuentasPorCobrarSalon = useMemo(() => {
-        return orders.sort((a, b) => {
+        // Filter out orders that are already paid or cancelled, keep 'entregado' and 'cuenta solicitada'
+        const pendingOrders = orders.filter(o => 
+            o.tipo === 'local' && 
+            ['entregado', 'cuenta solicitada'].includes(o.estado) && 
+            !['pagado', 'cancelado'].includes(o.estado)
+        );
+
+        return pendingOrders.sort((a, b) => {
             // Sort 'cuenta solicitada' to top
             if (a.estado === 'cuenta solicitada' && b.estado !== 'cuenta solicitada') return -1;
             if (a.estado !== 'cuenta solicitada' && b.estado === 'cuenta solicitada') return 1;
@@ -300,7 +307,7 @@ const CajaView: React.FC<CajaViewProps> = ({ orders, retiroOrdersToPay, paidOrde
                                                     <h3 className="font-bold text-lg text-text-primary dark:text-ivory-cream flex items-center gap-2">
                                                         Mesa {order.cliente.mesa}
                                                         {order.estado === 'cuenta solicitada' && (
-                                                            <span className="bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">Pide Cuenta</span>
+                                                            <span className="bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider animate-pulse">Pide Cuenta</span>
                                                         )}
                                                     </h3>
                                                     <p className="text-xs font-mono text-text-secondary dark:text-light-silver/50">{order.id}</p>

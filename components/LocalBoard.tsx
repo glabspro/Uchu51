@@ -15,7 +15,7 @@ const statusConfig: { [key in EstadoPedido]?: { label: string; icon: React.React
     'en armado': { label: 'En Armado', icon: <AdjustmentsHorizontalIcon className="h-4 w-4" />, progress: 75, className: 'bg-yellow-400' },
     'listo': { label: 'Listo p/ Servir', icon: <BellIcon className="h-4 w-4" />, progress: 100, className: 'bg-green-500', pulse: true, pulseColor: '52, 211, 153' }, // green
     'entregado': { label: 'En Mesa', icon: <UserIcon className="h-4 w-4" />, progress: 100, className: 'bg-emerald-600' },
-    'cuenta solicitada': { label: 'Pidiendo Cuenta', icon: <CreditCardIcon className="h-4 w-4" />, progress: 100, className: 'bg-blue-500', pulse: true, pulseColor: '59, 130, 246' }, // blue
+    'cuenta solicitada': { label: 'Pide Cuenta', icon: <CreditCardIcon className="h-4 w-4" />, progress: 100, className: 'bg-blue-500', pulse: true, pulseColor: '59, 130, 246' }, // blue
 };
 
 const LocalBoard: React.FC<LocalBoardProps> = ({ mesas }) => {
