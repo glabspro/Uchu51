@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import type { ClienteLeal } from '../types';
 import { SearchIcon, UserGroupIcon } from './icons';
@@ -10,12 +11,13 @@ const CustomerManager: React.FC<CustomerManagerProps> = ({ customers }) => {
     const [searchTerm, setSearchTerm] = useState('');
 
     const filteredCustomers = useMemo(() => {
-        const sortedCustomers = [...customers].sort((a, b) => b.puntos - a.puntos);
+        const safeCustomers = customers || [];
+        const sortedCustomers = [...safeCustomers].sort((a, b) => (b.puntos || 0) - (a.puntos || 0));
         if (!searchTerm) return sortedCustomers;
         return sortedCustomers.filter(
             c =>
-                c.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                c.telefono.includes(searchTerm)
+                (c.nombre || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (c.telefono || '').includes(searchTerm)
         );
     }, [customers, searchTerm]);
 
@@ -50,12 +52,15 @@ const CustomerManager: React.FC<CustomerManagerProps> = ({ customers }) => {
                         <tbody className="divide-y divide-text-primary/5 dark:divide-zinc-700">
                             {filteredCustomers.length > 0 ? (
                                 filteredCustomers.map(customer => {
-                                    const totalSpent = customer.historialPedidos.reduce((sum, order) => sum + order.total, 0);
+                                    // Use total_gastado from DB, fallback to 0. 
+                                    // This prevents the crash when historialPedidos is undefined.
+                                    const totalSpent = customer.total_gastado || 0;
+                                    
                                     return (
-                                        <tr key={customer.telefono} className="hover:bg-text-primary/5 dark:hover:bg-zinc-700/30">
-                                            <td className="p-4 font-medium text-text-primary dark:text-zinc-200">{customer.nombre}</td>
-                                            <td className="p-4 text-text-secondary dark:text-zinc-400 font-mono">{customer.telefono.slice(-9)}</td>
-                                            <td className="p-4 text-center font-bold text-lg text-primary dark:text-orange-400">{customer.puntos}</td>
+                                        <tr key={customer.id || customer.telefono} className="hover:bg-text-primary/5 dark:hover:bg-zinc-700/30">
+                                            <td className="p-4 font-medium text-text-primary dark:text-zinc-200">{customer.nombre || 'Sin Nombre'}</td>
+                                            <td className="p-4 text-text-secondary dark:text-zinc-400 font-mono">{customer.telefono ? customer.telefono.slice(-9) : '-'}</td>
+                                            <td className="p-4 text-center font-bold text-lg text-primary dark:text-orange-400">{customer.puntos || 0}</td>
                                             <td className="p-4 text-center font-mono text-text-secondary dark:text-zinc-400">S/.{totalSpent.toFixed(2)}</td>
                                         </tr>
                                     );
