@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Pedido, Producto, ProductoPedido, Mesa, Salsa, EstadoPedido, ClienteLeal, Recompensa, LoyaltyProgram, Promocion } from '../types';
 import { ChevronLeftIcon, TrashIcon, MinusIcon, PlusIcon, CheckCircleIcon, UserIcon, StarIcon, SparklesIcon, DocumentTextIcon } from './icons';
@@ -86,7 +87,6 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
 
     const hasUnsentItems = useMemo(() => {
         if (!currentOrder) return false;
-        if (currentOrder.productos.length === 0) return false; // No items, nothing to send (so not unsent, but also not sendable)
         return currentOrder.productos.some(p => !p.sentToKitchen);
     }, [currentOrder]);
     
@@ -290,12 +290,8 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
             newStatus = currentOrder.estado;
         }
         
-        // Generate a temporary ID if one doesn't exist to allow immediate state transition
-        const tempId = currentOrder.id || `TEMP-${Date.now()}`;
-
         const orderToSend: Pedido = { 
             ...currentOrder, 
-            id: tempId, // Use temp ID locally
             productos: productosEnviados,
             estado: newStatus,
             historial: [
@@ -304,12 +300,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
             ],
         };
         
-        // Optimistic UI update: Immediately set state to Sent
-        setCurrentOrder(orderToSend);
-        
         onSaveOrder(orderToSend, mesa.numero);
-        
-        setTimeout(() => setIsSubmitting(false), 500);
     };
 
     const handleAssignCustomer = (customer: ClienteLeal) => {
@@ -485,17 +476,12 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
         if (!currentOrder || !currentOrder.id) return;
         onGeneratePreBill(currentOrder.id);
         updateOrderStatus(currentOrder.id, 'cuenta solicitada');
-        // Optimistic UI update
-        setCurrentOrder(prev => prev ? ({...prev, estado: 'cuenta solicitada'}) : null);
     };
 
     const renderActionButtons = () => {
-        // STRICT PRIORITY LOGIC
-        
-        // 1. UNSENT ITEMS / NEW ORDER (Highest Priority)
-        // Checks if there are ANY items that haven't been sent.
-        // We REMOVED !currentOrder.id check to avoid sticky "Send" button if local state lags on ID.
-        if (hasUnsentItems) {
+        // PRIORITY 1: Unsent Items
+        // Applies to NEW orders or EXISTING orders with added items.
+        if (!currentOrder?.id || hasUnsentItems) {
             return (
                 <button
                     onClick={handleSendToKitchen}
@@ -507,18 +493,12 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
             );
         }
 
-        // 2. KITCHEN/READY PHASE (Order Sent -> Waiting to Serve)
-        // If items are sent (handled above), and status implies preparation.
-        if (currentOrder && ['confirmado', 'en preparación', 'en armado', 'listo', 'listo para armado'].includes(currentOrder.estado)) {
+        // PRIORITY 2: Kitchen Phase (Order sent, waiting to serve)
+        // Includes: confirmado, en preparación, en armado, listo, listo para armado
+        if (['confirmado', 'en preparación', 'en armado', 'listo', 'listo para armado'].includes(currentOrder.estado)) {
             return (
                 <button
-                    onClick={() => {
-                        if (currentOrder.id) {
-                            updateOrderStatus(currentOrder.id, 'entregado');
-                            // Optimistic UI update
-                            setCurrentOrder(prev => prev ? ({...prev, estado: 'entregado'}) : null);
-                        }
-                    }}
+                    onClick={() => updateOrderStatus(currentOrder.id, 'entregado')}
                     className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-xl text-xl transition-all duration-300 shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40 hover:-translate-y-0.5 active:scale-95"
                 >
                     <CheckCircleIcon className="inline-block h-6 w-6 mr-2" />
@@ -527,8 +507,8 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
             );
         }
 
-        // 3. EATING PHASE (Served -> Request Bill)
-        if (currentOrder?.estado === 'entregado') {
+        // PRIORITY 3: Eating Phase (Delivered) -> Request Bill
+        if (currentOrder.estado === 'entregado') {
             return (
                 <button
                     onClick={handleRequestBill}
@@ -540,18 +520,13 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
             );
         }
 
-        // 4. BILLING PHASE
-        if (currentOrder?.estado === 'cuenta solicitada') {
+        // PRIORITY 4: Billing Phase
+        if (currentOrder.estado === 'cuenta solicitada') {
             return (
                 <div className="w-full bg-blue-100 dark:bg-blue-900/30 border-2 border-blue-500 text-blue-700 dark:text-blue-300 font-bold py-4 rounded-xl text-center text-lg animate-pulse">
                     Cuenta Solicitada ⏳
                 </div>
             );
-        }
-        
-        // Fallback for empty/new order with no items
-        if (!currentOrder || currentOrder.productos.length === 0) {
-             return null; 
         }
         
         return null;
@@ -584,7 +559,7 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                     </button>
                     <div className="text-center">
                         <h1 className="text-2xl font-heading font-bold text-text-primary dark:text-zinc-100">Mesa {mesa.numero}</h1>
-                        {currentOrder?.id && !currentOrder.id.startsWith('TEMP') && <p className="text-sm font-mono text-text-secondary dark:text-zinc-500">{currentOrder.id}</p>}
+                        {currentOrder?.id && <p className="text-sm font-mono text-text-secondary dark:text-zinc-500">{currentOrder.id}</p>}
                     </div>
                      <div className="w-48 text-right">
                         {currentOrder ? (() => {
@@ -704,23 +679,6 @@ const POSView: React.FC<POSViewProps> = ({ mesa, order, products, promotions, on
                         {/* Action Buttons Logic */}
                         <div className="space-y-3">
                              {renderActionButtons()}
-                             {currentOrder?.id && !currentOrder.id.startsWith('TEMP') && !hasUnsentItems && (
-                                <div className="grid grid-cols-2 gap-3">
-                                    <button
-                                        onClick={handleSaveChanges}
-                                        className="w-full bg-text-primary/10 dark:bg-zinc-700 hover:bg-text-primary/20 dark:hover:bg-zinc-600 text-text-primary dark:text-zinc-200 font-bold py-3 rounded-xl text-base transition-colors active:scale-95 disabled:bg-gray-400/20 dark:disabled:bg-zinc-800 disabled:text-text-secondary/50 disabled:cursor-not-allowed"
-                                    >
-                                        Guardar Cambios
-                                    </button>
-                                    <button
-                                        onClick={() => onGeneratePreBill(currentOrder!.id)}
-                                        className="w-full bg-text-primary/80 dark:bg-zinc-600 text-white font-bold py-3 rounded-xl text-base hover:bg-text-primary/90 dark:hover:bg-zinc-500 transition-all duration-300 shadow-lg hover:shadow-text-primary/20 hover:-translate-y-0.5 active:scale-95 disabled:bg-gray-400/50 dark:disabled:bg-zinc-700 disabled:text-text-secondary dark:disabled:text-zinc-400 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0"
-                                        aria-label="Ver o imprimir la pre-cuenta del pedido"
-                                    >
-                                        Ver Cuenta
-                                    </button>
-                                </div>
-                             )}
                         </div>
                     </div>
                 </div>
